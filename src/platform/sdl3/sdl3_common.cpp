@@ -5,10 +5,13 @@
 #include <chrono>
 #include <ctime>
 #include <fstream>
+
+#if USE_THREADS
 #include <mutex>
+static std::mutex s_mutex;
+#endif
 
 static std::unique_ptr<std::ofstream> s_file_sink;
-static std::mutex s_mutex;
 
 static const char* log_prefix(LogSeverity severity) {
 	switch (severity) {
@@ -26,7 +29,7 @@ static const char* log_prefix(LogSeverity severity) {
 	return "";
 }
 
-std::string log_test() {
+std::string log_datetime() {
 	std::string out;
 	out.resize(128);
 
@@ -34,8 +37,7 @@ std::string log_test() {
 	std::time_t datetime = std::chrono::system_clock::to_time_t(now);
 
 	std::tm localtime;
-#if WIN32
-	// FIXME: this is windows-only
+#if defined(_WIN32) || defined(_WIN64)
 	localtime_s(&localtime, &datetime);
 #else
 	localtime_r(&datetime, &localtime);
@@ -49,7 +51,7 @@ std::string log_test() {
 static std::string format_message(LogSeverity severity, std::string_view message) {
 	std::string str;
 	str.reserve(128);
-	str += log_test();
+	str += log_datetime();
 	str += log_prefix(severity);
 	str += "-> ";
 	str += message;
@@ -58,7 +60,9 @@ static std::string format_message(LogSeverity severity, std::string_view message
 
 static void log_callback(LogSeverity severity, std::string_view message) {
 	std::string str = format_message(severity, message);
+#if USE_THREADS
 	std::lock_guard lock{ s_mutex };
+#endif
 
 	// Lazy load file sink
 	if (!s_file_sink) {

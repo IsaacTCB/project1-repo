@@ -18,6 +18,12 @@ else()
     add_executable(${EXECUTABLE_NAME} ${SDL3_SOURCES})
 endif()
 
+if(EMSCRIPTEN)
+    target_compile_definitions(${EXECUTABLE_NAME} PRIVATE -DUSE_THREADS=0)
+else()
+    target_compile_definitions(${EXECUTABLE_NAME} PRIVATE -DUSE_THREADS=1)
+endif()
+
 target_link_libraries(${EXECUTABLE_NAME}
     PRIVATE
     engine
