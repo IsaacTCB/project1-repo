@@ -22,6 +22,10 @@ struct DisplayWindowProps {
 struct DisplayWindowHandle {
 	void* raw_window_handle;
 	DisplayWindowProps props;
+
+	operator bool() const noexcept {
+		return raw_window_handle != nullptr;
+	}
 };
 
 /**

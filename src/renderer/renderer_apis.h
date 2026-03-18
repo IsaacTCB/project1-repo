@@ -5,6 +5,11 @@ enum class RendererAPI {
     OpenGL,
 };
 
+/**
+ * @brief Gets the default renderer API.
+ *
+ * @return An RendererAPI for use.
+ */
 inline RendererAPI get_default_api() {
-    return RendererAPI::OpenGL;
+    return RendererAPI::SDL3Renderer;
 }

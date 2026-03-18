@@ -1,5 +1,8 @@
 #include "../display_server.h"
 
+#include "../../common/assertion.h"
+#include "../../common/logger.h"
+
 #include "sdl3_common.h"
 
 #include <cstdlib>
@@ -10,20 +13,23 @@ DisplayWindowHandle DisplayServer::init_display(const DisplayWindowProps& props)
     SDL_WindowFlags flags = get_common_sdl_flags(props);
 
     switch (props.api) {
-    case RendererAPI::SDL3Renderer:
-        break;
-    case RendererAPI::OpenGL:
-        flags |= SDL_WINDOW_OPENGL;
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-        break;
+        case RendererAPI::SDL3Renderer:
+            break;
+        case RendererAPI::OpenGL:
+            flags |= SDL_WINDOW_OPENGL;
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+            break;
+        default:
+            ASSERT(false, "SDL: Invalid renderer API");
+            break;
     }
 
     SDL_Window *window = SDL_CreateWindow(props.caption.data(), props.width, props.height, flags);
     if (!window) {
-        /* Ideally, we fallback to other APIs */
-        exit(0);
+        LOG_ERROR("SDL3: Failed to create window. Reason: {0}", SDL_GetError());
+        return {};
     }
 
     return {

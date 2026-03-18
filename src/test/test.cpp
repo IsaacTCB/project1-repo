@@ -2,6 +2,7 @@
 
 #include "../renderer/renderer.h"
 #include "../platform/platform.h"
+
 #include "../common/logger.h"
 
 #include <cstdlib>
@@ -14,8 +15,8 @@ void Test::run_platform_test(Platform& platform) {
     LOG_TRACE("run_platform_test(): Ensure all platforms behave similarly.");
 
     auto& os = platform.os();
-    LOG_TRACE("platform: {}", os.get_platform());
-    LOG_TRACE("os: {}", os.get_os());
+    LOG_INFO("platform: {}", os.get_platform());
+    LOG_INFO("os: {}", os.get_os());
 
     /* =================== */
     /*       DISPLAY       */
@@ -27,7 +28,12 @@ void Test::run_platform_test(Platform& platform) {
     props.width = 800;
     props.height = 600;
     props.api = RendererAPI::SDL3Renderer;
+
     s_window = display.init_display(props);
+    if (!s_window) {
+        LOG_CRITICAL("run_platform_test(): Failed to create main window");
+        exit(0);
+    }
 
     /* initialize renderer */
     s_renderer = Renderer::create(s_window);
@@ -38,7 +44,7 @@ void Test::run_platform_test(Platform& platform) {
 
     /* poll window size */
     auto [width, height] = display.get_size(s_window);
-    LOG_TRACE("display size: {0}x{1}", width, height);
+    LOG_INFO("display size: {0}x{1}", width, height);
 }
 
 void Test::run_platform_render_test(Platform& platform) {
