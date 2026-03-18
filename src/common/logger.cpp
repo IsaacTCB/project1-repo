@@ -23,7 +23,7 @@ void Logger::log(LogSeverity severity, std::string_view message) {
 }
 
 static void default_log_callback(LogSeverity severity, std::string_view message) {
-    const char *prefix = "";
+    const char *prefix = nullptr;
     switch (severity) {
         case LOG_SEVERITY_TRACE:
             prefix = "[TRACE] ";
@@ -41,7 +41,12 @@ static void default_log_callback(LogSeverity severity, std::string_view message)
             prefix = "[FATAL] ";
             break;
     }
-    std::cout << prefix << message << std::endl;
+
+    if (prefix) {
+        std::cout << prefix << message << std::endl;
+    } else {
+        std::cout << message << std::endl;
+    }
 }
 
 Logger::Logger() :m_callback(default_log_callback)

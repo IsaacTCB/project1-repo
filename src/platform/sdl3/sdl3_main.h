@@ -6,9 +6,8 @@
 class PlatformImpl {
 public:
 	PlatformImpl()
-		:m_platform(m_state)
-	{
-	}
+		:m_state{}, m_platform{m_state}
+	{}
 
 	void init();
 	void iterate();

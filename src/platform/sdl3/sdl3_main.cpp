@@ -23,6 +23,7 @@ int main(int argc, char* argv[]) {
 void PlatformImpl::init() {
     SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO);
 
+    m_state.running = true;
     Test::run_platform_test(m_platform);
 }
 
