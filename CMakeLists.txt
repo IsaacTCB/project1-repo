@@ -10,16 +10,18 @@ if(PLATFORM STREQUAL "sdl3")
     set(PLATFORM_SDL3 true)
 endif()
 
-macro(target_add_renderer target name)
-    add_subdirectory(${CMAKE_SOURCE_DIR}/src/renderer/${name} ${CMAKE_CURRENT_BINARY_DIR}/renderer_${name})
+function(target_add_renderer target name)
+    add_subdirectory(
+        ${CMAKE_SOURCE_DIR}/src/renderer/${name}
+        ${CMAKE_CURRENT_BINARY_DIR}/renderer_${name})
     target_link_libraries(${target} PRIVATE renderer_${name})
     message(STATUS "Linked renderer ${name} to ${target}")
-endmacro()
+endfunction()
 
 # Common stuff
 add_library(engine STATIC
     src/test/test.cpp
-    src/platform/common/logger.cpp
+    src/common/logger.cpp
     src/renderer/renderer.cpp)
 
 # Platform (entrypoint)

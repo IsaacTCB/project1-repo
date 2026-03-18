@@ -2,11 +2,10 @@
 
 #include "../renderer/renderer.h"
 #include "../platform/platform.h"
-#include "../platform/common/logger.h"
+#include "../common/logger.h"
 
 #include <cstdlib>
 #include <memory>
-#include <vector>
 
 static DisplayWindowHandle s_window;
 static std::shared_ptr<Renderer> s_renderer;

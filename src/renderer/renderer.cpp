@@ -2,7 +2,7 @@
 
 #include "sdl3/sdl3_renderer.h"
 
-#include "../platform/common/logger.h"
+#include "../common/logger.h"
 
 std::shared_ptr<Renderer> Renderer::create(DisplayWindowHandle& window_data) {
     switch (window_data.props.api) {

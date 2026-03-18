@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common/server_macros.inl"
+#include "server_macros.inl"
 
 #include "../renderer/renderer_apis.h"
 

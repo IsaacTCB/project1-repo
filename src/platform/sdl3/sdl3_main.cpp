@@ -6,6 +6,8 @@
 #include "../../test/test.h"
 
 int main(int argc, char* argv[]) {
+    log_init();
+
     PlatformImpl impl{};
     impl.init();
     while (impl.is_running()) {

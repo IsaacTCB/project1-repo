@@ -7,3 +7,5 @@ struct PlatformImplState {
     SDL_Renderer* renderer;
     bool running;
 };
+
+void log_init();

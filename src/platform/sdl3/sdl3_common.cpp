@@ -1,14 +1,10 @@
 #include "sdl3_common.h"
 
-#include "../common/logger.h"
+#include "../../common/logger.h"
 
 #include <chrono>
 #include <ctime>
-#include <vector>
-#include <iostream>
 #include <fstream>
-#include <sstream>
-#include <thread>
 #include <mutex>
 
 static std::unique_ptr<std::ofstream> s_file_sink;
@@ -60,11 +56,7 @@ static std::string format_message(LogSeverity severity, std::string_view message
 	return str;
 }
 
-void Logger::log(LogSeverity severity, std::string_view message) {
-	if (severity < m_severity) {
-		return;
-	}
-
+static void log_callback(LogSeverity severity, std::string_view message) {
 	std::string str = format_message(severity, message);
 	std::lock_guard lock{ s_mutex };
 
@@ -77,4 +69,8 @@ void Logger::log(LogSeverity severity, std::string_view message) {
 
 	SDL_Log("%s\n", str.c_str());
 	*s_file_sink << str << '\n';
+}
+
+void log_init() {
+	Logger::get().set_log_callback(log_callback);
 }
