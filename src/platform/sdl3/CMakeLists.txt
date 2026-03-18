@@ -13,16 +13,16 @@ set(SDL3_SOURCES
 if(ANDROID)
     add_library(main SHARED ${SDL3_SOURCES})
     target_add_renderer(main sdl3)
-    add_library(${PROJECT_NAME} ALIAS main)
+    add_library(${EXECUTABLE_NAME} ALIAS main)
 else()
-    add_executable(${PROJECT_NAME} ${SDL3_SOURCES})
+    add_executable(${EXECUTABLE_NAME} ${SDL3_SOURCES})
 endif()
 
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${EXECUTABLE_NAME}
     PRIVATE
     engine
     PUBLIC
     SDL3::SDL3
 )
 
-target_add_renderer(${PROJECT_NAME} sdl3)
+target_add_renderer(${EXECUTABLE_NAME} sdl3)

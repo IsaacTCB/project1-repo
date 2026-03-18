@@ -2,10 +2,13 @@ cmake_minimum_required(VERSION 3.16)
 
 project(Engine LANGUAGES C CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_C_STANDARD 11)
 
 set(PLATFORM "sdl3" CACHE STRING "Platform to configure for")
+set(EXECUTABLE_NAME "game" CACHE STRING "Hello world")
+
 if(PLATFORM STREQUAL "sdl3")
     set(PLATFORM_SDL3 true)
 endif()
