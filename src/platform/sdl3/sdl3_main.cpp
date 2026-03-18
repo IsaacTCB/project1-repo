@@ -3,6 +3,7 @@
 #include "sdl3_common.h"
 #include "sdl3_main.h"
 
+#include "../../common/logger.h"
 #include "../../test/test.h"
 
 int main(int argc, char* argv[]) {
@@ -21,7 +22,11 @@ int main(int argc, char* argv[]) {
 }
 
 void PlatformImpl::init() {
-    SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO);
+    if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO)) {
+        LOG_CRITICAL("Failed to initialize SDL3");
+        m_state.running = false;
+        return;
+    }
 
     m_state.running = true;
     Test::run_platform_test(m_platform);
