@@ -1,6 +1,17 @@
 cmake_minimum_required(VERSION 3.11)
 
-find_package(SDL3 REQUIRED)
+find_package(SDL3 QUIET)
+if(NOT SDL3_FOUND)
+    include(FetchContent)
+    FetchContent_Declare("SDL3"
+        GIT_REPOSITORY  https://github.com/libsdl-org/SDL.git
+        GIT_TAG         release-3.4.2
+        GIT_SHALLOW     TRUE
+        GIT_PROGRESS    TRUE
+    )
+    FetchContent_MakeAvailable("SDL3")
+    set(SDL3_FOUND TRUE)
+endif()
 
 set(SDL3_SOURCES
     sdl3_common.cpp
@@ -10,16 +21,26 @@ set(SDL3_SOURCES
     sdl3_main.cpp
 )
 
+set(BUILD_DEBUG (CMAKE_BUILD_TYPE STREQUAL "Debug"))
+
 if(ANDROID)
     add_library(main SHARED ${SDL3_SOURCES})
     target_add_renderer(main sdl3)
     add_library(${EXECUTABLE_NAME} ALIAS main)
 else()
-    add_executable(${EXECUTABLE_NAME} ${SDL3_SOURCES})
+    if(BUILD_DEBUG)
+        add_executable(${EXECUTABLE_NAME} ${SDL3_SOURCES})
+    else()
+        # For non-debug builds, disable console on Windows.
+        add_executable(${EXECUTABLE_NAME} WIN32 ${SDL3_SOURCES})
+    endif()
 endif()
+
+target_compile_definitions(${EXECUTABLE_NAME} PRIVATE SDL_MAIN_USE_CALLBACKS)
 
 if(EMSCRIPTEN)
     target_compile_definitions(${EXECUTABLE_NAME} PRIVATE -DUSE_THREADS=0)
+    set(CMAKE_EXECUTABLE_SUFFIX ".html")
 else()
     target_compile_definitions(${EXECUTABLE_NAME} PRIVATE -DUSE_THREADS=1)
 endif()
@@ -32,3 +53,13 @@ target_link_libraries(${EXECUTABLE_NAME}
 )
 
 target_add_renderer(${EXECUTABLE_NAME} sdl3)
+
+if(WIN32)
+    add_custom_command(TARGET ${EXECUTABLE_NAME} POST_BUILD
+        COMMAND "${CMAKE_COMMAND}"
+        -E copy_if_different
+        "$<TARGET_FILE:SDL3::SDL3>"
+        "$<TARGET_FILE_DIR:${EXECUTABLE_NAME}>"
+        VERBATIM
+    )
+endif()

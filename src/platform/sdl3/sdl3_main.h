@@ -9,10 +9,10 @@ public:
 		:m_state{}, m_platform{m_state}
 	{}
 
-	void init();
-	void iterate();
-	void event(const SDL_Event &event);
-	void close();
+	SDL_AppResult init();
+	SDL_AppResult iterate();
+	SDL_AppResult event(const SDL_Event &event);
+	void close(SDL_AppResult result);
 
 	bool is_running() const noexcept { return m_state.running; }
 

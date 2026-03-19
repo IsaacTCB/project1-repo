@@ -1,20 +1,28 @@
 #include "sdl3_renderer.h"
 
-SDL3Renderer::SDL3Renderer(DisplayWindowHandle& window_data) {
-    m_window = reinterpret_cast<SDL_Window*>(window_data.raw_window_handle);
-    m_renderer = SDL_CreateRenderer(m_window, nullptr);
-    SDL_SetRenderVSync(m_renderer, 1);
+#include <SDL3/SDL.h>
+
+struct SDL3Renderer::Impl {
+    SDL_Window* window;
+    SDL_Renderer* renderer;
+};
+
+SDL3Renderer::SDL3Renderer(DisplayWindowHandle& window_data)
+    :m_impl(new Impl){
+    m_impl->window = reinterpret_cast<SDL_Window*>(window_data.raw_window_handle);
+    m_impl->renderer = SDL_CreateRenderer(m_impl->window, nullptr);
+    SDL_SetRenderVSync(m_impl->renderer, 1);
 }
 
 void SDL3Renderer::clear(float r, float g, float b, float a) {
-    SDL_SetRenderDrawColor(m_renderer,
+    SDL_SetRenderDrawColor(m_impl->renderer,
         static_cast<uint8_t>(r * 255.0f),
         static_cast<uint8_t>(g * 255.0f),
         static_cast<uint8_t>(b * 255.0f),
         static_cast<uint8_t>(a * 255.0f));
-    SDL_RenderClear(m_renderer);
+    SDL_RenderClear(m_impl->renderer);
 }
 
 void SDL3Renderer::swap_buffers() {
-    SDL_RenderPresent(m_renderer);
+    SDL_RenderPresent(m_impl->renderer);
 }

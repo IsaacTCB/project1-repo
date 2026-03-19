@@ -5,6 +5,7 @@
 #include <chrono>
 #include <ctime>
 #include <fstream>
+#include <iostream>
 
 #if USE_THREADS
 #include <mutex>
@@ -64,15 +65,24 @@ static void log_callback(LogSeverity severity, std::string_view message) {
 	std::lock_guard lock{ s_mutex };
 #endif
 
+#if !defined(EMSCRIPTEN)
 	// Lazy load file sink
 	if (!s_file_sink) {
 		s_file_sink = std::make_unique<std::ofstream>("runtime.log");
 		*s_file_sink << "This file was auto-generated at runtime.\n\n";
 		s_file_sink->flush();
 	}
+#endif
 
+#if !defined(EMSCRIPTEN)
 	SDL_Log("%s\n", str.c_str());
-	*s_file_sink << str << '\n';
+#else
+	std::cout << str << '\n';
+#endif
+
+	if (s_file_sink) {
+		*s_file_sink << str << '\n';
+	}
 }
 
 void log_init() {

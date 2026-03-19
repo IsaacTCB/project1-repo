@@ -1,7 +1,5 @@
 #pragma once
 
-#include <SDL3/SDL.h>
-
 #include "../renderer.h"
 
 class SDL3Renderer : public Renderer {
@@ -10,8 +8,8 @@ public:
     void swap_buffers() override;
 
 private:
-    SDL_Window* m_window;
-    SDL_Renderer* m_renderer;
+    struct Impl;
+    Impl *m_impl;
 
     SDL3Renderer(DisplayWindowHandle& window_data);
     friend Renderer;
