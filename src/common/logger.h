@@ -1,7 +1,8 @@
 #pragma once
 
-#include <string_view>
 #include <format>
+#include <memory>
+#include <string_view>
 
 enum LogSeverity {
 	LOG_SEVERITY_TRACE = 0,
@@ -28,6 +29,8 @@ public:
 	static void close();
 
 public:
+	~Logger() = default;
+
 	/**
 	 * @brief Override log callback
 	 *
@@ -79,7 +82,6 @@ public:
 
 private:
 	Logger();
-	~Logger() = default;
 
 	Logger(const Logger& logger) = delete;
 	Logger(Logger&& logger) = delete;
@@ -92,7 +94,7 @@ private:
 	LogFn m_callback;
 	LogSeverity m_severity = LOG_SEVERITY_TRACE;
 
-	inline static Logger *s_Logger = nullptr;
+	static std::unique_ptr<Logger> s_logger;
 };
 
 #define LOG_TRACE(...)    ::Logger::get().print(LOG_SEVERITY_TRACE, __VA_ARGS__)

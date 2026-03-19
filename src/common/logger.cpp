@@ -2,15 +2,17 @@
 
 #include <iostream>
 
+std::unique_ptr<Logger> Logger::s_logger;
+
 Logger& Logger::get() {
-    if (!s_Logger) {
-        s_Logger = new Logger();
+    if (!s_logger) {
+        s_logger.reset(new Logger{});
     }
-    return *s_Logger;
+    return *s_logger;
 }
 
 void Logger::close() {
-    delete s_Logger;
+    s_logger.reset();
 }
 
 void Logger::log(LogSeverity severity, std::string_view message) {

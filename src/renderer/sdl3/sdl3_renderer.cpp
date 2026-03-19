@@ -8,7 +8,7 @@ struct SDL3Renderer::Impl {
 };
 
 SDL3Renderer::SDL3Renderer(DisplayWindowHandle& window_data)
-    :m_impl(new Impl){
+    :m_impl(std::make_unique<Impl>()){
     m_impl->window = reinterpret_cast<SDL_Window*>(window_data.raw_window_handle);
     m_impl->renderer = SDL_CreateRenderer(m_impl->window, nullptr);
     SDL_SetRenderVSync(m_impl->renderer, 1);
@@ -16,7 +16,6 @@ SDL3Renderer::SDL3Renderer(DisplayWindowHandle& window_data)
 
 SDL3Renderer::~SDL3Renderer() {
     SDL_DestroyRenderer(m_impl->renderer);
-    delete m_impl;
 }
 
 void SDL3Renderer::clear(float r, float g, float b, float a) {
