@@ -4,6 +4,8 @@
 
 class SDL3Renderer : public Renderer {
 public:
+    ~SDL3Renderer();
+
     void clear(float r, float g, float b, float a = 255) override;
     void swap_buffers() override;
 

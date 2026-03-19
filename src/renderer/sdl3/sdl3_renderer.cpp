@@ -14,6 +14,11 @@ SDL3Renderer::SDL3Renderer(DisplayWindowHandle& window_data)
     SDL_SetRenderVSync(m_impl->renderer, 1);
 }
 
+SDL3Renderer::~SDL3Renderer() {
+    SDL_DestroyRenderer(m_impl->renderer);
+    delete m_impl;
+}
+
 void SDL3Renderer::clear(float r, float g, float b, float a) {
     SDL_SetRenderDrawColor(m_impl->renderer,
         static_cast<uint8_t>(r * 255.0f),
