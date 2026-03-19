@@ -1,6 +1,6 @@
 #include "../os_server.h"
 
-#include "sdl3_common.h"
+#include <SDL3/SDL.h>
 
 const char* OSServer::get_os() const {
     return SDL_GetPlatform();

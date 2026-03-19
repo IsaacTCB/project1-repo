@@ -5,7 +5,7 @@
 #include "sdl3_common.h"
 #include "sdl3_main.h"
 
-#include "../../common/logger.h"
+#include "../../core/logger.h"
 #include "../../test/test.h"
 
 static PlatformImpl impl;

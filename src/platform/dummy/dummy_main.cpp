@@ -1,11 +1,11 @@
 #include "../platform.h"
 
-#include "../common/logger.h"
+#include "../core/logger.h"
 
 #include "dummy_main.h"
 #include "dummy_common.h"
 
-#include "../common/test.h"
+#include "../core/test.h"
 
 #include <iostream>
 

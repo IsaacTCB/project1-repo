@@ -1,0 +1,62 @@
+{
+    "version": 7,
+    "configurePresets": [
+        {
+            "name": "default",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true
+            }
+        },
+        {
+            "name": "debug",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "release",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "platform-sdl3",
+            "hidden": true,
+            "inherits": [
+                "default"
+            ],
+            "cacheVariables": {
+                "PLATFORM": "sdl3"
+            }
+        },
+        {
+            "name": "sdl3-debug",
+            "inherits": [
+                "platform-sdl3",
+                "debug"
+            ]
+        },
+        {
+            "name": "sdl3-release",
+            "inherits": [
+                "platform-sdl3",
+                "release"
+            ]
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "sdl3-debug",
+            "configurePreset": "sdl3-debug"
+        },
+        {
+            "name": "sdl3-release",
+            "configurePreset": "sdl3-release"
+        }
+    ]
+}

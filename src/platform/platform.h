@@ -1,7 +1,5 @@
 #pragma once
 
-#include <memory>
-
 #include "os_server.h"
 #include "io_server.h"
 #include "display_server.h"

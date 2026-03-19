@@ -24,7 +24,7 @@ endfunction()
 # Common stuff
 add_library(engine STATIC
     src/test/test.cpp
-    src/common/logger.cpp
+    src/core/logger.cpp
     src/renderer/renderer.cpp)
 
 # Platform (entrypoint)

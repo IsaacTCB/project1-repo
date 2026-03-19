@@ -3,7 +3,7 @@
 #include "../renderer/renderer.h"
 #include "../platform/platform.h"
 
-#include "../common/logger.h"
+#include "../core/logger.h"
 
 #include <cstdlib>
 #include <memory>

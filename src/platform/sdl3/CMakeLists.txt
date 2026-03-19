@@ -1,11 +1,16 @@
 cmake_minimum_required(VERSION 3.11)
 
-find_package(SDL3 QUIET)
+set(SDL3_VERSION 3.4)
+set(SDL3_FETCH_VERSION 3.4.2)
+
+find_package(SDL3 ${SDL3_VERSION} QUIET)
 if(NOT SDL3_FOUND)
+    message(INFO "The SDL3 installation was not found. Downloading SDL3 ${SDL3_VERSION}...")
+
     include(FetchContent)
     FetchContent_Declare("SDL3"
         GIT_REPOSITORY  https://github.com/libsdl-org/SDL.git
-        GIT_TAG         release-3.4.2
+        GIT_TAG         release-${SDL3_FETCH_VERSION}
         GIT_SHALLOW     TRUE
         GIT_PROGRESS    TRUE
     )

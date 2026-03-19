@@ -1,6 +1,6 @@
 #include "dummy_common.h"
 
-#include "../common/Logger.h"
+#include "../core/Logger.h"
 
 #include <chrono>
 #include <ctime>
