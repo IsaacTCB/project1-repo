@@ -1,8 +1,21 @@
-.cache/
-.vs/
+.cache
+out
+build
 
-build/
-out/
+# Visual Studio
+.vs
+*.sln
+*.slnx
 
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
 compile_commands.json
+CTestTestfile.cmake
+_deps
 CMakeUserPresets.json
