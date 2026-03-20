@@ -31,20 +31,24 @@ static const char* log_prefix(LogSeverity severity) {
 }
 
 std::string log_datetime() {
-	std::string out;
-	out.resize(128);
-
-	std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-	std::time_t datetime = std::chrono::system_clock::to_time_t(now);
-
+	using system_clock = std::chrono::system_clock;
+	system_clock::time_point now = system_clock::now();
+	std::time_t datetime = system_clock::to_time_t(now);
 	std::tm localtime;
+
 #if defined(_WIN32) || defined(_WIN64)
 	localtime_s(&localtime, &datetime);
 #else
 	localtime_r(&datetime, &localtime);
 #endif
 
-	std::size_t size = std::strftime(out.data(), out.size(), "[%Y/%m/%d %H:%M:%S] ", &localtime);
+	std::string out;
+	out.resize(128);
+	std::size_t size = std::strftime(
+		out.data(),
+		out.size(),
+		"[%Y/%m/%d %H:%M:%S] ",
+		&localtime);
 	out.resize(size);
 	return out;
 }
