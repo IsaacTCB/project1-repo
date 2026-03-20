@@ -51,6 +51,5 @@ static void default_log_callback(LogSeverity severity, std::string_view message)
     }
 }
 
-Logger::Logger() :m_callback(default_log_callback)
-{}
+Logger::Logger() :m_callback(default_log_callback) {}
 

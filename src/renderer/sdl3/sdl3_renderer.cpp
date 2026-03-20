@@ -7,8 +7,8 @@ struct SDL3Renderer::Impl {
     SDL_Renderer* renderer;
 };
 
-SDL3Renderer::SDL3Renderer(DisplayWindowHandle& window_data)
-    :m_impl(std::make_unique<Impl>()){
+SDL3Renderer::SDL3Renderer(DisplayWindowHandle& window_data) 
+    :m_impl(std::make_unique<Impl>()) {
     m_impl->window = reinterpret_cast<SDL_Window*>(window_data.raw_window_handle);
     m_impl->renderer = SDL_CreateRenderer(m_impl->window, nullptr);
     SDL_SetRenderVSync(m_impl->renderer, 1);

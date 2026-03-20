@@ -28,8 +28,9 @@ private:
 	DisplayServer display_server;
 
 	explicit Platform(PlatformImplState &state)
-		:os_server{state}, io_server{state}, display_server{state}
-	{}
+		:os_server{state},
+        io_server{state},
+        display_server{state} {}
 
 	friend PlatformImpl;
 };
