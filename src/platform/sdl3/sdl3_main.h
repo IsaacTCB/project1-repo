@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../platform.h"
+
 #include "sdl3_common.h"
 
 class PlatformImpl {

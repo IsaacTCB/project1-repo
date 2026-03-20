@@ -1,6 +1,6 @@
 #include "sdl3_common.h"
 
-#include "../../core/logger.h"
+#include "core/logger.h"
 
 #include <chrono>
 #include <ctime>

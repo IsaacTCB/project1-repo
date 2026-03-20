@@ -17,7 +17,9 @@ function(target_add_renderer target name)
     add_subdirectory(
         ${CMAKE_SOURCE_DIR}/src/renderer/${name}
         ${CMAKE_CURRENT_BINARY_DIR}/renderer_${name})
+    target_include_directories(renderer_${name} PUBLIC ${CMAKE_SOURCE_DIR}/src)
     target_link_libraries(${target} PRIVATE renderer_${name})
+
     message(STATUS "Linked renderer ${name} to ${target}")
 endfunction()
 
@@ -27,8 +29,9 @@ add_library(engine STATIC
     src/core/logger.cpp
     src/renderer/renderer.cpp)
 
+target_include_directories(engine PUBLIC src)
+
 # Platform (entrypoint)
 if(PLATFORM_SDL3)
     add_subdirectory(src/platform/sdl3 ${CMAKE_CURRENT_BINARY_DIR}/sdl3)
 endif()
-

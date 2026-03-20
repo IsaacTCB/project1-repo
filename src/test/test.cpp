@@ -1,9 +1,11 @@
 #include "test.h"
 
-#include "../renderer/renderer.h"
-#include "../platform/platform.h"
+#include "platform/platform.h"
 
-#include "../core/logger.h"
+#include "renderer/renderer.h"
+#include "renderer/renderer_apis.h"
+
+#include "core/logger.h"
 
 #include <cstdlib>
 #include <memory>

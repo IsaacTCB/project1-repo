@@ -2,7 +2,7 @@
 
 #include "server_macros.inl"
 
-#include "../renderer/renderer_apis.h"
+#include "renderer/renderer_apis.h"
 
 #include <cstdint>
 #include <string>

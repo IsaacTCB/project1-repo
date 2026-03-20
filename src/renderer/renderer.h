@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "../platform/display_server.h"
+#include "platform/display_server.h"
 
 class Renderer {
 public:

@@ -41,6 +41,7 @@ else()
     endif()
 endif()
 
+target_include_directories(${EXECUTABLE_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_compile_definitions(${EXECUTABLE_NAME} PRIVATE SDL_MAIN_USE_CALLBACKS)
 
 if(EMSCRIPTEN)

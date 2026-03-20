@@ -1,7 +1,7 @@
 #include "../display_server.h"
 
-#include "../../core/assertion.h"
-#include "../../core/logger.h"
+#include "core/assertion.h"
+#include "core/logger.h"
 
 #include "sdl3_common.h"
 
