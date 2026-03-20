@@ -31,41 +31,41 @@ set(BUILD_DEBUG (CMAKE_BUILD_TYPE STREQUAL "Debug"))
 if(ANDROID)
     add_library(main SHARED ${SDL3_SOURCES})
     target_add_renderer(main sdl3)
-    add_library(${EXECUTABLE_NAME} ALIAS main)
+    add_library(${TARGET_NAME} ALIAS main)
 else()
     if(BUILD_DEBUG)
-        add_executable(${EXECUTABLE_NAME} ${SDL3_SOURCES})
+        add_executable(${TARGET_NAME} ${SDL3_SOURCES})
     else()
         # For non-debug builds, disable console on Windows.
-        add_executable(${EXECUTABLE_NAME} WIN32 ${SDL3_SOURCES})
+        add_executable(${TARGET_NAME} WIN32 ${SDL3_SOURCES})
     endif()
 endif()
 
-target_include_directories(${EXECUTABLE_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
-target_compile_definitions(${EXECUTABLE_NAME} PRIVATE SDL_MAIN_USE_CALLBACKS)
+target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_compile_definitions(${TARGET_NAME} PRIVATE SDL_MAIN_USE_CALLBACKS)
 
 if(EMSCRIPTEN)
-    target_compile_definitions(${EXECUTABLE_NAME} PRIVATE -DUSE_THREADS=0)
+    target_compile_definitions(${TARGET_NAME} PRIVATE -DUSE_THREADS=0)
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
 else()
-    target_compile_definitions(${EXECUTABLE_NAME} PRIVATE -DUSE_THREADS=1)
+    target_compile_definitions(${TARGET_NAME} PRIVATE -DUSE_THREADS=1)
 endif()
 
-target_link_libraries(${EXECUTABLE_NAME}
+target_link_libraries(${TARGET_NAME}
     PRIVATE
     engine
     PUBLIC
     SDL3::SDL3
 )
 
-target_add_renderer(${EXECUTABLE_NAME} sdl3)
+target_add_renderer(${TARGET_NAME} sdl3)
 
 if(WIN32)
-    add_custom_command(TARGET ${EXECUTABLE_NAME} POST_BUILD
+    add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
         COMMAND "${CMAKE_COMMAND}"
         -E copy_if_different
         "$<TARGET_FILE:SDL3::SDL3>"
-        "$<TARGET_FILE_DIR:${EXECUTABLE_NAME}>"
+        "$<TARGET_FILE_DIR:${TARGET_NAME}>"
         VERBATIM
     )
 endif()

@@ -5,11 +5,13 @@ project(Engine VERSION 0.1.0 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_C_STANDARD 11)
 
-set(PLATFORM "sdl3" CACHE STRING "Platform to configure for")
-set(EXECUTABLE_NAME "game" CACHE STRING "Hello world")
+set(TARGET_PLATFORM "sdl3" CACHE STRING "Platform to configure for")
+set(TARGET_NAME "game" CACHE STRING "Hello world")
 
-if(PLATFORM STREQUAL "sdl3")
+if(TARGET_PLATFORM STREQUAL "sdl3")
     set(PLATFORM_SDL3 true)
+else()
+    message(FATAL_ERROR "Unknown platform \'${TARGET_PLATFORM}\'.")
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)

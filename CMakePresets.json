@@ -31,7 +31,7 @@
                 "default"
             ],
             "cacheVariables": {
-                "PLATFORM": "sdl3"
+                "TARGET_PLATFORM": "sdl3"
             }
         },
         {
