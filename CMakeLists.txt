@@ -41,7 +41,7 @@ endfunction()
 
 function(target_add_renderer_src target name sources)
     target_add_renderer(${target} ${name})
-    target_sources(renderer_${name} PRIVATE ${sources})
+    target_sources(${target} PRIVATE ${sources}) # Hacky, I guess.
 endfunction()
 
 # Common stuff
