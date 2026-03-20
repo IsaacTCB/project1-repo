@@ -1,4 +1,4 @@
-if(NOT PLATFORM STREQUAL "sdl3")
+if(NOT TARGET_PLATFORM STREQUAL "sdl3")
     message(FATAL_ERROR "SDL3 Renderer can only be used on SDL3 platform.")
 endif()
 
