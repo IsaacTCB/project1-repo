@@ -10,7 +10,7 @@ struct GLContext::Impl {
 };
 
 GLContext::GLContext()
-    :load_func(SDL_GL_GetProcAddress),
+    :load_func{SDL_GL_GetProcAddress},
     m_impl{} {
 }
 
