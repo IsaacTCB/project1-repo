@@ -30,7 +30,7 @@ set(BUILD_DEBUG (CMAKE_BUILD_TYPE STREQUAL "Debug"))
 
 if(ANDROID)
     add_library(main SHARED ${SDL3_SOURCES})
-    target_add_renderer(main sdl3)
+    # target_add_renderer(main sdl3)
     add_library(${TARGET_NAME} ALIAS main)
 else()
     if(BUILD_DEBUG)
@@ -59,6 +59,7 @@ target_link_libraries(${TARGET_NAME}
 )
 
 target_add_renderer(${TARGET_NAME} sdl3)
+target_add_renderer_src(${TARGET_NAME} gl sdl3_gl_context.cpp)
 
 if(WIN32)
     add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
