@@ -1,4 +1,4 @@
-#include "renderer/gl/gl_context.h"
+#include "renderer/backends/gl/gl_context.h"
 
 #include <SDL3/SDL_video.h>
 
