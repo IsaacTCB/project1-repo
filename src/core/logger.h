@@ -16,7 +16,7 @@ enum LogSeverity {
  * @class Logger
  * @brief A global singleton for printing stuff.
  * 
- * It is recommended for the platform to override
+ * It is highly recommended that the platform overrides
  * the default callback behavior with `set_log_callback()`.
  * 
  * @usage Logger::get().print("hello")
