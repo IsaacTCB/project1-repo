@@ -12,9 +12,24 @@ if(PLATFORM STREQUAL "sdl3")
     set(PLATFORM_SDL3 true)
 endif()
 
+if(NOT CMAKE_BUILD_TYPE)
+    set(default_build_type "Debug")
+    message(STATUS "Set the build type to `${default_build_type}` as none was specified.")
+    set(CMAKE_BUILD_TYPE ${default_build_type} CACHE STRING "Chooce the build type." FORCE)
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+    "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    # HACK: This command affects all targets, including dependencies.
+    # This should get replaced by target_compile_definitions().
+    add_compile_definitions("-DENABLE_ASSERTS=1")
+endif()
+
+# Used by platform projects to add renderers.
 function(target_add_renderer target name)
     add_subdirectory(
-        ${CMAKE_SOURCE_DIR}/src/renderer/${name}
+        ${CMAKE_SOURCE_DIR}/src/renderer/backends/${name}
         ${CMAKE_CURRENT_BINARY_DIR}/renderer_${name})
     target_include_directories(renderer_${name} PUBLIC ${CMAKE_SOURCE_DIR}/src)
     target_link_libraries(${target} PRIVATE renderer_${name})
@@ -22,15 +37,19 @@ function(target_add_renderer target name)
     message(STATUS "Linked renderer ${name} to ${target}")
 endfunction()
 
-# Common stuff
+# Common stuff included here too.
 add_library(engine STATIC
     src/test/test.cpp
+    src/test/app.cpp
     src/core/logger.cpp
-    src/renderer/renderer.cpp)
+    src/renderer/api/renderer.cpp)
 
 target_include_directories(engine PUBLIC src)
 
 # Platform (entrypoint)
 if(PLATFORM_SDL3)
-    add_subdirectory(src/platform/sdl3 ${CMAKE_CURRENT_BINARY_DIR}/sdl3)
+    add_subdirectory(
+        src/platform/backends/sdl3
+        ${CMAKE_CURRENT_BINARY_DIR}/sdl3
+    )
 endif()
