@@ -1,9 +1,20 @@
 #pragma once
 
-#include "../platform/platform.h"
+#include "../platform/api/platform.h"
 
-namespace Test {
-    void run_platform_test(Platform& platform);
-    void run_platform_render_test(Platform& platform);
-    void run_platform_stop_test(Platform& platform);
-}
+#include "application.h"
+
+class ApplicationHandler {
+public:
+    ApplicationHandler(Platform &platform);
+    ~ApplicationHandler();
+
+    void init();
+    void update(float ts);
+    void render();
+    void close();
+
+private:
+    Platform &m_platform;
+};
+
