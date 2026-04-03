@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "core/image/decoder.h"
 #include "core/logger.h"
 
 #include "platform/api/platform.h"
@@ -37,6 +38,13 @@ public:
         if (!m_renderer) {
             LOG_CRITICAL("run_platform_test(): Failed to create renderer");
             exit(0);
+        }
+
+        ImageData image = Image::decode("test.png");
+        if (image) {
+            LOG_INFO("Loaded 'test.png'");
+            TextureHandle test_image = m_renderer->load_texture(image);
+            m_renderer->destroy_texture(test_image);
         }
 
         /* poll window size */
