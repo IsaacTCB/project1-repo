@@ -5,8 +5,8 @@
 class OSServer {
 	DECLARE_SERVER(OSServer);
 public:
-	const char *get_os() const;
-	const char *get_platform() const;
+	[[nodiscard]] const char *get_os() const;
+	[[nodiscard]] const char *get_platform() const;
 };
 
 #undef DECLARE_SERVER

@@ -1,0 +1,7 @@
+---
+IndentWidth: 4
+ColumnWidth: 120
+DerivePointerAlignment: true
+PointerAlignment: Right
+SortIncludes: true
+...

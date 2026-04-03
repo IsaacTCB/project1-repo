@@ -26,7 +26,7 @@ public:
     virtual TextureHandle load_texture(ImageData& image) = 0;
     virtual void destroy_texture(TextureHandle texture) = 0;
 
-    virtual void draw_texture(TextureHandle texture, int x, int y) = 0;
+    virtual void draw_texture(TextureHandle texture, int x, int y, int width, int height) = 0;
 
 protected:
     Renderer() = default;

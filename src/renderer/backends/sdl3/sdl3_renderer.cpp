@@ -1,6 +1,7 @@
 #include "sdl3_renderer.h"
 
 #include <SDL3/SDL.h>
+#include <cassert>
 
 #include "core/assertion.h"
 #include "core/handles.h"
@@ -54,6 +55,7 @@ TextureHandle SDL3Renderer::load_texture(ImageData& image) {
     }
 
     int pitch = image.width * image.channels;
+    ASSERT(pitch > 0, "Invalid pitch size: pitch <= 0");
 
     SDL_Surface* surface = SDL_CreateSurfaceFrom(
         image.width, image.height, format,
@@ -83,7 +85,7 @@ void SDL3Renderer::destroy_texture(TextureHandle handle) {
     m_impl->texture_pool.remove(handle);
 }
 
-void SDL3Renderer::draw_texture(TextureHandle handle, int x, int y) {
+void SDL3Renderer::draw_texture(TextureHandle handle, int x, int y, int width, int height) {
     SDL_Texture** slot = m_impl->texture_pool.get(handle);
     ASSERT(slot, "Attempted to draw a non-existent handle");
 
@@ -97,8 +99,8 @@ void SDL3Renderer::draw_texture(TextureHandle handle, int x, int y) {
     SDL_FRect dest{
         static_cast<float>(x),
         static_cast<float>(y),
-        static_cast<float>(texture->w),
-        static_cast<float>(texture->h),
+        static_cast<float>(width),
+        static_cast<float>(height),
     };
     SDL_RenderTexture(m_impl->renderer, texture, &rect, &dest);
 }

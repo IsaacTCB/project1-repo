@@ -1,0 +1,27 @@
+If:
+  PathExclude:
+    - "external/.*"
+
+CompileFlags:
+  Add: [-Wall]
+
+Diagnostics:
+  ClangTidy:
+    Add:
+      - modernize-*
+      - performance-*
+      - readability-*
+    Remove:
+      - modernize-use-trailing-return-type
+      - modernize-avoid-c-arrays
+      - performance-no-int-to-ptr
+      - readability-uppercase-literal-suffix
+      - readability-magic-numbers
+      - readability-redundant-access-specifiers
+      - readability-convert-member-functions-to-static
+      - readability-isolate-declaration
+      - readability-implicit-bool-conversion
+      - readability-identifier-length
+
+Completion:
+  HeaderInsertion: Never

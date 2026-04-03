@@ -1,6 +1,8 @@
 #pragma once
 
-enum class RendererAPI {
+#include <cstdint>
+
+enum class RendererAPI : uint8_t {
     SDL3Renderer,
     OpenGL,
 };

@@ -1,10 +1,11 @@
 #pragma once
 
+#include <cstdint>
 #include <format>
 #include <memory>
 #include <string_view>
 
-enum LogSeverity {
+enum LogSeverity : uint8_t {
 	LOG_SEVERITY_TRACE = 0,
 	LOG_SEVERITY_INFO,
 	LOG_SEVERITY_WARNING,
@@ -29,7 +30,11 @@ public:
 	static void close();
 
 public:
+	Logger(const Logger& logger) = delete;
 	~Logger() = default;
+	Logger(Logger&& logger) = delete;
+	Logger& operator=(Logger& other) = delete;
+	Logger& operator=(Logger&& other) = delete;
 
 	/**
 	 * @brief Override log callback
@@ -82,11 +87,6 @@ public:
 
 private:
 	Logger();
-
-	Logger(const Logger& logger) = delete;
-	Logger(Logger&& logger) = delete;
-	Logger& operator=(Logger& other) = delete;
-	Logger& operator=(Logger&& other) = delete;
 
     void log(LogSeverity severity, std::string_view message);
 

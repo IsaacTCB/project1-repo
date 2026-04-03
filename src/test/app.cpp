@@ -55,7 +55,7 @@ public:
 
     void on_render() override {
         m_renderer->clear(0.1f, 0.1f, 0.1f, 0.0f);
-        m_renderer->draw_texture(m_texture, 16, 16);
+        m_renderer->draw_texture(m_texture, 16, 16, 128, 128);
         m_renderer->swap_buffers();
     }
 
