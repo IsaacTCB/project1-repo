@@ -45,9 +45,9 @@ static void default_log_callback(LogSeverity severity, std::string_view message)
     }
 
     if (prefix) {
-        std::cout << prefix << message << std::endl;
+        std::cout << prefix << message << '\n';
     } else {
-        std::cout << message << std::endl;
+        std::cout << message << '\n';
     }
 }
 

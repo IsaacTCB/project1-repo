@@ -53,7 +53,7 @@ public:
 	 * @return A tuple containing the window's width and height respectively.
 	 */
 	[[nodiscard]]
-	std::tuple<uint32_t, uint32_t> get_size(DisplayWindowHandle handle) const;
+	std::tuple<uint32_t, uint32_t> get_size(const DisplayWindowHandle& handle) const;
 };
 
 #undef DECLARE_SERVER
