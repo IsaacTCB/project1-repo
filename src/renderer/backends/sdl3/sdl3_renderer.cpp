@@ -4,10 +4,13 @@
 
 #include "core/assertion.h"
 #include "core/handles.h"
+#include "core/logger.h"
 
 struct SDL3Renderer::Impl {
     SDL_Window* window;
     SDL_Renderer* renderer;
+
+    HandlePool<SDL_Texture*> texture_pool;
 };
 
 SDL3Renderer::SDL3Renderer(DisplayWindowHandle& window_data) 
@@ -55,14 +58,41 @@ TextureHandle SDL3Renderer::load_texture(ImageData& image) {
     SDL_Surface* surface = SDL_CreateSurfaceFrom(
         image.width, image.height, format,
         image.pixels.data(), pitch);
+    ASSERT(surface, "Unable to create SDL surface");
 
     SDL_Texture* texture = SDL_CreateTextureFromSurface(
         m_impl->renderer,
         surface);
+    ASSERT(texture, "Unable to create SDL texture");
 
     SDL_DestroySurface(surface);
-    return TextureHandle{};
+    return m_impl->texture_pool.emplace(texture);
 }
 
-void SDL3Renderer::destroy_texture(TextureHandle texture) {}
+void SDL3Renderer::destroy_texture(TextureHandle handle) {
+    SDL_Texture** texture_slot = m_impl->texture_pool.get(handle);
+    if (!texture_slot) { 
+        ASSERT(false, "Attempted to delete a non-existant handle");
+        LOG_ERROR("SDL3Renderer::destroy_texture(): Attempted to delete a non-existant handle");
+        return;
+    }
 
+    SDL_Texture* texture = *texture_slot;
+    SDL_DestroyTexture(texture);
+
+    m_impl->texture_pool.remove(handle);
+}
+
+void SDL3Renderer::draw_texture(TextureHandle handle, int x, int y) {
+    SDL_Texture** texture_slot = m_impl->texture_pool.get(handle);
+    ASSERT(texture_slot, "Attempted to draw a non-existant handle");
+
+    SDL_Texture* texture = *texture_slot;
+    SDL_FRect rect{
+        0.0f, 0.0f, texture->w, texture->h,
+    };
+    SDL_FRect dest{
+        x, y, texture->w, texture->h,
+    };
+    SDL_RenderTexture(m_impl->renderer, texture, &rect, &dest);
+}

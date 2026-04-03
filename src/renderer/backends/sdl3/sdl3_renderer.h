@@ -16,6 +16,8 @@ public:
     TextureHandle load_texture(ImageData& image) override;
     void destroy_texture(TextureHandle texture) override;
 
+    void draw_texture(TextureHandle texture, int x, int y) override;
+
 private:
     struct Impl;
     std::unique_ptr<Impl> m_impl;

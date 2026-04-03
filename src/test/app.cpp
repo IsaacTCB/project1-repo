@@ -43,8 +43,7 @@ public:
         ImageData image = Image::decode("test.png");
         if (image) {
             LOG_INFO("Loaded 'test.png'");
-            TextureHandle test_image = m_renderer->load_texture(image);
-            m_renderer->destroy_texture(test_image);
+            m_texture = m_renderer->load_texture(image);
         }
 
         /* poll window size */
@@ -56,16 +55,20 @@ public:
 
     void on_render() override {
         m_renderer->clear(0.1f, 0.1f, 0.1f, 0.0f);
+        m_renderer->draw_texture(m_texture, 0, 0);
         m_renderer->swap_buffers();
     }
 
     void on_close() override {
+        m_renderer->destroy_texture(m_texture);
         m_platform->display().close_display(m_window);
         m_renderer.reset();
     }
 private:
     DisplayWindowHandle m_window;
     std::shared_ptr<Renderer> m_renderer;
+
+    TextureHandle m_texture;
 };
 
 SET_APP(TestApplication)
