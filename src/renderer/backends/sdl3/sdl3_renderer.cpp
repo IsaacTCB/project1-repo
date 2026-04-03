@@ -70,29 +70,35 @@ TextureHandle SDL3Renderer::load_texture(ImageData& image) {
 }
 
 void SDL3Renderer::destroy_texture(TextureHandle handle) {
-    SDL_Texture** texture_slot = m_impl->texture_pool.get(handle);
-    if (!texture_slot) { 
-        ASSERT(false, "Attempted to delete a non-existant handle");
-        LOG_ERROR("SDL3Renderer::destroy_texture(): Attempted to delete a non-existant handle");
+    SDL_Texture** slot = m_impl->texture_pool.get(handle);
+    if (!slot) {
+        ASSERT(false, "Attempted to delete a non-existent handle");
+        LOG_ERROR("SDL3Renderer::destroy_texture(): Attempted to delete a non-existent handle");
         return;
     }
 
-    SDL_Texture* texture = *texture_slot;
+    SDL_Texture* texture = *slot;
     SDL_DestroyTexture(texture);
 
     m_impl->texture_pool.remove(handle);
 }
 
 void SDL3Renderer::draw_texture(TextureHandle handle, int x, int y) {
-    SDL_Texture** texture_slot = m_impl->texture_pool.get(handle);
-    ASSERT(texture_slot, "Attempted to draw a non-existant handle");
+    SDL_Texture** slot = m_impl->texture_pool.get(handle);
+    ASSERT(slot, "Attempted to draw a non-existent handle");
 
-    SDL_Texture* texture = *texture_slot;
+    SDL_Texture* texture = *slot;
     SDL_FRect rect{
-        0.0f, 0.0f, texture->w, texture->h,
+        0.0f,
+        0.0f,
+        static_cast<float>(texture->w),
+        static_cast<float>(texture->h),
     };
     SDL_FRect dest{
-        x, y, texture->w, texture->h,
+        static_cast<float>(x),
+        static_cast<float>(y),
+        static_cast<float>(texture->w),
+        static_cast<float>(texture->h),
     };
     SDL_RenderTexture(m_impl->renderer, texture, &rect, &dest);
 }
