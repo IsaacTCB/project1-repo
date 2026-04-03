@@ -15,6 +15,10 @@ public:
 
 public:
     virtual ~Renderer() = default;
+    Renderer(const Renderer& other) = delete;
+    Renderer operator=(const Renderer& other) = delete;
+    Renderer(Renderer&& rhs) = delete;
+    Renderer operator=(Renderer&& rhs) = delete;
 
     virtual void clear(float r, float g, float b, float a = 255) = 0;
     virtual void swap_buffers() = 0;
