@@ -98,9 +98,6 @@ TextureHandle GLRenderer::load_texture(ImageData& image) {
             break;
     }
 
-    int pitch = image.width * image.channels;
-    ASSERT(pitch > 0, "Invalid pitch size: pitch <= 0");
-
     GLuint texture_id;
     glGenTextures(1, &texture_id);
     ASSERT(texture_id != 0, "Unable to create gl texture");
