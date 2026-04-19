@@ -3,7 +3,6 @@
 #include "../backends/sdl3/sdl3_renderer.h"
 #include "../backends/gl/gl_renderer.h"
 
-#include "core/assertion.h"
 #include "core/logger.h"
 
 std::shared_ptr<Renderer> Renderer::create(DisplayWindowHandle& window_data) {
@@ -16,6 +15,4 @@ std::shared_ptr<Renderer> Renderer::create(DisplayWindowHandle& window_data) {
             LOG_CRITICAL("Unsupported graphics API");
             return nullptr;
     }
-    ASSERT(false, "Unknown graphics API");
-    return nullptr;
 }

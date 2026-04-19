@@ -42,12 +42,22 @@ SDL_AppResult PlatformImpl::init() {
 }
 
 SDL_AppResult PlatformImpl::iterate() {
+    constexpr uint64_t TARGET_TICKRATE = (1.0/TARGET_FPS) * 1000;
+
+    uint64_t tick = SDL_GetTicks();
+
     m_app_handler.update(1.0f);
     m_app_handler.render();
 
     if (!m_state.running) {
         return SDL_APP_SUCCESS;
     }
+
+    uint64_t delta = SDL_GetTicks() - tick;
+    if (delta < TARGET_TICKRATE) {
+        SDL_Delay(TARGET_TICKRATE - delta);
+    }
+
     return SDL_APP_CONTINUE;
 }
 

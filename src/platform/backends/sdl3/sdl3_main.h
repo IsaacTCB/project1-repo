@@ -5,6 +5,8 @@
 
 #include "sdl3_common.h"
 
+constexpr uint32_t TARGET_FPS = 60;
+
 class PlatformImpl {
 public:
 	PlatformImpl()
