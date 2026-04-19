@@ -40,7 +40,7 @@ GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
             static_cast<GLADloadfunc>(m_impl->context.load_func)
         );
         if (!success) {
-            LOG_CRITICAL("Glad failed to load OpenGL.");
+            LOG_CRITICAL("gl: Glad failed to load OpenGL.");
         }
     }
 
@@ -178,7 +178,7 @@ TextureHandle GLRenderer::load_texture(ImageData& image) {
         .width = image.width,
         .height = image.height,
     };
-    LOG_INFO("texture is {0}", texture.id);
+    LOG_TRACE("gl: loaded texture: {0} ({1}x{2})", texture.id, image.width, image.height);
     return m_impl->texture_pool.emplace(texture);
 }
 

@@ -38,7 +38,7 @@ GLShader::GLShader(std::string_view vertex_source, std::string_view fragment_sou
         glGetProgramiv(m_program, GL_INFO_LOG_LENGTH, &length);
         std::vector<char> error_msg(length);
         glGetProgramInfoLog(m_program, length, nullptr, error_msg.data());
-        LOG_ERROR("SHADER LINK ERROR: {0}", error_msg.data());
+        LOG_ERROR("gl: SHADER LINK ERROR: {0}", error_msg.data());
         ASSERT(false);
     }
 }
@@ -110,7 +110,7 @@ static GLuint compile_shader(const char* shader_source, GLenum shader_type) {
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
         std::vector<char> error_msg(length);
         glGetShaderInfoLog(shader, length, nullptr, error_msg.data());
-        LOG_ERROR("{0} SHADER COMPILE ERROR: {1}",
+        LOG_ERROR("gl: {0} SHADER COMPILE ERROR: {1}",
                      get_shader_type(shader_type),
                      error_msg.data());
         ASSERT(false);
