@@ -18,6 +18,8 @@ struct GLRenderer::Impl {
     GLContext context;
     HandlePool<ImplTexture> texture_pool;
     std::unique_ptr<GLShader> shader;
+
+    GLuint vao, vbo, ibo;
 };
 
 static bool init_glad(GLADloadfunc func) {
@@ -37,6 +39,25 @@ GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
             LOG_CRITICAL("Glad failed to load OpenGL.");
         }
     }
+
+    glGenVertexArrays(1, &m_impl->vao);
+    glBindVertexArray(m_impl->vao);
+
+    float vertices[] {
+         0.0f,  0.8f, 0.0f,  0.5f,  0.0f,
+         0.8f, -0.8f, 0.0f,  1.0f,  1.0f,
+        -0.8f, -0.8f, 0.0f,  0.0f,  1.0f,
+    };
+
+
+    glGenBuffers(1, &m_impl->vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, m_impl->vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(sizeof(float)*0));
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(sizeof(float)*3));
+    glEnableVertexAttribArray(1);
 
     const char* vertex_shader_source = R"(
         #version 330 core
@@ -65,10 +86,15 @@ GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
             color = texture(u_texture, v_uv);
         }
     )";
+
     m_impl->shader = std::make_unique<GLShader>(
         vertex_shader_source,
         fragment_shader_source
     );
+    glUseProgram(m_impl->shader->get_program());
+
+    GLuint u_texture = glGetUniformLocation(m_impl->shader->get_program(), "u_texture");
+    glUniform1i(u_texture, 0);
 }
 
 GLRenderer::~GLRenderer() = default;
@@ -118,6 +144,7 @@ TextureHandle GLRenderer::load_texture(ImageData& image) {
         image.pixels.data());
 
     glBindTexture(GL_TEXTURE_2D, 0);
+    glBindVertexArray(0);
 
     ImplTexture texture{
         .id = texture_id,
@@ -136,5 +163,12 @@ void GLRenderer::destroy_texture(TextureHandle handle) {
 
 void GLRenderer::draw_texture(TextureHandle handle, int x, int y, int width, int height) {
     ImplTexture* texture = m_impl->texture_pool.get(handle);
+
+    glBindVertexArray(m_impl->vao);
+
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture->id);
+
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    // glDrawElements(GL_TRIANGLES, 3)
 }
