@@ -89,16 +89,16 @@ void SDL3Renderer::draw_texture(TextureHandle handle, int x, int y, int width, i
 
     SDL_Texture* texture = *slot;
     SDL_FRect rect{
-        0.0f,
-        0.0f,
-        static_cast<float>(texture->w),
-        static_cast<float>(texture->h),
+        .x = 0.0f,
+        .y = 0.0f,
+        .w = static_cast<float>(texture->w),
+        .h = static_cast<float>(texture->h),
     };
     SDL_FRect dest{
-        static_cast<float>(x),
-        static_cast<float>(y),
-        static_cast<float>(width),
-        static_cast<float>(height),
+        .x = static_cast<float>(x),
+        .y = static_cast<float>(y),
+        .w = static_cast<float>(width),
+        .h = static_cast<float>(height),
     };
     SDL_RenderTexture(m_impl->renderer, texture, &rect, &dest);
 }
