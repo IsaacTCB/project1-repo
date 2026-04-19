@@ -65,7 +65,10 @@ GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
             color = texture(u_texture, v_uv);
         }
     )";
-    m_impl->shader = std::make_unique<GLShader>(vertex_shader_source, fragment_shader_source);
+    m_impl->shader = std::make_unique<GLShader>(
+        vertex_shader_source,
+        fragment_shader_source
+    );
 }
 
 GLRenderer::~GLRenderer() = default;
