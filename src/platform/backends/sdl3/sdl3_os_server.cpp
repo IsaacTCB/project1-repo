@@ -9,3 +9,11 @@ const char* OSServer::get_os() const {
 const char* OSServer::get_platform() const {
     return "sdl3";
 }
+
+float OSServer::get_ticks_sec() const {
+    return SDL_GetTicks() / 1000.0f;
+}
+
+uint64_t OSServer::get_ticks_ms() const {
+    return SDL_GetTicks();
+}

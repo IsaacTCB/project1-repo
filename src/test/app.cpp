@@ -1,5 +1,6 @@
 #include "application.h"
 
+#include <cmath>
 #include <memory>
 
 #include "core/image/decoder.h"
@@ -54,9 +55,15 @@ public:
     void on_update(float delta) override {}
 
     void on_render() override {
+        constexpr float SPEED = 3.0f;
+        constexpr float MAGNITUDE = 30.0f;
+
+        float sin = std::sinf(m_platform->os().get_ticks_sec() * SPEED);
+        float cos = std::cosf(m_platform->os().get_ticks_sec() * SPEED);
+
         m_renderer->clear(0.1f, 0.1f, 0.1f, 0.0f);
         /* TODO: verify if texture actually exists. */
-        m_renderer->draw_texture(m_texture, 16, 16, 128, 128);
+        m_renderer->draw_texture(m_texture, 40 + (sin * MAGNITUDE), 38 + (cos * MAGNITUDE), 200, 200);
         m_renderer->swap_buffers();
     }
 
