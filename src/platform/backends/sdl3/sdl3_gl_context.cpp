@@ -2,6 +2,8 @@
 
 #include <SDL3/SDL_video.h>
 
+#include <memory>
+
 #include "core/logger.h"
 
 struct GLContext::Impl {
@@ -10,17 +12,15 @@ struct GLContext::Impl {
 };
 
 GLContext::GLContext()
-    :load_func{SDL_GL_GetProcAddress},
-    m_impl{} {
-}
+    :load_func{SDL_GL_GetProcAddress} {}
 
 GLContext::~GLContext() {
     close();
 }
 
-void GLContext::init(void *raw_window_handle) {
-    m_impl.reset(new GLContext::Impl);
-    m_impl->window = reinterpret_cast<SDL_Window*>(raw_window_handle);
+void GLContext::init(void *native_window) {
+    m_impl = std::make_unique<GLContext::Impl>();
+    m_impl->window = reinterpret_cast<SDL_Window*>(native_window);
     m_impl->context = SDL_GL_CreateContext(m_impl->window);
 
     LOG_TRACE("Started SDL3 + OpenGL context");
