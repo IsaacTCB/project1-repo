@@ -28,7 +28,7 @@ void GLContext::init(void *raw_window_handle) {
 
 void GLContext::close() {
     if (m_impl) {
-        LOG_TRACE("OpenGL SDL3 + GL context");
+        LOG_TRACE("Destroyed SDL3 + OpenGL context");
         SDL_GL_DestroyContext(m_impl->context);
         m_impl.reset(nullptr);
     }
