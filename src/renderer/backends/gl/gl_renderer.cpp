@@ -44,11 +44,11 @@ GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
     glBindVertexArray(m_impl->vao);
 
     float vertices[] {
-         0.0f,  0.8f, 0.0f,  0.5f,  0.0f,
-         0.8f, -0.8f, 0.0f,  1.0f,  1.0f,
-        -0.8f, -0.8f, 0.0f,  0.0f,  1.0f,
+         0.0f, 0.0f, 0.0f,  0.0f,  0.0f,
+         1.0f, 0.0f, 0.0f,  1.0f,  0.0f,
+         1.0f, 1.0f, 0.0f,  1.0f,  1.0f,
+         0.0f, 1.0f, 0.0f,  0.0f,  1.0f,
     };
-
 
     glGenBuffers(1, &m_impl->vbo);
     glBindBuffer(GL_ARRAY_BUFFER, m_impl->vbo);
@@ -58,6 +58,15 @@ GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(sizeof(float)*3));
     glEnableVertexAttribArray(1);
+
+    uint32_t indices[] = {
+        0, 1, 2,
+        2, 3, 0,
+    };
+
+    glGenBuffers(1, &m_impl->ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_impl->ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     const char* vertex_shader_source = R"(
         #version 330 core
@@ -165,10 +174,10 @@ void GLRenderer::draw_texture(TextureHandle handle, int x, int y, int width, int
     ImplTexture* texture = m_impl->texture_pool.get(handle);
 
     glBindVertexArray(m_impl->vao);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_impl->ibo);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture->id);
 
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    // glDrawElements(GL_TRIANGLES, 3)
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 }
