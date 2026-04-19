@@ -7,8 +7,15 @@
 
 static bool s_glad_loaded = false;
 
+struct ImplTexture {
+    GLuint id;
+    size_t width;
+    size_t height;
+};
+
 struct GLRenderer::Impl {
     GLContext context;
+    HandlePool<ImplTexture> texture_pool;
 };
 
 static bool init_glad(GLADloadfunc func) {
@@ -40,4 +47,64 @@ void GLRenderer::clear(float r, float g, float b, float a) {
 
 void GLRenderer::swap_buffers() {
     m_impl->context.swap_buffers();
+}
+
+TextureHandle GLRenderer::load_texture(ImageData& image) {
+    ASSERT(image.pixels.size() > 0, "Image is not loaded");
+
+    GLenum internal_format, data_format;
+    switch (image.channels) {
+        case 3:
+            internal_format = GL_RGB8;
+            data_format = GL_RGB;
+            break;
+        case 4:
+            internal_format = GL_RGBA8;
+            data_format = GL_RGBA;
+            break;
+        default:
+            ASSERT(false, "Unsupported bpp");
+            break;
+    }
+
+    int pitch = image.width * image.channels;
+    ASSERT(pitch > 0, "Invalid pitch size: pitch <= 0");
+
+    GLuint texture_id;
+    glGenTextures(1, &texture_id);
+    ASSERT(texture_id != 0, "Unable to create gl texture");
+
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, internal_format,
+        image.width, image.height, 0,
+        data_format, GL_UNSIGNED_BYTE,
+        image.pixels.data());
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    ImplTexture texture{
+        .id = texture_id,
+        .width = image.width,
+        .height = image.height,
+    };
+    LOG_INFO("texture is {0}", texture.id);
+    return m_impl->texture_pool.emplace(texture);
+}
+
+void GLRenderer::destroy_texture(TextureHandle handle) {
+    ImplTexture* texture = m_impl->texture_pool.get(handle);
+    glDeleteTextures(1, &texture->id);
+    texture->id = 0;
+    m_impl->texture_pool.remove(handle);
+}
+
+void GLRenderer::draw_texture(TextureHandle handle, int x, int y, int width, int height) {
+    ImplTexture* texture = m_impl->texture_pool.get(handle);
+    glBindTexture(GL_TEXTURE_2D, texture->id);
 }

@@ -25,7 +25,7 @@ public:
         DisplayWindowProps props{};
         props.width = 800;
         props.height = 600;
-        props.api = RendererAPI::SDL3Renderer;
+        props.api = RendererAPI::OpenGL;
 
         m_window = display.init_display(props);
         if (!m_window) {
