@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdint>
+#include <glad/gl.h>
 #include <string_view>
 
 enum class ShaderType : uint8_t {
@@ -14,8 +14,8 @@ public:
     ~GLShader();
 
     [[nodiscard]]
-    unsigned int get_program() const { return m_program; }
+    GLuint get_program() const { return m_program; }
 
 private:
-    unsigned int m_program;
+    GLuint m_program;
 };

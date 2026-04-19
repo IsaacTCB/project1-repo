@@ -6,10 +6,8 @@
 #include <string_view>
 #include <vector>
 
-#include <glad/gl.h>
-
 /**
- * @brief Compiles GLSL ES sources into a shader object
+ * @brief Compiles GLSL sources into a shader object
  *
  * @param shader_source The specific shader source
  * @param shader_type What kind of shader is this? (GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, etc.)
