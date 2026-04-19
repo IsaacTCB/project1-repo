@@ -126,10 +126,9 @@ TextureHandle GLRenderer::load_texture(ImageData& image) {
 }
 
 void GLRenderer::destroy_texture(TextureHandle handle) {
-    ImplTexture* texture = m_impl->texture_pool.get(handle);
+    auto texture = m_impl->texture_pool.get_and_destroy(handle);
     glDeleteTextures(1, &texture->id);
     texture->id = 0;
-    m_impl->texture_pool.remove(handle);
 }
 
 void GLRenderer::draw_texture(TextureHandle handle, int x, int y, int width, int height) {
