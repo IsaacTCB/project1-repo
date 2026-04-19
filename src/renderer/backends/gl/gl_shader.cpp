@@ -49,9 +49,11 @@ GLShader::~GLShader() {
 }
 
 GLuint GLShader::get_uniform(std::string_view uniform_name) {
+    std::string temp(uniform_name);
+
     /* TODO: cache this */
     glUseProgram(m_program);
-    return glGetUniformLocation(m_program, uniform_name.data());
+    return glGetUniformLocation(m_program, temp.c_str());
 }
 
 void GLShader::set_int(std::string_view uniform_name, int value) {
