@@ -72,7 +72,7 @@ TextureHandle SDL3Renderer::load_texture(ImageData& image) {
 }
 
 void SDL3Renderer::destroy_texture(TextureHandle handle) {
-    SDL_Texture** slot = m_impl->texture_pool.get(handle);
+    auto slot = m_impl->texture_pool.get_and_destroy(handle);
     if (!slot) {
         ASSERT(false, "Attempted to delete a non-existent handle");
         LOG_ERROR("SDL3Renderer::destroy_texture(): Attempted to delete a non-existent handle");
@@ -81,8 +81,6 @@ void SDL3Renderer::destroy_texture(TextureHandle handle) {
 
     SDL_Texture* texture = *slot;
     SDL_DestroyTexture(texture);
-
-    m_impl->texture_pool.remove(handle);
 }
 
 void SDL3Renderer::draw_texture(TextureHandle handle, int x, int y, int width, int height) {
