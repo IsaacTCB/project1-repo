@@ -5,7 +5,9 @@
 #include "core/logger.h"
 
 #include <glad/gl.h>
+
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 static bool s_glad_loaded = false;
 
@@ -20,6 +22,7 @@ struct GLRenderer::Impl {
     HandlePool<ImplTexture> texture_pool;
     std::unique_ptr<GLShader> shader;
 
+    glm::mat4 proj;
     GLuint vao, vbo, ibo;
 };
 
@@ -77,9 +80,12 @@ GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
 
         out vec2 v_uv;
 
+        uniform mat4 u_view_proj;
+        uniform mat4 u_model;
+
         void main() {
             v_uv = a_uv;
-            gl_Position = vec4(a_pos, 1.0);
+            gl_Position = u_view_proj * u_model * vec4(a_pos, 1.0);
         }
     )";
 
@@ -104,6 +110,14 @@ GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
 
     glUseProgram(m_impl->shader->get_program());
     m_impl->shader->set_int("u_texture", 0);
+
+    /* TODO: allow resize. need to implement a event dispatcher/listener
+     * for this one. */
+    float window_width = window_data.props.width;
+    float window_height = window_data.props.height;
+    glViewport(0, 0, (GLsizei)window_width, (GLsizei)window_height);
+    m_impl->proj = glm::ortho(0.0f, window_width, window_height, 0.0f, -1.0f, 1.0f);
+    m_impl->shader->set_mat4("u_view_proj", m_impl->proj);
 }
 
 GLRenderer::~GLRenderer() {
@@ -178,6 +192,11 @@ void GLRenderer::draw_texture(TextureHandle handle, int x, int y, int width, int
 
     glBindVertexArray(m_impl->vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_impl->ibo);
+
+    glm::mat4 model{1.0f};
+    model = glm::translate(model, {x, y, 0.0f});
+    model = glm::scale(model, {width, height, 1.0f});
+    m_impl->shader->set_mat4("u_model", model);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture->id);
