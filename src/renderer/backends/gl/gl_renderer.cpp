@@ -5,6 +5,7 @@
 #include "core/logger.h"
 
 #include <glad/gl.h>
+#include <glm/glm.hpp>
 
 static bool s_glad_loaded = false;
 
@@ -100,13 +101,16 @@ GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
         vertex_shader_source,
         fragment_shader_source
     );
-    glUseProgram(m_impl->shader->get_program());
 
-    GLuint u_texture = glGetUniformLocation(m_impl->shader->get_program(), "u_texture");
-    glUniform1i(u_texture, 0);
+    glUseProgram(m_impl->shader->get_program());
+    m_impl->shader->set_int("u_texture", 0);
 }
 
-GLRenderer::~GLRenderer() = default;
+GLRenderer::~GLRenderer() {
+    glDeleteBuffers(1, &m_impl->ibo);
+    glDeleteBuffers(1, &m_impl->vbo);
+    glDeleteVertexArrays(1, &m_impl->vao);
+}
 
 void GLRenderer::clear(float r, float g, float b, float a) {
     m_impl->context.bind();
@@ -167,7 +171,6 @@ TextureHandle GLRenderer::load_texture(ImageData& image) {
 void GLRenderer::destroy_texture(TextureHandle handle) {
     auto texture = m_impl->texture_pool.get_and_destroy(handle);
     glDeleteTextures(1, &texture->id);
-    texture->id = 0;
 }
 
 void GLRenderer::draw_texture(TextureHandle handle, int x, int y, int width, int height) {

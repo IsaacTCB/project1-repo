@@ -6,6 +6,9 @@
 #include <string_view>
 #include <vector>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 /**
  * @brief Compiles GLSL sources into a shader object
  *
@@ -43,6 +46,42 @@ GLShader::GLShader(std::string_view vertex_source, std::string_view fragment_sou
 GLShader::~GLShader() {
     ASSERT(m_program != 0);
     glDeleteProgram(m_program);
+}
+
+GLuint GLShader::get_uniform(std::string_view uniform_name) {
+    /* TODO: cache this */
+    glUseProgram(m_program);
+    return glGetUniformLocation(m_program, uniform_name.data());
+}
+
+void GLShader::set_int(std::string_view uniform_name, int value) {
+    GLuint uniform = get_uniform(uniform_name);
+    glUniform1i(uniform, value);
+}
+
+void GLShader::set_float(std::string_view uniform_name, float value) {
+    GLuint uniform = get_uniform(uniform_name);
+    glUniform1f(uniform, value);
+}
+
+void GLShader::set_float2(std::string_view uniform_name, const glm::vec2& vec) {
+    GLuint uniform = get_uniform(uniform_name);
+    glUniform2fv(uniform, 1, glm::value_ptr(vec));
+}
+
+void GLShader::set_float3(std::string_view uniform_name, const glm::vec3& vec) {
+    GLuint uniform = get_uniform(uniform_name);
+    glUniform3fv(uniform, 1, glm::value_ptr(vec));
+}
+
+void GLShader::set_float4(std::string_view uniform_name, const glm::vec4& vec) {
+    GLuint uniform = get_uniform(uniform_name);
+    glUniform4fv(uniform, 1, glm::value_ptr(vec));
+}
+
+void GLShader::set_mat4(std::string_view uniform_name, const glm::mat4& mat4) {
+    GLuint uniform = get_uniform(uniform_name);
+    glUniformMatrix4fv(uniform, 1, GL_FALSE, glm::value_ptr(mat4));
 }
 
 static std::string_view get_shader_type(GLenum shader_type) {

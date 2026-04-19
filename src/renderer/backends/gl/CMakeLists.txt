@@ -1,9 +1,10 @@
 add_subdirectory(${CMAKE_SOURCE_DIR}/external/glad glad)
+add_subdirectory(${CMAKE_SOURCE_DIR}/external/glm glm)
 
 add_library(renderer_gl STATIC
     gl_renderer.cpp
     gl_shader.cpp
 )
 
-target_link_libraries(renderer_gl PRIVATE glad)
+target_link_libraries(renderer_gl PRIVATE glad glm)
 target_compile_definitions(renderer_gl PUBLIC -DRENDERER_GL_ENABLED=1)
