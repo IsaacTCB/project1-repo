@@ -49,7 +49,11 @@ add_library(engine STATIC
     src/test/test.cpp
     src/test/app.cpp
     src/core/logger.cpp
+    src/core/image/decoder.cpp
     src/renderer/api/renderer.cpp)
+
+add_subdirectory(${CMAKE_SOURCE_DIR}/external/stb_image)
+target_link_libraries(engine PRIVATE stb_image)
 
 target_include_directories(engine PUBLIC src)
 

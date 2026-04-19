@@ -3,14 +3,12 @@
 #include "core/assertion.h"
 #include "core/logger.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 
 static std::unique_ptr<IApplication> m_app;
 
 ApplicationHandler::ApplicationHandler(Platform &platform)
     :m_platform{platform} {}
-
-ApplicationHandler::~ApplicationHandler() {}
 
 void ApplicationHandler::init() {
     m_app = IApplication::create_application(m_platform);

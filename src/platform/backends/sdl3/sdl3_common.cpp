@@ -5,7 +5,6 @@
 #include <chrono>
 #include <ctime>
 #include <fstream>
-#include <iostream>
 
 #if USE_THREADS
 #include <mutex>

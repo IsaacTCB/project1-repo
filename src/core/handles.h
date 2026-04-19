@@ -15,8 +15,7 @@ using Handle = uint32_t;
 template <typename T>
 class HandlePool {
 public:
-    HandlePool()
-    {}
+    HandlePool() = default;
 
     template<typename... Args>
     Handle emplace(Args&& ...args) {
@@ -51,6 +50,7 @@ public:
         );
     }
 
+    [[nodiscard]]
     bool has(Handle handle) const {
         return get_slot(handle) != nullptr;
     }
@@ -65,7 +65,7 @@ public:
         slot->handle = handle_add_generation(slot->handle, 1);
         slot->alive = false;
 
-        size_t index = static_cast<size_t>(slot - m_pool.data());
+        auto index = static_cast<size_t>(slot - m_pool.data());
         m_available_slots.emplace(index);
     }
 
@@ -82,21 +82,21 @@ public:
     }
 
 private:
-    inline static size_t handle_get_index(Handle handle) {
+    static size_t handle_get_index(Handle handle) {
         return (handle & HANDLE_UPPER) >> HANDLE_BITSHIFT;
     }
 
-    inline static Handle handle_from_index(size_t index) {
+    static Handle handle_from_index(size_t index) {
         return static_cast<Handle>(index << HANDLE_BITSHIFT);
     }
 
-    inline static size_t handle_get_generation(Handle handle) {
+    static size_t handle_get_generation(Handle handle) {
         return static_cast<size_t>(handle & HANDLE_LOWER);
     }
 
-    inline static Handle handle_add_generation(Handle handle, int amount) {
+    static Handle handle_add_generation(Handle handle, int amount) {
         return static_cast<Handle>(
-            handle & HANDLE_UPPER |
+            (handle & HANDLE_UPPER) |
             ((handle + amount) & HANDLE_LOWER)
         );
     }

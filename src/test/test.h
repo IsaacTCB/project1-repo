@@ -7,7 +7,7 @@
 class ApplicationHandler {
 public:
     ApplicationHandler(Platform &platform);
-    ~ApplicationHandler();
+    ~ApplicationHandler() = default;
 
     void init();
     void update(float ts);

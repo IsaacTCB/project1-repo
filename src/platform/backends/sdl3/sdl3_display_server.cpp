@@ -3,9 +3,7 @@
 #include "core/assertion.h"
 #include "core/logger.h"
 
-#include "sdl3_common.h"
-
-#include <cstdlib>
+#include <SDL3/SDL.h>
 
 static SDL_WindowFlags get_common_sdl_flags(const DisplayWindowProps &props);
 
@@ -43,8 +41,8 @@ void DisplayServer::close_display(DisplayWindowHandle handle) {
     handle.raw_window_handle = nullptr;
 }
 
-std::tuple<uint32_t, uint32_t> DisplayServer::get_size(DisplayWindowHandle handle) const {
-    auto window = reinterpret_cast<SDL_Window *>(handle.raw_window_handle);
+std::tuple<uint32_t, uint32_t> DisplayServer::get_size(const DisplayWindowHandle& handle) const {
+    auto* window = reinterpret_cast<SDL_Window*>(handle.raw_window_handle);
 
     int width, height;
     SDL_GetWindowSize(window, &width, &height);

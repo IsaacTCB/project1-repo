@@ -52,7 +52,8 @@ public:
 	 * @brief Gets the current window display size.
 	 * @return A tuple containing the window's width and height respectively.
 	 */
-	std::tuple<uint32_t, uint32_t> get_size(DisplayWindowHandle handle) const;
+	[[nodiscard]]
+	std::tuple<uint32_t, uint32_t> get_size(const DisplayWindowHandle& handle) const;
 };
 
 #undef DECLARE_SERVER
