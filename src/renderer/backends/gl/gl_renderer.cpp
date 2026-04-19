@@ -1,5 +1,6 @@
 #include "gl_renderer.h"
 #include "gl_context.h"
+#include "gl_shader.h"
 
 #include "core/logger.h"
 
@@ -16,6 +17,7 @@ struct ImplTexture {
 struct GLRenderer::Impl {
     GLContext context;
     HandlePool<ImplTexture> texture_pool;
+    std::unique_ptr<GLShader> shader;
 };
 
 static bool init_glad(GLADloadfunc func) {
@@ -35,6 +37,35 @@ GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
             LOG_CRITICAL("Glad failed to load OpenGL.");
         }
     }
+
+    const char* vertex_shader_source = R"(
+        #version 330 core
+
+        layout (location = 0) in vec3 a_pos;
+        layout (location = 1) in vec2 a_uv;
+
+        out vec2 v_uv;
+
+        void main() {
+            v_uv = a_uv;
+            gl_Position = vec4(a_pos, 1.0);
+        }
+    )";
+
+    const char* fragment_shader_source = R"(
+        #version 330 core
+
+        in vec2 v_uv;
+
+        out vec4 color;
+
+        uniform sampler2D u_texture;
+
+        void main() {
+            color = texture(u_texture, v_uv);
+        }
+    )";
+    m_impl->shader = std::make_unique<GLShader>(vertex_shader_source, fragment_shader_source);
 }
 
 GLRenderer::~GLRenderer() = default;
