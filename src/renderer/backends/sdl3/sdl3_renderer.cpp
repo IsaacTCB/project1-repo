@@ -83,22 +83,42 @@ void SDL3Renderer::destroy_texture(TextureHandle handle) {
     SDL_DestroyTexture(texture);
 }
 
-void SDL3Renderer::draw_texture(TextureHandle handle, int x, int y, int width, int height) {
-    SDL_Texture** slot = m_impl->texture_pool.get(handle);
-    ASSERT(slot, "Attempted to draw a non-existent handle");
-
-    SDL_Texture* texture = *slot;
-    SDL_FRect rect{
-        .x = 0.0f,
-        .y = 0.0f,
-        .w = static_cast<float>(texture->w),
-        .h = static_cast<float>(texture->h),
-    };
+void SDL3Renderer::command(const RenderCommandDraw& command) {
     SDL_FRect dest{
-        .x = static_cast<float>(x),
-        .y = static_cast<float>(y),
-        .w = static_cast<float>(width),
-        .h = static_cast<float>(height),
+        .x = static_cast<float>(command.x),
+        .y = static_cast<float>(command.y),
+        .w = static_cast<float>(command.width),
+        .h = static_cast<float>(command.height),
     };
-    SDL_RenderTexture(m_impl->renderer, texture, &rect, &dest);
+
+    if (command.texture.has_value()) {
+        Handle handle = command.texture.value();
+        SDL_Texture** slot = m_impl->texture_pool.get(handle);
+        ASSERT(slot, "Attempted to draw a non-existent handle");
+
+        SDL_Texture* texture = *slot;
+        SDL_FRect rect{
+            .x = 0.0f,
+            .y = 0.0f,
+            .w = static_cast<float>(texture->w),
+            .h = static_cast<float>(texture->h),
+        };
+        SDL_RenderTexture(m_impl->renderer, texture, &rect, &dest);
+    } else {
+        Uint8 r = ((command.color & 0xFF000000) >> 24);
+        Uint8 g = ((command.color & 0x00FF0000) >> 16);
+        Uint8 b = ((command.color & 0x0000FF00) >> 8);
+        Uint8 a = ((command.color & 0x000000FF) >> 0);
+        SDL_SetRenderDrawColor(m_impl->renderer, r, g, b, a);
+        SDL_RenderFillRect(m_impl->renderer, &dest);
+    }
 }
+
+void SDL3Renderer::render_pass(const RenderQueue& queue) {
+    for (const auto& command : queue.get()) {
+        std::visit([this](const auto& cmd){
+            this->command(cmd);
+        }, command);
+    }
+}
+

@@ -8,6 +8,7 @@
 
 #include "platform/api/platform.h"
 #include "renderer/api/renderer.h"
+#include "renderer/api/render_queue.h"
 
 class TestApplication : public IApplication {
     DECLARE_APP(TestApplication);
@@ -61,9 +62,14 @@ public:
         float sin = std::sinf(m_platform->os().get_ticks_sec() * SPEED);
         float cos = std::cosf(m_platform->os().get_ticks_sec() * SPEED);
 
-        m_renderer->clear(0.1f, 0.1f, 0.1f, 0.0f);
+        m_queue.clear();
+
         /* TODO: verify if texture actually exists. */
-        m_renderer->draw_texture(m_texture, 40 + (sin * MAGNITUDE), 38 + (cos * MAGNITUDE), 200, 200);
+        m_queue.draw_color(0xFFFF00FF, 0, 0, 400, 400);
+        m_queue.draw_texture(m_texture, 40 + (sin * MAGNITUDE), 38 + (cos * MAGNITUDE), 200, 200);
+
+        m_renderer->clear(0.1f, 0.1f, 0.1f, 0.0f);
+        m_renderer->render_pass(m_queue);
         m_renderer->swap_buffers();
     }
 
@@ -78,6 +84,7 @@ private:
     std::shared_ptr<Renderer> m_renderer;
 
     TextureHandle m_texture;
+    RenderQueue m_queue;
 };
 
 SET_APP(TestApplication)
