@@ -59,8 +59,9 @@ public:
         constexpr float SPEED = 3.0f;
         constexpr float MAGNITUDE = 30.0f;
 
-        float sin = std::sinf(m_platform->os().get_ticks_sec() * SPEED);
-        float cos = std::cosf(m_platform->os().get_ticks_sec() * SPEED);
+        float time = m_platform->os().get_ticks_sec();
+        float sin = std::sinf(time * SPEED);
+        float cos = std::cosf(time * SPEED);
 
         m_queue.clear();
 
