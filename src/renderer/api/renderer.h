@@ -2,12 +2,11 @@
 
 #include <memory>
 
-#include "core/handles.h"
 #include "core/image/image.h"
-
 #include "platform/api/display_server.h"
 
-using TextureHandle = Handle;
+#include "render_handles.h"
+#include "render_queue.h"
 
 class Renderer {
 public:
@@ -26,7 +25,7 @@ public:
     virtual TextureHandle load_texture(ImageData& image) = 0;
     virtual void destroy_texture(TextureHandle texture) = 0;
 
-    virtual void draw_texture(TextureHandle texture, int x, int y, int width, int height) = 0;
+    virtual void render_pass(const RenderQueue& queue) = 0;
 
 protected:
     Renderer() = default;

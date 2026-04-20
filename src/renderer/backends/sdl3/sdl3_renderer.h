@@ -16,7 +16,12 @@ public:
     TextureHandle load_texture(ImageData& image) override;
     void destroy_texture(TextureHandle handle) override;
 
-    void draw_texture(TextureHandle handle, int x, int y, int width, int height) override;
+    void render_pass(const RenderQueue& queue) override;
+
+private:
+    template <typename T>
+    void command(T&) = delete;
+    void command(const RenderCommandDraw& command);
 
 private:
     struct Impl;
