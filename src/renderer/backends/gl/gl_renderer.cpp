@@ -9,6 +9,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <variant>
+
 static bool s_glad_loaded = false;
 
 struct ImplTexture {
@@ -24,12 +26,16 @@ struct GLRenderer::Impl {
 
     glm::mat4 proj;
     GLuint vao, vbo, ibo;
+
+    ImplTexture white_texture;
 };
 
 static bool init_glad(GLADloadfunc func) {
     int version = gladLoadGL(func);
     return (version != 0);
 }
+
+static ImplTexture gl_create_texture(ImageData& image);
 
 GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
     :m_impl(std::make_unique<Impl>()) {
@@ -42,6 +48,16 @@ GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
         if (!success) {
             LOG_CRITICAL("gl: Glad failed to load OpenGL.");
         }
+    }
+
+    /* load white texture to draw solid colors. */
+    {
+        ImageData white_pixel;
+        white_pixel.pixels.resize(8 * 3, 0xFF);
+        white_pixel.width = 2;
+        white_pixel.height = 2;
+        white_pixel.channels = 3;
+        m_impl->white_texture = gl_create_texture(white_pixel);
     }
 
     glGenVertexArrays(1, &m_impl->vao);
@@ -97,9 +113,10 @@ GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
         out vec4 color;
 
         uniform sampler2D u_texture;
+        uniform vec4 u_color;
 
         void main() {
-            color = texture(u_texture, v_uv);
+            color = u_color * texture(u_texture, v_uv);
         }
     )";
 
@@ -136,9 +153,7 @@ void GLRenderer::swap_buffers() {
     m_impl->context.swap_buffers();
 }
 
-TextureHandle GLRenderer::load_texture(ImageData& image) {
-    ASSERT(image.pixels.size() > 0, "Image is not loaded");
-
+static ImplTexture gl_create_texture(ImageData& image) {
     GLenum internal_format, data_format;
     switch (image.channels) {
         case 3:
@@ -173,11 +188,16 @@ TextureHandle GLRenderer::load_texture(ImageData& image) {
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
 
-    ImplTexture texture{
+    return ImplTexture{
         .id = texture_id,
         .width = image.width,
         .height = image.height,
     };
+}
+
+TextureHandle GLRenderer::load_texture(ImageData& image) {
+    ASSERT(image.pixels.size() > 0, "Image is not loaded");
+    ImplTexture texture = gl_create_texture(image);
     LOG_TRACE("gl: loaded texture: {0} ({1}x{2})", texture.id, image.width, image.height);
     return m_impl->texture_pool.emplace(texture);
 }
@@ -187,19 +207,41 @@ void GLRenderer::destroy_texture(TextureHandle handle) {
     glDeleteTextures(1, &texture->id);
 }
 
-void GLRenderer::draw_texture(TextureHandle handle, int x, int y, int width, int height) {
-    ImplTexture* texture = m_impl->texture_pool.get(handle);
+void GLRenderer::command(const RenderCommandDraw& command) {
+    ImplTexture* texture;
+    if (command.texture.has_value()) {
+        TextureHandle handle = command.texture.value();
+        texture = m_impl->texture_pool.get(handle);
+    } else {
+        texture = &m_impl->white_texture;
+    }
 
     glBindVertexArray(m_impl->vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_impl->ibo);
 
+    glm::vec4 color;
+    color.r = ((command.color & 0xFF000000) >> 24) / static_cast<float>(0xFF);
+    color.g = ((command.color & 0x00FF0000) >> 16) / static_cast<float>(0xFF);
+    color.b = ((command.color & 0x0000FF00) >> 8) / static_cast<float>(0xFF);
+    color.a = ((command.color & 0x000000FF) >> 0) / static_cast<float>(0xFF);
+
     glm::mat4 model{1.0f};
-    model = glm::translate(model, {x, y, 0.0f});
-    model = glm::scale(model, {width, height, 1.0f});
+    model = glm::translate(model, {command.x, command.y, 0.0f});
+    model = glm::scale(model, {command.width, command.height, 1.0f});
     m_impl->shader->set_mat4("u_model", model);
+    m_impl->shader->set_float4("u_color", color);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture->id);
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 }
+
+void GLRenderer::render_pass(const RenderQueue& queue) {
+    for (const auto& command : queue.get()) {
+        std::visit([this](const auto& cmd){
+            this->command(cmd);
+        }, command);
+    }
+}
+
