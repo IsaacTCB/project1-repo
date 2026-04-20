@@ -50,6 +50,9 @@ GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
         }
     }
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     /* load white texture to draw solid colors. */
     {
         ImageData white_pixel;
