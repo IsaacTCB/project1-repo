@@ -59,13 +59,15 @@ public:
         constexpr float SPEED = 3.0f;
         constexpr float MAGNITUDE = 30.0f;
 
-        float sin = std::sinf(m_platform->os().get_ticks_sec() * SPEED);
-        float cos = std::cosf(m_platform->os().get_ticks_sec() * SPEED);
+        float time = m_platform->os().get_ticks_sec();
+        float sin = std::sinf(time * SPEED);
+        float cos = std::cosf(time * SPEED);
 
         m_queue.clear();
 
         /* TODO: verify if texture actually exists. */
-        m_queue.draw_color(0xFFFF00FF, 0, 0, 400, 400);
+        m_queue.draw_color(RGB8(88, 90, 220), 0, 0, 400, 400);
+        m_queue.draw_color(RGBA8(48, 45, 120, 80), 40, 40, 320, 320);
         m_queue.draw_texture(m_texture, 40 + (sin * MAGNITUDE), 38 + (cos * MAGNITUDE), 200, 200);
 
         m_renderer->clear(0.1f, 0.1f, 0.1f, 0.0f);
