@@ -1,7 +1,6 @@
-#include "test.h"
-
 #include "core/assertion.h"
 #include "core/logger.h"
+#include "application.h"
 
 #include <cstdlib>
 

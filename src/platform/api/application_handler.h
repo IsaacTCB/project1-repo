@@ -1,8 +1,6 @@
 #pragma once
 
-#include "../platform/api/platform.h"
-
-#include "application.h"
+class Platform;
 
 class ApplicationHandler {
 public:

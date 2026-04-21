@@ -41,10 +41,11 @@ endfunction()
 
 # Common stuff included here too.
 add_library(engine STATIC
-    src/test/test.cpp
     src/test/app.cpp
     src/core/logger.cpp
     src/core/image/decoder.cpp
+    src/platform/api/platform.cpp
+    src/platform/api/application_handler.cpp
     src/renderer/api/renderer.cpp)
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/external/stb_image)

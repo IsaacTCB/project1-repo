@@ -1,7 +1,6 @@
 #pragma once
 
 #include "platform/api/platform.h"
-#include "test/test.h"
 
 #include "sdl3_common.h"
 
@@ -10,7 +9,7 @@ constexpr uint32_t TARGET_FPS = 60;
 class PlatformImpl {
 public:
 	PlatformImpl()
-		:m_state{}, m_platform{m_state}, m_app_handler{m_platform}
+		:m_state{}, m_platform{m_state}
 	{}
 
 	SDL_AppResult init();
@@ -23,6 +22,4 @@ public:
 private:
 	PlatformImplState m_state;
 	Platform m_platform;
-
-    ApplicationHandler m_app_handler;
 };
