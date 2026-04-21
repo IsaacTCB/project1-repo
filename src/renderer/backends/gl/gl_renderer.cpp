@@ -93,7 +93,6 @@ GLRenderer::GLRenderer(DisplayWindowHandle &window_data)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_impl->ibo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-
     m_impl->shader = std::make_unique<GLShader>(
         g_vertex_shader_source,
         g_fragment_shader_source);
