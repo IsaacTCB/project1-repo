@@ -12,15 +12,15 @@ struct PlatformImplState;
 class Platform {
 public:
 	OSServer& os() {
-		return this->os_server;
+		return this->m_os_server;
 	}
 
 	IOServer& io() {
-		return this->io_server;
+		return this->m_io_server;
 	}
 
 	DisplayServer& display() {
-		return this->display_server;
+		return this->m_display_server;
 	}
 
 protected:
@@ -31,16 +31,16 @@ protected:
 	void send_event(); /* to be implemented */
 
 private:
-	OSServer os_server;
-	IOServer io_server;
-	DisplayServer display_server;
-	ApplicationHandler app_handler;
+	OSServer m_os_server;
+	IOServer m_io_server;
+	DisplayServer m_display_server;
+	ApplicationHandler m_app_handler;
 
 	explicit Platform(PlatformImplState &state)
-		:os_server{state},
-        io_server{state},
-        display_server{state},
-		app_handler{*this} {}
+		:m_os_server{state},
+        m_io_server{state},
+        m_display_server{state},
+		m_app_handler{*this} {}
 
 	friend PlatformImpl;
 };
