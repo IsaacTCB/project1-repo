@@ -1,6 +1,6 @@
 #pragma once
 
-inline const char *g_vertex_shader_source = R"(
+inline const char *const g_vertex_shader_source = R"(
 #version 330 core
 
 layout (location = 0) in vec3 a_pos;
@@ -17,7 +17,7 @@ void main() {
 }
 )";
 
-inline const char *g_fragment_shader_source = R"(
+inline const char *const g_fragment_shader_source = R"(
 #version 330 core
 
 in vec2 v_uv;
