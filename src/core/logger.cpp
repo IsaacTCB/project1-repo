@@ -4,7 +4,7 @@
 
 std::unique_ptr<Logger> Logger::s_logger;
 
-Logger& Logger::get() {
+Logger &Logger::get() {
     if (!s_logger) {
         s_logger.reset(new Logger{});
     }
@@ -51,5 +51,4 @@ static void default_log_callback(LogSeverity severity, std::string_view message)
     }
 }
 
-Logger::Logger() :m_callback(default_log_callback) {}
-
+Logger::Logger() : m_callback(default_log_callback) {}

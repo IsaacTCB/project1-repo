@@ -12,6 +12,7 @@
 
 class TestApplication : public IApplication {
     DECLARE_APP(TestApplication);
+
 public:
     void on_init() override {
         auto& os = m_platform->os();
@@ -80,6 +81,7 @@ public:
         m_platform->display().close_display(m_window);
         m_renderer.reset();
     }
+
 private:
     DisplayWindowHandle m_window;
     std::shared_ptr<Renderer> m_renderer;

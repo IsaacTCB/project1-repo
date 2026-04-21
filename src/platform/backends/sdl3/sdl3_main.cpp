@@ -1,6 +1,6 @@
+#include <SDL3/SDL.h>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_main.h>
-#include <SDL3/SDL.h>
 
 #include "sdl3_common.h"
 #include "sdl3_main.h"
@@ -9,7 +9,7 @@
 
 static PlatformImpl impl;
 
-SDL_AppResult SDL_AppInit(void **appstate, int argc, char* argv[]) {
+SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
     return impl.init();
 }
 
@@ -41,7 +41,7 @@ SDL_AppResult PlatformImpl::init() {
 }
 
 SDL_AppResult PlatformImpl::iterate() {
-    constexpr uint64_t TARGET_TICKRATE = (1.0/TARGET_FPS) * 1000;
+    constexpr uint64_t TARGET_TICKRATE = (1.0 / TARGET_FPS) * 1000;
 
     uint64_t tick = SDL_GetTicks();
 
@@ -62,9 +62,9 @@ SDL_AppResult PlatformImpl::iterate() {
 
 SDL_AppResult PlatformImpl::event(const SDL_Event &event) {
     switch (event.type) {
-    case SDL_EVENT_QUIT:
-        m_state.running = false;
-        break;
+        case SDL_EVENT_QUIT:
+            m_state.running = false;
+            break;
     }
     return SDL_APP_CONTINUE;
 }
