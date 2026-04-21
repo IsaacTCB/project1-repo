@@ -38,13 +38,12 @@ static bool init_glad(GLADloadfunc func) {
 static ImplTexture gl_create_texture(ImageData& image);
 
 GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
-    :m_impl(std::make_unique<Impl>()) {
+    : m_impl(std::make_unique<Impl>()) {
     m_impl->context.init(window_data.raw_window_handle);
     if (!s_glad_loaded) {
         s_glad_loaded = true;
         bool success = init_glad(
-            static_cast<GLADloadfunc>(m_impl->context.load_func)
-        );
+            static_cast<GLADloadfunc>(m_impl->context.load_func));
         if (!success) {
             LOG_CRITICAL("gl: Glad failed to load OpenGL.");
         }
@@ -66,25 +65,45 @@ GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
     glGenVertexArrays(1, &m_impl->vao);
     glBindVertexArray(m_impl->vao);
 
-    float vertices[] {
-         0.0f, 0.0f, 0.0f,  0.0f,  0.0f,
-         1.0f, 0.0f, 0.0f,  1.0f,  0.0f,
-         1.0f, 1.0f, 0.0f,  1.0f,  1.0f,
-         0.0f, 1.0f, 0.0f,  0.0f,  1.0f,
+    float vertices[]{
+        0.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        1.0f,
+        0.0f,
+        0.0f,
+        1.0f,
+        0.0f,
+        1.0f,
+        1.0f,
+        0.0f,
+        1.0f,
+        1.0f,
+        0.0f,
+        1.0f,
+        0.0f,
+        0.0f,
+        1.0f,
     };
 
     glGenBuffers(1, &m_impl->vbo);
     glBindBuffer(GL_ARRAY_BUFFER, m_impl->vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(sizeof(float)*0));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(sizeof(float) * 0));
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(sizeof(float)*3));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(sizeof(float) * 3));
     glEnableVertexAttribArray(1);
 
     uint32_t indices[] = {
-        0, 1, 2,
-        2, 3, 0,
+        0,
+        1,
+        2,
+        2,
+        3,
+        0,
     };
 
     glGenBuffers(1, &m_impl->ibo);
@@ -125,8 +144,7 @@ GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
 
     m_impl->shader = std::make_unique<GLShader>(
         vertex_shader_source,
-        fragment_shader_source
-    );
+        fragment_shader_source);
 
     glUseProgram(m_impl->shader->get_program());
     m_impl->shader->set_int("u_texture", 0);
@@ -241,10 +259,10 @@ void GLRenderer::command(const RenderCommandDraw& command) {
 }
 
 void GLRenderer::render_pass(const RenderQueue& queue) {
-    for (const auto& command : queue.get()) {
-        std::visit([this](const auto& cmd){
+    for (const auto& command: queue.get()) {
+        std::visit([this](const auto& cmd) {
             this->command(cmd);
-        }, command);
+        },
+            command);
     }
 }
-

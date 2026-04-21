@@ -4,8 +4,9 @@
 
 class GLContext {
 public:
-    using FnProcAddr = void(*)();
-    using FnLoad = FnProcAddr(*)(const char*);
+    using FnProcAddr = void (*)();
+    using FnLoad = FnProcAddr (*)(const char *);
+
 public:
     GLContext();
     ~GLContext();

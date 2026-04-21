@@ -1,7 +1,7 @@
 #include "gl_shader.h"
 
-#include <core/logger.h>
 #include <core/assertion.h>
+#include <core/logger.h>
 
 #include <string_view>
 #include <vector>
@@ -24,7 +24,7 @@ GLShader::GLShader(std::string_view vertex_source, std::string_view fragment_sou
 
     auto vertex_shader = compile_shader(vertex_source.data(), GL_VERTEX_SHADER);
     glAttachShader(m_program, vertex_shader);
-    auto fragment_shader = compile_shader(fragment_source.data(), GL_FRAGMENT_SHADER); 
+    auto fragment_shader = compile_shader(fragment_source.data(), GL_FRAGMENT_SHADER);
     glAttachShader(m_program, fragment_shader);
     glLinkProgram(m_program);
 
@@ -111,8 +111,8 @@ static GLuint compile_shader(const char* shader_source, GLenum shader_type) {
         std::vector<char> error_msg(length);
         glGetShaderInfoLog(shader, length, nullptr, error_msg.data());
         LOG_ERROR("gl: {0} SHADER COMPILE ERROR: {1}",
-                     get_shader_type(shader_type),
-                     error_msg.data());
+            get_shader_type(shader_type),
+            error_msg.data());
         ASSERT(false);
         return 0;
     }

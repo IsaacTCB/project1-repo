@@ -12,7 +12,7 @@ struct GLContext::Impl {
 };
 
 GLContext::GLContext()
-    :load_func{SDL_GL_GetProcAddress} {}
+    : load_func{SDL_GL_GetProcAddress} {}
 
 GLContext::~GLContext() {
     close();
@@ -20,7 +20,7 @@ GLContext::~GLContext() {
 
 void GLContext::init(void *native_window) {
     m_impl = std::make_unique<GLContext::Impl>();
-    m_impl->window = reinterpret_cast<SDL_Window*>(native_window);
+    m_impl->window = reinterpret_cast<SDL_Window *>(native_window);
     m_impl->context = SDL_GL_CreateContext(m_impl->window);
 
     LOG_TRACE("Started SDL3 + OpenGL context");

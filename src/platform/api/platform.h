@@ -31,16 +31,16 @@ protected:
     void send_event(); /* to be implemented */
 
 private:
-	OSServer m_os_server;
-	IOServer m_io_server;
-	DisplayServer m_display_server;
-	ApplicationHandler m_app_handler;
+    OSServer m_os_server;
+    IOServer m_io_server;
+    DisplayServer m_display_server;
+    ApplicationHandler m_app_handler;
 
-	explicit Platform(PlatformImplState &state)
-		:m_os_server{state},
-        m_io_server{state},
-        m_display_server{state},
-		m_app_handler{*this} {}
+    explicit Platform(PlatformImplState& state)
+        : m_os_server{state},
+          m_io_server{state},
+          m_display_server{state},
+          m_app_handler{*this} {}
 
     friend PlatformImpl;
 };

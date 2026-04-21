@@ -1,7 +1,7 @@
 #include "renderer.h"
 
-#include "../backends/sdl3/sdl3_renderer.h"
 #include "../backends/gl/gl_renderer.h"
+#include "../backends/sdl3/sdl3_renderer.h"
 
 #include "core/logger.h"
 
