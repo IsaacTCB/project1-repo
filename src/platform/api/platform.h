@@ -1,6 +1,8 @@
 #pragma once
 
 #include "application_handler.h"
+#include "events.h"
+
 #include "display_server.h"
 #include "io_server.h"
 #include "os_server.h"
@@ -28,12 +30,18 @@ protected:
     void close();
     void update(float ts);
     void render();
-    void send_event(); /* to be implemented */
+
+    template <typename T, typename... Args>
+    void send_event(Args &&...args) {
+        m_events.emplace<T>(std::forward<Args>(args)...);
+    }
 
 private:
     OSServer m_os_server;
     IOServer m_io_server;
     DisplayServer m_display_server;
+
+    EventQueue m_events;
     ApplicationHandler m_app_handler;
 
     explicit Platform(PlatformImplState &state)
