@@ -78,8 +78,9 @@ public:
 
     void on_close() override {
         m_renderer->destroy_texture(m_texture);
-        m_platform->display().close_display(m_window);
         m_renderer.reset();
+
+        m_platform->display().close_display(m_window);
     }
 
 private:
