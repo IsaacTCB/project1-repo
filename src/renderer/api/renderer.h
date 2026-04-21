@@ -10,7 +10,7 @@
 
 class Renderer {
 public:
-    static std::shared_ptr<Renderer> create(DisplayWindowHandle &window_data);
+    static std::unique_ptr<Renderer> create(DisplayWindowHandle &window_data);
 
 public:
     virtual ~Renderer() = default;
