@@ -115,7 +115,7 @@ void SDL3Renderer::command(const RenderCommandDraw &command) {
 }
 
 void SDL3Renderer::render_pass(const RenderQueue &queue) {
-    for (const auto &command: queue.get()) {
+    for (const auto &command : queue.get()) {
         std::visit([this](const auto &cmd) {
             this->command(cmd);
         },
