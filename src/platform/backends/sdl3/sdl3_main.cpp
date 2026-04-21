@@ -6,7 +6,6 @@
 #include "sdl3_main.h"
 
 #include "core/logger.h"
-#include "test/test.h"
 
 static PlatformImpl impl;
 
@@ -36,7 +35,7 @@ SDL_AppResult PlatformImpl::init() {
     }
 
     m_state.running = true;
-    m_app_handler.init();
+    m_platform.init();
 
     return SDL_APP_CONTINUE;
 }
@@ -46,8 +45,8 @@ SDL_AppResult PlatformImpl::iterate() {
 
     uint64_t tick = SDL_GetTicks();
 
-    m_app_handler.update(1.0f);
-    m_app_handler.render();
+    m_platform.update(1.0f);
+    m_platform.render();
 
     if (!m_state.running) {
         return SDL_APP_SUCCESS;
@@ -71,6 +70,6 @@ SDL_AppResult PlatformImpl::event(const SDL_Event &event) {
 }
 
 void PlatformImpl::close(SDL_AppResult result) {
-    m_app_handler.close();
+    m_platform.close();
     m_state.running = false;
 }

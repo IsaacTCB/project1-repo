@@ -1,8 +1,8 @@
-#include "platform/api/platform.h"
+#pragma once
+
+#include "platform.h"
 
 #include <memory>
-
-class ApplicationHandler;
 
 class IApplication {
 public:
@@ -15,7 +15,7 @@ public:
     virtual void on_close() = 0;
 
 protected:
-    friend ApplicationHandler;
+    friend class ApplicationHandler;
     static std::unique_ptr<IApplication> create_application(Platform &platform);
 
     explicit IApplication(Platform *platform) :m_platform{platform} {};

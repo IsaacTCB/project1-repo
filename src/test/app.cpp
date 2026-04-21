@@ -1,12 +1,12 @@
-#include "application.h"
-
 #include <cmath>
 #include <memory>
 
 #include "core/image/decoder.h"
 #include "core/logger.h"
 
+#include "platform/api/application.h"
 #include "platform/api/platform.h"
+
 #include "renderer/api/renderer.h"
 #include "renderer/api/render_queue.h"
 
