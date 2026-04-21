@@ -25,7 +25,7 @@ public:
     }
 
     [[nodiscard]]
-    const std::vector<RenderCommand>& get() const {
+    const std::vector<RenderCommand> &get() const {
         return m_queue;
     }
 

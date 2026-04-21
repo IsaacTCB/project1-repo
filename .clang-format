@@ -1,7 +1,6 @@
 ---
 IndentWidth: 4
 ColumnLimit: 0
-DerivePointerAlignment: true
 PointerAlignment: Right
 SortIncludes: true
 Language: Cpp
