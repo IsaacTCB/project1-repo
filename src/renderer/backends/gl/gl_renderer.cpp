@@ -41,6 +41,8 @@ static ImplTexture gl_create_texture(ImageData &image);
 GLRenderer::GLRenderer(DisplayWindowHandle &window_data)
     : m_impl(std::make_unique<Impl>()) {
     m_impl->context.init(window_data.raw_window_handle);
+    m_impl->context.bind();
+
     if (!s_glad_loaded) {
         s_glad_loaded = true;
         bool success = init_glad(
@@ -122,6 +124,7 @@ void GLRenderer::clear(float r, float g, float b, float a) {
 }
 
 void GLRenderer::swap_buffers() {
+    m_impl->context.bind();
     m_impl->context.swap_buffers();
 }
 
@@ -168,6 +171,7 @@ static ImplTexture gl_create_texture(ImageData &image) {
 }
 
 TextureHandle GLRenderer::load_texture(ImageData &image) {
+    m_impl->context.bind();
     ASSERT(image.pixels.size() > 0, "Image is not loaded");
     ImplTexture texture = gl_create_texture(image);
     LOG_TRACE("gl: loaded texture: {0} ({1}x{2})", texture.id, image.width, image.height);
@@ -175,6 +179,7 @@ TextureHandle GLRenderer::load_texture(ImageData &image) {
 }
 
 void GLRenderer::destroy_texture(TextureHandle handle) {
+    m_impl->context.bind();
     auto texture = m_impl->texture_pool.get_and_destroy(handle);
     glDeleteTextures(1, &texture->id);
 }
@@ -210,6 +215,7 @@ void GLRenderer::command(const RenderCommandDraw &command) {
 }
 
 void GLRenderer::render_pass(const RenderQueue &queue) {
+    m_impl->context.bind();
     for (const auto &command: queue.get()) {
         std::visit([this](const auto &cmd) {
             this->command(cmd);
