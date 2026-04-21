@@ -14,4 +14,3 @@
 #else
 #define ASSERT(...) /* do nothing */
 #endif
-

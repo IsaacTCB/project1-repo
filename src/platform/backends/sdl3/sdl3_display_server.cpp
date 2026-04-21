@@ -7,7 +7,7 @@
 
 static SDL_WindowFlags get_common_sdl_flags(const DisplayWindowProps &props);
 
-DisplayWindowHandle DisplayServer::init_display(const DisplayWindowProps& props) {
+DisplayWindowHandle DisplayServer::init_display(const DisplayWindowProps &props) {
     SDL_WindowFlags flags = get_common_sdl_flags(props);
 
     switch (props.api) {
@@ -37,19 +37,18 @@ DisplayWindowHandle DisplayServer::init_display(const DisplayWindowProps& props)
 }
 
 void DisplayServer::close_display(DisplayWindowHandle handle) {
-    SDL_DestroyWindow((SDL_Window*)handle.raw_window_handle);
+    SDL_DestroyWindow((SDL_Window *)handle.raw_window_handle);
     handle.raw_window_handle = nullptr;
 }
 
-std::tuple<uint32_t, uint32_t> DisplayServer::get_size(const DisplayWindowHandle& handle) const {
-    auto* window = reinterpret_cast<SDL_Window*>(handle.raw_window_handle);
+std::tuple<uint32_t, uint32_t> DisplayServer::get_size(const DisplayWindowHandle &handle) const {
+    auto *window = reinterpret_cast<SDL_Window *>(handle.raw_window_handle);
 
     int width, height;
     SDL_GetWindowSize(window, &width, &height);
     return {
         static_cast<uint32_t>(width),
-        static_cast<uint32_t>(height)
-    };
+        static_cast<uint32_t>(height)};
 }
 
 /**

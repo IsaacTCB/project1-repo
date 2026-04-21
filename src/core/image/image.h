@@ -13,8 +13,8 @@ public:
 public:
     operator bool() const {
         return (pixels.size() > 0 ||
-            width > 0 ||
-            height > 0 ||
-            channels > 0);
+                width > 0 ||
+                height > 0 ||
+                channels > 0);
     }
 };

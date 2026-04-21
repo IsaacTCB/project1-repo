@@ -14,8 +14,8 @@ struct SDL3Renderer::Impl {
     HandlePool<SDL_Texture*> texture_pool;
 };
 
-SDL3Renderer::SDL3Renderer(DisplayWindowHandle& window_data) 
-    :m_impl(std::make_unique<Impl>()) {
+SDL3Renderer::SDL3Renderer(DisplayWindowHandle& window_data)
+    : m_impl(std::make_unique<Impl>()) {
     m_impl->window = reinterpret_cast<SDL_Window*>(window_data.raw_window_handle);
     m_impl->renderer = SDL_CreateRenderer(m_impl->window, nullptr);
     SDL_SetRenderVSync(m_impl->renderer, 1);
@@ -115,10 +115,10 @@ void SDL3Renderer::command(const RenderCommandDraw& command) {
 }
 
 void SDL3Renderer::render_pass(const RenderQueue& queue) {
-    for (const auto& command : queue.get()) {
-        std::visit([this](const auto& cmd){
+    for (const auto& command: queue.get()) {
+        std::visit([this](const auto& cmd) {
             this->command(cmd);
-        }, command);
+        },
+            command);
     }
 }
-

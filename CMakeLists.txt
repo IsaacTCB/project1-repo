@@ -46,7 +46,7 @@ endfunction()
 
 # Common stuff
 add_library(engine STATIC
-    src/test/app.cpp
+    src/test/testapp.cpp
     src/core/logger.cpp
     src/core/image/decoder.cpp
     src/platform/api/platform.cpp

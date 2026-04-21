@@ -46,7 +46,7 @@ public:
 
 private:
     HandleDestructor(HandlePool<T>* pool, T* object, Handle handle)
-        :m_pool(pool), m_object(object), m_handle(handle)  {}
+        : m_pool(pool), m_object(object), m_handle(handle) {}
 
     HandlePool<T>* m_pool;
     T* m_object;
@@ -59,15 +59,15 @@ class HandlePool {
 public:
     HandlePool() = default;
 
-    template<typename... Args>
-    Handle emplace(Args&& ...args) {
+    template <typename... Args>
+    Handle emplace(Args&&... args) {
         Slot* slot = reserve_slot();
         slot->value = T{std::forward<Args>(args)...};
         slot->alive = true;
         return slot->handle;
     }
 
-    template<typename T2>
+    template <typename T2>
     Handle emplace(T2&& value) {
         Slot* slot = reserve_slot();
         slot->value = std::move(value);
@@ -88,8 +88,7 @@ public:
     T* get(Handle handle) {
         const auto* const_this = static_cast<const HandlePool<T>*>(this);
         return const_cast<T*>(
-            const_this->get(handle)
-        );
+            const_this->get(handle));
     }
 
     /** @brief Gets handle using RAII principles.
@@ -150,8 +149,7 @@ private:
     static Handle handle_add_generation(Handle handle, int amount) {
         return static_cast<Handle>(
             (handle & HANDLE_UPPER) |
-            ((handle + amount) & HANDLE_LOWER)
-        );
+            ((handle + amount) & HANDLE_LOWER));
     }
 
 private:

@@ -5,5 +5,5 @@
 #include <string_view>
 
 namespace Image {
-    ImageData decode(std::string_view path);
+ImageData decode(std::string_view path);
 }

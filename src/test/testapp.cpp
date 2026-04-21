@@ -7,11 +7,12 @@
 #include "platform/api/application.h"
 #include "platform/api/platform.h"
 
-#include "renderer/api/renderer.h"
 #include "renderer/api/render_queue.h"
+#include "renderer/api/renderer.h"
 
 class TestApplication : public IApplication {
     DECLARE_APP(TestApplication);
+
 public:
     void on_init() override {
         auto& os = m_platform->os();
@@ -81,6 +82,7 @@ public:
 
         m_platform->display().close_display(m_window);
     }
+
 private:
     DisplayWindowHandle m_window;
     std::shared_ptr<Renderer> m_renderer;
