@@ -4,14 +4,14 @@
 
 #include "core/logger.h"
 
-std::shared_ptr<Renderer> Renderer::create(DisplayWindowHandle &window_data) {
+std::unique_ptr<Renderer> Renderer::create(DisplayWindowHandle &window_data) {
     switch (window_data.props.api) {
         case RendererAPI::SDL3Renderer:
-            return std::shared_ptr<Renderer>(new SDL3Renderer(window_data));
+            return std::unique_ptr<Renderer>(new SDL3Renderer(window_data));
         case RendererAPI::OpenGL:
             ASSERT(false, "Renderer::create(): OpenGL renderer is unimplemented.");
         default:
             LOG_CRITICAL("Unsupported graphics API");
-            return nullptr;
+            return std::unique_ptr<Renderer>(nullptr);
     }
 }

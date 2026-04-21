@@ -85,7 +85,7 @@ public:
 
 private:
     DisplayWindowHandle m_window;
-    std::shared_ptr<Renderer> m_renderer;
+    std::unique_ptr<Renderer> m_renderer;
 
     TextureHandle m_texture;
     RenderQueue m_queue;
