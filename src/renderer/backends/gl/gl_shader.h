@@ -24,10 +24,10 @@ public:
 public:
     void set_int(std::string_view uniform_name, int value);
     void set_float(std::string_view uniform_name, float value);
-    void set_float2(std::string_view uniform_name, const glm::vec2& vec);
-    void set_float3(std::string_view uniform_name, const glm::vec3& vec);
-    void set_float4(std::string_view uniform_name, const glm::vec4& vec);
-    void set_mat4(std::string_view uniform_name, const glm::mat4& mat4);
+    void set_float2(std::string_view uniform_name, const glm::vec2 &vec);
+    void set_float3(std::string_view uniform_name, const glm::vec3 &vec);
+    void set_float4(std::string_view uniform_name, const glm::vec4 &vec);
+    void set_mat4(std::string_view uniform_name, const glm::mat4 &mat4);
 
 private:
     GLuint m_program;

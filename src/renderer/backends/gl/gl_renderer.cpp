@@ -35,9 +35,9 @@ static bool init_glad(GLADloadfunc func) {
     return (version != 0);
 }
 
-static ImplTexture gl_create_texture(ImageData& image);
+static ImplTexture gl_create_texture(ImageData &image);
 
-GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
+GLRenderer::GLRenderer(DisplayWindowHandle &window_data)
     : m_impl(std::make_unique<Impl>()) {
     m_impl->context.init(window_data.raw_window_handle);
     if (!s_glad_loaded) {
@@ -83,16 +83,16 @@ GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
     glBindBuffer(GL_ARRAY_BUFFER, m_impl->vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(sizeof(float) * 0));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(sizeof(float) * 0));
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(sizeof(float) * 3));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(sizeof(float) * 3));
     glEnableVertexAttribArray(1);
 
     glGenBuffers(1, &m_impl->ibo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_impl->ibo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    const char* vertex_shader_source = R"(
+    const char *vertex_shader_source = R"(
         #version 330 core
 
         layout (location = 0) in vec3 a_pos;
@@ -109,7 +109,7 @@ GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
         }
     )";
 
-    const char* fragment_shader_source = R"(
+    const char *fragment_shader_source = R"(
         #version 330 core
 
         in vec2 v_uv;
@@ -156,7 +156,7 @@ void GLRenderer::swap_buffers() {
     m_impl->context.swap_buffers();
 }
 
-static ImplTexture gl_create_texture(ImageData& image) {
+static ImplTexture gl_create_texture(ImageData &image) {
     GLenum internal_format, data_format;
     switch (image.channels) {
         case 3:
@@ -198,7 +198,7 @@ static ImplTexture gl_create_texture(ImageData& image) {
     };
 }
 
-TextureHandle GLRenderer::load_texture(ImageData& image) {
+TextureHandle GLRenderer::load_texture(ImageData &image) {
     ASSERT(image.pixels.size() > 0, "Image is not loaded");
     ImplTexture texture = gl_create_texture(image);
     LOG_TRACE("gl: loaded texture: {0} ({1}x{2})", texture.id, image.width, image.height);
@@ -210,8 +210,8 @@ void GLRenderer::destroy_texture(TextureHandle handle) {
     glDeleteTextures(1, &texture->id);
 }
 
-void GLRenderer::command(const RenderCommandDraw& command) {
-    ImplTexture* texture;
+void GLRenderer::command(const RenderCommandDraw &command) {
+    ImplTexture *texture;
     if (command.texture.has_value()) {
         TextureHandle handle = command.texture.value();
         texture = m_impl->texture_pool.get(handle);
@@ -240,9 +240,9 @@ void GLRenderer::command(const RenderCommandDraw& command) {
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 }
 
-void GLRenderer::render_pass(const RenderQueue& queue) {
-    for (const auto& command: queue.get()) {
-        std::visit([this](const auto& cmd) {
+void GLRenderer::render_pass(const RenderQueue &queue) {
+    for (const auto &command: queue.get()) {
+        std::visit([this](const auto &cmd) {
             this->command(cmd);
         },
             command);
