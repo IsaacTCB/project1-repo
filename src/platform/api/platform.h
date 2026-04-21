@@ -11,15 +11,15 @@ struct PlatformImplState;
 /* This class is generic */
 class Platform {
 public:
-    OSServer& os() {
+    OSServer &os() {
         return this->m_os_server;
     }
 
-    IOServer& io() {
+    IOServer &io() {
         return this->m_io_server;
     }
 
-    DisplayServer& display() {
+    DisplayServer &display() {
         return this->m_display_server;
     }
 
@@ -36,7 +36,7 @@ private:
     DisplayServer m_display_server;
     ApplicationHandler m_app_handler;
 
-    explicit Platform(PlatformImplState& state)
+    explicit Platform(PlatformImplState &state)
         : m_os_server{state},
           m_io_server{state},
           m_display_server{state},

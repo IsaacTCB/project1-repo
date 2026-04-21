@@ -15,14 +15,14 @@ class TestApplication : public IApplication {
 
 public:
     void on_init() override {
-        auto& os = m_platform->os();
+        auto &os = m_platform->os();
         LOG_INFO("m_platform: {}", os.get_platform());
         LOG_INFO("os: {}", os.get_os());
 
         /* =================== */
         /*       DISPLAY       */
         /* =================== */
-        auto& display = m_platform->display();
+        auto &display = m_platform->display();
 
         /* create main window/screen */
         DisplayWindowProps props{};

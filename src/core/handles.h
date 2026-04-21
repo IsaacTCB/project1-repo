@@ -18,19 +18,19 @@ class HandlePool;
 template <typename T>
 class HandleDestructor {
 public:
-    operator const T*() const {
+    operator const T *() const {
         return m_object;
     }
 
-    operator T*() {
+    operator T *() {
         return m_object;
     }
 
-    T* operator->() {
+    T *operator->() {
         return m_object;
     }
 
-    const T* operator->() const {
+    const T *operator->() const {
         return m_object;
     }
 
@@ -39,17 +39,17 @@ public:
         m_pool->remove(m_handle);
     }
 
-    HandleDestructor(HandleDestructor& other) = delete;
-    HandleDestructor(HandleDestructor&& other) = delete;
-    HandleDestructor& operator=(HandleDestructor& rhs) = delete;
-    HandleDestructor& operator=(HandleDestructor&& rhs) = delete;
+    HandleDestructor(HandleDestructor &other) = delete;
+    HandleDestructor(HandleDestructor &&other) = delete;
+    HandleDestructor &operator=(HandleDestructor &rhs) = delete;
+    HandleDestructor &operator=(HandleDestructor &&rhs) = delete;
 
 private:
-    HandleDestructor(HandlePool<T>* pool, T* object, Handle handle)
+    HandleDestructor(HandlePool<T> *pool, T *object, Handle handle)
         : m_pool(pool), m_object(object), m_handle(handle) {}
 
-    HandlePool<T>* m_pool;
-    T* m_object;
+    HandlePool<T> *m_pool;
+    T *m_object;
     Handle m_handle;
     friend HandlePool<T>;
 };
@@ -60,23 +60,23 @@ public:
     HandlePool() = default;
 
     template <typename... Args>
-    Handle emplace(Args&&... args) {
-        Slot* slot = reserve_slot();
+    Handle emplace(Args &&...args) {
+        Slot *slot = reserve_slot();
         slot->value = T{std::forward<Args>(args)...};
         slot->alive = true;
         return slot->handle;
     }
 
     template <typename T2>
-    Handle emplace(T2&& value) {
-        Slot* slot = reserve_slot();
+    Handle emplace(T2 &&value) {
+        Slot *slot = reserve_slot();
         slot->value = std::move(value);
         slot->alive = true;
         return slot->handle;
     }
 
-    const T* get(Handle handle) const {
-        const Slot* slot = get_slot(handle);
+    const T *get(Handle handle) const {
+        const Slot *slot = get_slot(handle);
         if (!slot) {
             return nullptr;
         }
@@ -85,9 +85,9 @@ public:
         return &slot->value;
     }
 
-    T* get(Handle handle) {
-        const auto* const_this = static_cast<const HandlePool<T>*>(this);
-        return const_cast<T*>(
+    T *get(Handle handle) {
+        const auto *const_this = static_cast<const HandlePool<T> *>(this);
+        return const_cast<T *>(
             const_this->get(handle));
     }
 
@@ -97,7 +97,7 @@ public:
      *
      * @return RAII-styled object that automatically calls this->remove() on destructor. */
     HandleDestructor<T> get_and_destroy(Handle handle) {
-        T* obj = this->get(handle);
+        T *obj = this->get(handle);
         ASSERT(obj);
         return {this, obj, handle};
     }
@@ -108,7 +108,7 @@ public:
     }
 
     void remove(Handle handle) {
-        Slot* slot = const_cast<Slot*>(this->get_slot(handle));
+        Slot *slot = const_cast<Slot *>(this->get_slot(handle));
         if (!slot) {
             ASSERT(slot, "Attempted to remove a non-existing handle!");
             return;
@@ -163,8 +163,8 @@ private:
 
 private:
     [[nodiscard]]
-    Slot* reserve_slot() {
-        Slot* slot = nullptr;
+    Slot *reserve_slot() {
+        Slot *slot = nullptr;
         if (!m_available_slots.empty()) {
             /* recycle available slot */
             size_t index = m_available_slots.front();
@@ -181,14 +181,14 @@ private:
     }
 
     [[nodiscard]]
-    const Slot* get_slot(Handle handle) const {
+    const Slot *get_slot(Handle handle) const {
         size_t index = handle_get_index(handle);
 
         if (index >= m_pool.size()) {
             return nullptr;
         }
 
-        const Slot& slot = m_pool.at(index);
+        const Slot &slot = m_pool.at(index);
         if (!slot.alive) {
             return nullptr;
         }

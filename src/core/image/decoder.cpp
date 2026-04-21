@@ -8,7 +8,7 @@
 ImageData Image::decode(std::string_view path) {
     int width, height, channels;
 
-    stbi_uc* data = stbi_load(path.data(), &width, &height, &channels, 0);
+    stbi_uc *data = stbi_load(path.data(), &width, &height, &channels, 0);
     if (!data) {
         return ImageData{};
     }

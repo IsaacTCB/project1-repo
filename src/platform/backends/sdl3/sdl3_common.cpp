@@ -13,7 +13,7 @@ static std::mutex s_mutex;
 
 static std::unique_ptr<std::ofstream> s_file_sink;
 
-static const char* log_prefix(LogSeverity severity) {
+static const char *log_prefix(LogSeverity severity) {
     switch (severity) {
         case LOG_SEVERITY_TRACE:
             return "[TRACE] ";

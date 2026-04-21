@@ -20,7 +20,7 @@ struct DisplayWindowProps {
 
 // HACK: Ideally we return a WindowHandle object instead.
 struct DisplayWindowHandle {
-    void* raw_window_handle;
+    void *raw_window_handle;
     DisplayWindowProps props;
 
     operator bool() const noexcept {
@@ -42,7 +42,7 @@ public:
      * @param props The desired window configuration to use.
      * @return A DisplayWindowHandle, that references a window inside this server.
      */
-    DisplayWindowHandle init_display(const DisplayWindowProps& props);
+    DisplayWindowHandle init_display(const DisplayWindowProps &props);
 
     /**
      * @brief Closes the window display handle.
@@ -54,7 +54,7 @@ public:
      * @return A tuple containing the window's width and height respectively.
      */
     [[nodiscard]]
-    std::tuple<uint32_t, uint32_t> get_size(const DisplayWindowHandle& handle) const;
+    std::tuple<uint32_t, uint32_t> get_size(const DisplayWindowHandle &handle) const;
 };
 
 #undef DECLARE_SERVER

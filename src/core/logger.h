@@ -26,15 +26,15 @@ class Logger {
 public:
     using LogFn = void (*)(LogSeverity severity, std::string_view message);
 
-    [[nodiscard]] static Logger& get();
+    [[nodiscard]] static Logger &get();
     static void close();
 
 public:
-    Logger(const Logger& logger) = delete;
+    Logger(const Logger &logger) = delete;
     ~Logger() = default;
-    Logger(Logger&& logger) = delete;
-    Logger& operator=(Logger& other) = delete;
-    Logger& operator=(Logger&& other) = delete;
+    Logger(Logger &&logger) = delete;
+    Logger &operator=(Logger &other) = delete;
+    Logger &operator=(Logger &&other) = delete;
 
     /**
      * @brief Override log callback
@@ -78,7 +78,7 @@ public:
      * @param args... The parameters for the format string
      */
     template <typename... Args>
-    void print(LogSeverity severity, std::format_string<Args...> fmt, Args&&... args) {
+    void print(LogSeverity severity, std::format_string<Args...> fmt, Args &&...args) {
         std::string formatted = std::format(fmt,
             std::forward<Args>(args)...);
         log(severity, formatted);
