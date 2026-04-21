@@ -1,7 +1,40 @@
 ---
 IndentWidth: 4
-ColumnWidth: 120
+ColumnLimit: 0
 DerivePointerAlignment: true
 PointerAlignment: Right
 SortIncludes: true
-...
+Language: Cpp
+KeepEmptyLines:
+  AtEndOfFile: false
+  AtStartOfFile: false
+  AtStartOfBlock: false
+InsertBraces: true
+SpaceBeforeRangeBasedForLoopColon: false
+SpacesInAngles: Never
+SpacesInContainerLiterals: false
+SpaceInEmptyBlock: false
+SpaceBeforeSquareBrackets: false
+IndentCaseLabels: true
+AlignAfterOpenBracket: DontAlign
+AccessModifierOffset: -4
+FixNamespaceComments: true
+AlignOperands: AlignAfterOperator
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterClass: false
+  AfterControlStatement: Never
+  AfterEnum: false
+  AfterFunction: false
+  AfterNamespace: false
+  AfterObjCDeclaration: false
+  AfterStruct: false
+  AfterUnion: false
+  AfterExternBlock: false
+  BeforeCatch: false
+  BeforeElse: false
+  BeforeLambdaBody: false
+  BeforeWhile: false
+  SplitEmptyFunction: false
+  SplitEmptyNamespace: false
+  SplitEmptyRecord: false
