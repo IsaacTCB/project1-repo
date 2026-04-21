@@ -68,30 +68,30 @@ SDL_AppResult PlatformImpl::event(const SDL_Event &event) {
             m_state.running = false;
             break;
         case SDL_EVENT_WINDOW_RESIZED:
-            m_platform.send_event<EventWindow>(EventWindowResized{
+            m_platform.submit_event<EventWindow>(EventWindowResized{
                 .width = static_cast<uint32_t>(event.window.data1),
                 .height = static_cast<uint32_t>(event.window.data2),
             });
             break;
         case SDL_EVENT_WINDOW_MAXIMIZED:
-            m_platform.send_event<EventWindow>(EventWindowMaximized{});
+            m_platform.submit_event<EventWindow>(EventWindowMaximized{});
             break;
         case SDL_EVENT_WINDOW_MINIMIZED:
-            m_platform.send_event<EventWindow>(EventWindowMinimized{});
+            m_platform.submit_event<EventWindow>(EventWindowMinimized{});
             break;
         case SDL_EVENT_KEY_DOWN:
         case SDL_EVENT_KEY_UP:
             if (event.key.repeat) {
                 break;
             }
-            m_platform.send_event<EventInput>(EventInputKey{
+            m_platform.submit_event<EventInput>(EventInputKey{
                 .key = event.key.key,
                 .scancode = event.key.scancode,
                 .pressed = event.key.down,
             });
             break;
         case SDL_EVENT_MOUSE_MOTION:
-            m_platform.send_event<EventInput>(EventInputMouseMotion{
+            m_platform.submit_event<EventInput>(EventInputMouseMotion{
                 .screen_x = event.motion.x,
                 .screen_y = event.motion.y,
                 .rel_x = event.motion.xrel,

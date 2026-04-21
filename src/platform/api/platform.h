@@ -32,7 +32,7 @@ protected:
     void render();
 
     template <typename T, typename... Args>
-    void send_event(Args &&...args) {
+    void submit_event(Args &&...args) {
         m_events.emplace<T>(std::forward<Args>(args)...);
     }
 
