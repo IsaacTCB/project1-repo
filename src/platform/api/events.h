@@ -25,7 +25,7 @@ public:
     }
 
     void clear() {
-        for (auto &[k, v]: m_pools) {
+        for (auto &[k, v] : m_pools) {
             v->clear();
         }
     }

@@ -143,7 +143,7 @@ void GLRenderer::destroy_texture(TextureHandle handle) {
 
 void GLRenderer::render_pass(const RenderQueue &queue) {
     m_impl->context.bind();
-    for (const auto &command: queue.get()) {
+    for (const auto &command : queue.get()) {
         std::visit([this](const auto &cmd) {
             this->command(cmd);
         },

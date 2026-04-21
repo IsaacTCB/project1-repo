@@ -15,7 +15,7 @@ void Platform::close() {
 void Platform::update(float ts) {
     m_app_handler.update(ts);
 
-    for (const auto &event: m_events.span<EventWindow>()) {
+    for (const auto &event : m_events.span<EventWindow>()) {
         if (const auto *ptr = std::get_if<EventWindowResized>(&event)) {
             LOG_TRACE("{0}x{1}", ptr->width, ptr->height);
         }
@@ -27,7 +27,7 @@ void Platform::update(float ts) {
         }
     }
 
-    for (const auto &event: m_events.span<EventInput>()) {
+    for (const auto &event : m_events.span<EventInput>()) {
         if (const auto *ptr = std::get_if<EventInputKey>(&event)) {
             LOG_TRACE("{} {}",
                 ptr->pressed ? "Pressed" : "Released",
