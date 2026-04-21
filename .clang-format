@@ -9,7 +9,6 @@ KeepEmptyLines:
   AtStartOfFile: false
   AtStartOfBlock: false
 InsertBraces: true
-SpaceBeforeRangeBasedForLoopColon: false
 SpacesInAngles: Never
 SpacesInContainerLiterals: false
 SpaceInEmptyBlock: false
