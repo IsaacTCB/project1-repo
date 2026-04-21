@@ -14,6 +14,7 @@ SpacesInAngles: Never
 SpacesInContainerLiterals: false
 SpaceInEmptyBlock: false
 SpaceBeforeSquareBrackets: false
+SpaceBeforeRangeBasedForLoopColon: true
 IndentCaseLabels: true
 AlignAfterOpenBracket: DontAlign
 AccessModifierOffset: -4

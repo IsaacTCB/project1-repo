@@ -1,9 +1,11 @@
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_init.h>
 #include <SDL3/SDL_main.h>
 
 #include "sdl3_common.h"
 #include "sdl3_main.h"
+
+#include "core/events/input_events.h"
+#include "core/events/window_events.h"
 
 #include "core/logger.h"
 
@@ -64,6 +66,37 @@ SDL_AppResult PlatformImpl::event(const SDL_Event &event) {
     switch (event.type) {
         case SDL_EVENT_QUIT:
             m_state.running = false;
+            break;
+        case SDL_EVENT_WINDOW_RESIZED:
+            m_platform.submit_event<EventWindow>(EventWindowResized{
+                .width = static_cast<uint32_t>(event.window.data1),
+                .height = static_cast<uint32_t>(event.window.data2),
+            });
+            break;
+        case SDL_EVENT_WINDOW_MAXIMIZED:
+            m_platform.submit_event<EventWindow>(EventWindowMaximized{});
+            break;
+        case SDL_EVENT_WINDOW_MINIMIZED:
+            m_platform.submit_event<EventWindow>(EventWindowMinimized{});
+            break;
+        case SDL_EVENT_KEY_DOWN:
+        case SDL_EVENT_KEY_UP:
+            if (event.key.repeat) {
+                break;
+            }
+            m_platform.submit_event<EventInput>(EventInputKey{
+                .key = event.key.key,
+                .scancode = event.key.scancode,
+                .pressed = event.key.down,
+            });
+            break;
+        case SDL_EVENT_MOUSE_MOTION:
+            m_platform.submit_event<EventInput>(EventInputMouseMotion{
+                .screen_x = event.motion.x,
+                .screen_y = event.motion.y,
+                .rel_x = event.motion.xrel,
+                .rel_y = event.motion.yrel,
+            });
             break;
     }
     return SDL_APP_CONTINUE;
