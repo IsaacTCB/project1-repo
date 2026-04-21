@@ -1,6 +1,7 @@
 #include "gl_renderer.h"
 #include "gl_context.h"
 #include "gl_shader.h"
+#include "gl_shader_sources.h"
 
 #include "core/logger.h"
 
@@ -92,41 +93,10 @@ GLRenderer::GLRenderer(DisplayWindowHandle &window_data)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_impl->ibo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    const char *vertex_shader_source = R"(
-        #version 330 core
-
-        layout (location = 0) in vec3 a_pos;
-        layout (location = 1) in vec2 a_uv;
-
-        out vec2 v_uv;
-
-        uniform mat4 u_view_proj;
-        uniform mat4 u_model;
-
-        void main() {
-            v_uv = a_uv;
-            gl_Position = u_view_proj * u_model * vec4(a_pos, 1.0);
-        }
-    )";
-
-    const char *fragment_shader_source = R"(
-        #version 330 core
-
-        in vec2 v_uv;
-
-        out vec4 color;
-
-        uniform sampler2D u_texture;
-        uniform vec4 u_color;
-
-        void main() {
-            color = u_color * texture(u_texture, v_uv);
-        }
-    )";
 
     m_impl->shader = std::make_unique<GLShader>(
-        vertex_shader_source,
-        fragment_shader_source);
+        g_vertex_shader_source,
+        g_fragment_shader_source);
 
     glUseProgram(m_impl->shader->get_program());
     m_impl->shader->set_int("u_texture", 0);
