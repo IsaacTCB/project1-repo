@@ -6,7 +6,6 @@
 #include "core/logger.h"
 
 #include <glad/gl.h>
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -128,6 +127,32 @@ void GLRenderer::swap_buffers() {
     m_impl->context.swap_buffers();
 }
 
+TextureHandle GLRenderer::load_texture(ImageData &image) {
+    m_impl->context.bind();
+    ASSERT(image.pixels.size() > 0, "Image is not loaded");
+    ImplTexture texture = gl_create_texture(image);
+    LOG_TRACE("gl: loaded texture: {0} ({1}x{2})", texture.id, image.width, image.height);
+    return m_impl->texture_pool.emplace(texture);
+}
+
+void GLRenderer::destroy_texture(TextureHandle handle) {
+    m_impl->context.bind();
+    auto texture = m_impl->texture_pool.get_and_destroy(handle);
+    glDeleteTextures(1, &texture->id);
+}
+
+void GLRenderer::render_pass(const RenderQueue &queue) {
+    m_impl->context.bind();
+    for (const auto &command: queue.get()) {
+        std::visit([this](const auto &cmd) {
+            this->command(cmd);
+        },
+            command);
+    }
+}
+
+/* commands */
+
 static ImplTexture gl_create_texture(ImageData &image) {
     GLenum internal_format, data_format;
     switch (image.channels) {
@@ -170,20 +195,6 @@ static ImplTexture gl_create_texture(ImageData &image) {
     };
 }
 
-TextureHandle GLRenderer::load_texture(ImageData &image) {
-    m_impl->context.bind();
-    ASSERT(image.pixels.size() > 0, "Image is not loaded");
-    ImplTexture texture = gl_create_texture(image);
-    LOG_TRACE("gl: loaded texture: {0} ({1}x{2})", texture.id, image.width, image.height);
-    return m_impl->texture_pool.emplace(texture);
-}
-
-void GLRenderer::destroy_texture(TextureHandle handle) {
-    m_impl->context.bind();
-    auto texture = m_impl->texture_pool.get_and_destroy(handle);
-    glDeleteTextures(1, &texture->id);
-}
-
 void GLRenderer::command(const RenderCommandDraw &command) {
     ImplTexture *texture;
     if (command.texture.has_value()) {
@@ -212,14 +223,4 @@ void GLRenderer::command(const RenderCommandDraw &command) {
     glBindTexture(GL_TEXTURE_2D, texture->id);
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-}
-
-void GLRenderer::render_pass(const RenderQueue &queue) {
-    m_impl->context.bind();
-    for (const auto &command: queue.get()) {
-        std::visit([this](const auto &cmd) {
-            this->command(cmd);
-        },
-            command);
-    }
 }
