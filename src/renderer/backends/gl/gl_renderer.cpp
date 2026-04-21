@@ -65,28 +65,19 @@ GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
     glGenVertexArrays(1, &m_impl->vao);
     glBindVertexArray(m_impl->vao);
 
+    // clang-format off
     float vertices[]{
-        0.0f,
-        0.0f,
-        0.0f,
-        0.0f,
-        0.0f,
-        1.0f,
-        0.0f,
-        0.0f,
-        1.0f,
-        0.0f,
-        1.0f,
-        1.0f,
-        0.0f,
-        1.0f,
-        1.0f,
-        0.0f,
-        1.0f,
-        0.0f,
-        0.0f,
-        1.0f,
+        0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,  1.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,  1.0f, 1.0f,
+        0.0f, 1.0f, 0.0f,  0.0f, 1.0f,
     };
+
+    uint32_t indices[] = {
+        0, 1, 2,
+        2, 3, 0,
+    };
+    // clang-format on
 
     glGenBuffers(1, &m_impl->vbo);
     glBindBuffer(GL_ARRAY_BUFFER, m_impl->vbo);
@@ -96,15 +87,6 @@ GLRenderer::GLRenderer(DisplayWindowHandle& window_data)
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(sizeof(float) * 3));
     glEnableVertexAttribArray(1);
-
-    uint32_t indices[] = {
-        0,
-        1,
-        2,
-        2,
-        3,
-        0,
-    };
 
     glGenBuffers(1, &m_impl->ibo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_impl->ibo);
