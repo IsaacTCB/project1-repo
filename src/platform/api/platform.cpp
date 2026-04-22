@@ -29,7 +29,10 @@ void Platform::update(float ts) {
 
     for (const auto &event : m_events.span<EventInput>()) {
         if (const auto *ptr = std::get_if<EventInputKey>(&event)) {
-            LOG_TRACE("{} {}",
+            if (ptr->repeat) {
+                continue;
+            }
+            LOG_TRACE("mouse: {} {}",
                 ptr->pressed ? "Pressed" : "Released",
                 ptr->key);
         }
@@ -37,6 +40,11 @@ void Platform::update(float ts) {
             LOG_TRACE("{} {}",
                 ptr->rel_x,
                 ptr->rel_y);
+        }
+        if (const auto *ptr = std::get_if<EventInputMouseButton>(&event)) {
+            LOG_TRACE("{} {}",
+                ptr->pressed ? "Pressed" : "Released",
+                ptr->button);
         }
     }
 

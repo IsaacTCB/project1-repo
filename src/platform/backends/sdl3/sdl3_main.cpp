@@ -1,4 +1,6 @@
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_keyboard.h>
 #include <SDL3/SDL_main.h>
 
 #include "sdl3_common.h"
@@ -67,27 +69,34 @@ SDL_AppResult PlatformImpl::event(const SDL_Event &event) {
         case SDL_EVENT_QUIT:
             m_state.running = false;
             break;
+
+        /* Window events */
         case SDL_EVENT_WINDOW_RESIZED:
             m_platform.submit_event<EventWindow>(EventWindowResized{
                 .width = static_cast<uint32_t>(event.window.data1),
                 .height = static_cast<uint32_t>(event.window.data2),
             });
             break;
+        case SDL_EVENT_WINDOW_MOVED:
+            m_platform.submit_event<EventWindow>(EventWindowMoved{
+                .x = event.window.data1,
+                .y = event.window.data2,
+            });
         case SDL_EVENT_WINDOW_MAXIMIZED:
             m_platform.submit_event<EventWindow>(EventWindowMaximized{});
             break;
         case SDL_EVENT_WINDOW_MINIMIZED:
             m_platform.submit_event<EventWindow>(EventWindowMinimized{});
             break;
+
+        /* Input events */
         case SDL_EVENT_KEY_DOWN:
         case SDL_EVENT_KEY_UP:
-            if (event.key.repeat) {
-                break;
-            }
             m_platform.submit_event<EventInput>(EventInputKey{
                 .key = event.key.key,
                 .scancode = event.key.scancode,
                 .pressed = event.key.down,
+                .repeat = event.key.repeat,
             });
             break;
         case SDL_EVENT_MOUSE_MOTION:
@@ -96,6 +105,13 @@ SDL_AppResult PlatformImpl::event(const SDL_Event &event) {
                 .screen_y = event.motion.y,
                 .rel_x = event.motion.xrel,
                 .rel_y = event.motion.yrel,
+            });
+            break;
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+        case SDL_EVENT_MOUSE_BUTTON_UP:
+            m_platform.submit_event<EventInput>(EventInputMouseButton{
+                .button = event.button.button,
+                .pressed = event.button.down,
             });
             break;
     }

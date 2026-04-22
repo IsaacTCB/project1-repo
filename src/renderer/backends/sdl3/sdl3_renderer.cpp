@@ -18,6 +18,7 @@ SDL3Renderer::SDL3Renderer(DisplayWindowHandle &window_data)
     : m_impl(std::make_unique<Impl>()) {
     m_impl->window = reinterpret_cast<SDL_Window *>(window_data.raw_window_handle);
     m_impl->renderer = SDL_CreateRenderer(m_impl->window, nullptr);
+    SDL_SetRenderDrawBlendMode(m_impl->renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderVSync(m_impl->renderer, 1);
 }
 
@@ -66,8 +67,9 @@ TextureHandle SDL3Renderer::load_texture(ImageData &image) {
         m_impl->renderer,
         surface);
     ASSERT(texture, "Unable to create SDL texture");
-
     SDL_DestroySurface(surface);
+
+    SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
     return m_impl->texture_pool.emplace(texture);
 }
 
@@ -91,6 +93,11 @@ void SDL3Renderer::command(const RenderCommandDraw &command) {
         .h = static_cast<float>(command.height),
     };
 
+    Uint8 r = ((command.color & 0xFF000000) >> 24);
+    Uint8 g = ((command.color & 0x00FF0000) >> 16);
+    Uint8 b = ((command.color & 0x0000FF00) >> 8);
+    Uint8 a = ((command.color & 0x000000FF) >> 0);
+
     if (command.texture.has_value()) {
         Handle handle = command.texture.value();
         SDL_Texture **slot = m_impl->texture_pool.get(handle);
@@ -103,12 +110,10 @@ void SDL3Renderer::command(const RenderCommandDraw &command) {
             .w = static_cast<float>(texture->w),
             .h = static_cast<float>(texture->h),
         };
+        SDL_SetTextureColorMod(texture, r, g, b);
+        SDL_SetTextureAlphaMod(texture, a);
         SDL_RenderTexture(m_impl->renderer, texture, &rect, &dest);
     } else {
-        Uint8 r = ((command.color & 0xFF000000) >> 24);
-        Uint8 g = ((command.color & 0x00FF0000) >> 16);
-        Uint8 b = ((command.color & 0x0000FF00) >> 8);
-        Uint8 a = ((command.color & 0x000000FF) >> 0);
         SDL_SetRenderDrawColor(m_impl->renderer, r, g, b, a);
         SDL_RenderFillRect(m_impl->renderer, &dest);
     }
