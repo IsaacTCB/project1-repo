@@ -6,6 +6,7 @@
 #include "sdl3_common.h"
 #include "sdl3_main.h"
 
+#include "core/assertion.h"
 #include "core/events/input_events.h"
 #include "core/events/window_events.h"
 
@@ -27,6 +28,11 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
     impl.close(result);
+}
+
+static Key::Scancode convert_scancode(SDL_Scancode scancode) {
+    ASSERT(scancode >= 0 && scancode < Key::SCANCODE_COUNT);
+    return static_cast<Key::Scancode>(scancode);
 }
 
 SDL_AppResult PlatformImpl::init() {
@@ -64,7 +70,7 @@ SDL_AppResult PlatformImpl::iterate() {
     return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult PlatformImpl::event(const SDL_Event &event) {
+SDL_AppResult PlatformImpl::event(SDL_Event &event) {
     switch (event.type) {
         case SDL_EVENT_QUIT:
             m_state.running = false;
@@ -93,8 +99,8 @@ SDL_AppResult PlatformImpl::event(const SDL_Event &event) {
         case SDL_EVENT_KEY_DOWN:
         case SDL_EVENT_KEY_UP:
             m_platform.submit_event<EventInput>(EventInputKey{
-                .key = event.key.key,
-                .scancode = event.key.scancode,
+                .key = convert_scancode(SDL_GetScancodeFromKey(event.key.key, &event.key.mod)),
+                .scancode = convert_scancode(event.key.scancode),
                 .pressed = event.key.down,
                 .repeat = event.key.repeat,
             });

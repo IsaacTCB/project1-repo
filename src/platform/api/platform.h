@@ -1,9 +1,9 @@
 #pragma once
 
 #include "application_handler.h"
-#include "events.h"
 
 #include "display_server.h"
+#include "event_server.h"
 #include "io_server.h"
 #include "os_server.h"
 
@@ -25,6 +25,10 @@ public:
         return this->m_display_server;
     }
 
+    EventServer &event() {
+        return this->m_event_server;
+    }
+
 protected:
     void init();
     void close();
@@ -33,15 +37,15 @@ protected:
 
     template <typename T, typename... Args>
     void submit_event(Args &&...args) {
-        m_events.emplace<T>(std::forward<Args>(args)...);
+        m_event_server.submit<T>(std::forward<Args>(args)...);
     }
 
 private:
     OSServer m_os_server;
     IOServer m_io_server;
     DisplayServer m_display_server;
+    EventServer m_event_server;
 
-    EventQueue m_events;
     ApplicationHandler m_app_handler;
 
     explicit Platform(PlatformImplState &state)

@@ -1,6 +1,8 @@
 #include <cmath>
 #include <memory>
 
+#include "core/events/input_events.h"
+#include "core/events/window_events.h"
 #include "core/image/decoder.h"
 #include "core/logger.h"
 
@@ -9,6 +11,8 @@
 
 #include "renderer/api/render_queue.h"
 #include "renderer/api/renderer.h"
+
+#include "test/input_service.h"
 
 class TestApplication : public IApplication {
     DECLARE_APP(TestApplication);
@@ -52,9 +56,38 @@ public:
         /* poll window size */
         auto [width, height] = display.get_size(m_window);
         LOG_INFO("display size: {0}x{1}", width, height);
+
+        m_input_service.init();
     }
 
-    void on_update(float delta) override {}
+    void on_update(float delta) override {
+        // m_input_service.update(delta);
+        for (const auto &event : m_platform->event().span<EventWindow>()) {
+            if (const auto *ptr = std::get_if<EventWindowResized>(&event)) {
+                LOG_TRACE("{0}x{1}", ptr->width, ptr->height);
+            }
+            if (std::get_if<EventWindowMaximized>(&event)) {
+                LOG_TRACE("maximized");
+            }
+            if (std::get_if<EventWindowMinimized>(&event)) {
+                LOG_TRACE("minimized");
+            }
+        }
+
+        m_input_service.update();
+
+        for (const auto &event : m_platform->event().span<EventInput>()) {
+            m_input_service.event(event);
+        }
+
+        if (m_input_service.is_key_just_pressed(Key::Scancode::SPACE)) {
+            LOG_TRACE("Damn");
+        }
+
+        if (m_input_service.is_key_just_released(Key::Scancode::SPACE)) {
+            LOG_TRACE("Undamn");
+        }
+    }
 
     void on_render() override {
         constexpr float SPEED = 3.0f;
@@ -71,12 +104,17 @@ public:
         m_queue.draw_color(RGBA8(48, 45, 120, 80), 40, 40, 320, 320);
         m_queue.draw_texture(m_texture, 40 + (sin * MAGNITUDE), 38 + (cos * MAGNITUDE), 200, 200);
 
+        auto [mouse_x, mouse_y] = m_input_service.get_mouse_pos();
+        m_queue.draw_color(0xFF00FFFF, mouse_x, mouse_y, 8, 8);
+
         m_renderer->clear(0.1f, 0.1f, 0.1f, 0.0f);
         m_renderer->render_pass(m_queue);
         m_renderer->swap_buffers();
     }
 
     void on_close() override {
+        m_input_service.close();
+
         m_renderer->destroy_texture(m_texture);
         m_renderer.reset();
 
@@ -89,6 +127,8 @@ private:
 
     TextureHandle m_texture;
     RenderQueue m_queue;
+
+    InputService m_input_service;
 };
 
 SET_APP(TestApplication)

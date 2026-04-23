@@ -3,11 +3,13 @@
 #include <cstdint>
 #include <variant>
 
+#include "core/keys/scancodes.h"
+
 /* Keyboard events */
 
 struct EventInputKey {
-    uint32_t key;
-    uint32_t scancode;
+    Key::Scancode key;
+    Key::Scancode scancode;
     bool pressed;
     bool repeat;
 };
