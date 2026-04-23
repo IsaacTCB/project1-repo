@@ -18,7 +18,7 @@ void InputService::close() {
 }
 
 void InputService::update() {
-    for (size_t i = 0; i < 512; ++i) {
+    for (size_t i = 0; i < Key::SCANCODE_COUNT; ++i) {
         m_key_state[Key::SCANCODE_COUNT + i] = m_key_state[i];
     }
 }
