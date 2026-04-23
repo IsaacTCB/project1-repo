@@ -196,13 +196,14 @@ static ImplTexture gl_create_texture(ImageData &image) {
 }
 
 void GLRenderer::command(const RenderCommandDraw &command) {
-    ImplTexture *texture;
+    ImplTexture *texture = nullptr;
     if (command.texture.has_value()) {
         TextureHandle handle = command.texture.value();
         texture = m_impl->texture_pool.get(handle);
     } else {
         texture = &m_impl->white_texture;
     }
+    ASSERT(texture, "Texture is still nullptr");
 
     glBindVertexArray(m_impl->vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_impl->ibo);
