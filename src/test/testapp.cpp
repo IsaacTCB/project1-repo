@@ -87,22 +87,28 @@ public:
         if (m_input_service.is_key_just_released(Key::Scancode::SPACE)) {
             LOG_TRACE("Undamn");
         }
+
+        constexpr float PLAYER_SPEED = 3.0f;
+        if (m_input_service.is_key_pressed(Key::Scancode::A)) {
+            m_entity.x -= PLAYER_SPEED;
+        } else if (m_input_service.is_key_pressed(Key::Scancode::D)) {
+            m_entity.x += PLAYER_SPEED;
+        }
+
+        if (m_input_service.is_key_pressed(Key::Scancode::W)) {
+            m_entity.y -= PLAYER_SPEED;
+        } else if (m_input_service.is_key_pressed(Key::Scancode::S)) {
+            m_entity.y += PLAYER_SPEED;
+        }
     }
 
     void on_render() override {
-        constexpr float SPEED = 3.0f;
-        constexpr float MAGNITUDE = 30.0f;
-
-        float time = m_platform->os().get_ticks_sec();
-        float sin = std::sinf(time * SPEED);
-        float cos = std::cosf(time * SPEED);
-
         m_queue.clear();
 
         /* TODO: verify if texture actually exists. */
         m_queue.draw_color(RGB8(88, 90, 220), 0, 0, 400, 400);
         m_queue.draw_color(RGBA8(48, 45, 120, 80), 40, 40, 320, 320);
-        m_queue.draw_texture(m_texture, 40 + (sin * MAGNITUDE), 38 + (cos * MAGNITUDE), 200, 200);
+        m_queue.draw_texture(m_texture, m_entity.x, m_entity.y, 200, 200);
 
         auto [mouse_x, mouse_y] = m_input_service.get_mouse_pos();
         m_queue.draw_color(0xFF00FFFF, mouse_x, mouse_y, 8, 8);
@@ -122,6 +128,12 @@ public:
     }
 
 private:
+    struct Entity {
+        float x = 0.0f;
+        float y = 0.0f;
+    };
+
+    Entity m_entity;
     DisplayWindowHandle m_window;
     std::unique_ptr<Renderer> m_renderer;
 
