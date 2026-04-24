@@ -1,7 +1,6 @@
 #include "input_service.h"
 
 #include "core/assertion.h"
-#include "core/logger.h"
 
 #include "core/keys/scancodes.h"
 
@@ -84,27 +83,27 @@ bool InputService::is_key_just_released(Key::Scancode scancode) const {
     return !m_key_state.at(index) && m_key_state.at(Key::SCANCODE_COUNT + index);
 }
 
+static inline bool get_mouse_state_flag_at(uint8_t bitfield, size_t index) {
+    uint8_t mask = GET_MOUSE_BIT(index);
+    return (bitfield & mask) != 0;
+}
+
 bool InputService::is_mouse_button_pressed(Key::MouseButtons button) const {
     size_t index = get_mouse_button_index(button);
     ASSERT(index < Key::MOUSE_BUTTON_COUNT);
-    uint8_t mask = GET_MOUSE_BIT(index);
-    return (m_mouse_state & mask) != 0;
+    return get_mouse_state_flag_at(m_mouse_state, index);
 }
 
 bool InputService::is_mouse_button_just_pressed(Key::MouseButtons button) const {
     size_t index = get_mouse_button_index(button);
     ASSERT(index < Key::MOUSE_BUTTON_COUNT);
-    uint8_t mask = GET_MOUSE_BIT(index);
-    bool a = (m_mouse_state & mask) != 0;
-    bool b = (m_mouse_state_previous & mask) != 0;
-    return a && !b;
+    return (get_mouse_state_flag_at(m_mouse_state, index) &&
+            !get_mouse_state_flag_at(m_mouse_state_previous, index));
 }
 
 bool InputService::is_mouse_button_just_released(Key::MouseButtons button) const {
     size_t index = get_mouse_button_index(button);
     ASSERT(index < Key::MOUSE_BUTTON_COUNT);
-    uint8_t mask = GET_MOUSE_BIT(index);
-    bool a = (m_mouse_state & mask) != 0;
-    bool b = (m_mouse_state_previous & mask) != 0;
-    return !a && b;
+    return (!get_mouse_state_flag_at(m_mouse_state, index) &&
+            get_mouse_state_flag_at(m_mouse_state_previous, index));
 }
