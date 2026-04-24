@@ -25,9 +25,14 @@ void InputService::close() {
 
 void InputService::update() {
     m_mouse_state_previous = m_mouse_state;
-    for (size_t i = 0; i < Key::SCANCODE_COUNT; ++i) {
-        m_key_state[Key::SCANCODE_COUNT + i] = m_key_state[i];
-    }
+
+    /* update previous key state */
+    ASSERT(m_key_state.size() >= Key::SCANCODE_COUNT * 2,
+        "Invalid m_key_state size!");
+    std::copy(
+        m_key_state.begin(),
+        m_key_state.begin() + Key::SCANCODE_COUNT,
+        m_key_state.begin() + Key::SCANCODE_COUNT);
 }
 
 [[nodiscard]]
@@ -48,6 +53,7 @@ void InputService::event(const EventInput &event) {
             return;
         }
         size_t idx = get_scancode_index(ptr->scancode);
+        ASSERT(idx < Key::SCANCODE_COUNT, "Keyboard key out-of-range");
         m_key_state.at(idx) = ptr->pressed;
     }
     if (const auto *ptr = std::get_if<EventInputMouseMotion>(&event)) {
@@ -56,10 +62,14 @@ void InputService::event(const EventInput &event) {
     }
     if (const auto *ptr = std::get_if<EventInputMouseButton>(&event)) {
         size_t idx = get_mouse_button_index(ptr->button);
+        ASSERT(idx < Key::MOUSE_BUTTON_COUNT - 1, "Mouse button out-of-range");
+
         uint8_t mask = GET_MOUSE_BIT(idx);
         if (ptr->pressed) {
+            /* turn mouse bit on */
             m_mouse_state |= mask;
         } else {
+            /* turn mouse bit off*/
             m_mouse_state &= ~mask;
         }
     }
