@@ -48,24 +48,26 @@ static size_t get_mouse_button_index(Key::MouseButtons button) {
 }
 
 void InputService::event(const EventInput &event) {
-    if (const auto *ptr = std::get_if<EventInputKey>(&event)) {
-        if (ptr->repeat) {
+    /* Keyboard-related events */
+    if (const auto *kbkey = std::get_if<EventInputKey>(&event)) {
+        if (kbkey->repeat) {
             return;
         }
-        size_t idx = get_scancode_index(ptr->scancode);
+        size_t idx = get_scancode_index(kbkey->scancode);
         ASSERT(idx < Key::SCANCODE_COUNT, "Keyboard key out-of-range");
-        m_key_state.at(idx) = ptr->pressed;
+        m_key_state.at(idx) = kbkey->pressed;
     }
-    if (const auto *ptr = std::get_if<EventInputMouseMotion>(&event)) {
-        m_mouse_x = ptr->screen_x;
-        m_mouse_y = ptr->screen_y;
+    /* Mouse-related events */
+    if (const auto *mouse = std::get_if<EventInputMouseMotion>(&event)) {
+        m_mouse_x = mouse->screen_x;
+        m_mouse_y = mouse->screen_y;
     }
-    if (const auto *ptr = std::get_if<EventInputMouseButton>(&event)) {
-        size_t idx = get_mouse_button_index(ptr->button);
+    if (const auto *mbutton = std::get_if<EventInputMouseButton>(&event)) {
+        size_t idx = get_mouse_button_index(mbutton->button);
         ASSERT(idx < Key::MOUSE_BUTTON_COUNT - 1, "Mouse button out-of-range");
 
         uint8_t mask = GET_MOUSE_BIT(idx);
-        if (ptr->pressed) {
+        if (mbutton->pressed) {
             /* turn mouse bit on */
             m_mouse_state |= mask;
         } else {
@@ -74,6 +76,10 @@ void InputService::event(const EventInput &event) {
         }
     }
 }
+
+/* ============== */
+/*    Keyboard    */
+/* ============== */
 
 bool InputService::is_key_pressed(Key::Scancode scancode) const {
     size_t index = get_scancode_index(scancode);
@@ -92,6 +98,10 @@ bool InputService::is_key_just_released(Key::Scancode scancode) const {
     ASSERT(index < Key::SCANCODE_COUNT);
     return !m_key_state.at(index) && m_key_state.at(Key::SCANCODE_COUNT + index);
 }
+
+/* ================= */
+/*   Mouse buttons   */
+/* ================= */
 
 static inline bool get_mouse_state_flag_at(uint8_t bitfield, size_t index) {
     uint8_t mask = GET_MOUSE_BIT(index);
