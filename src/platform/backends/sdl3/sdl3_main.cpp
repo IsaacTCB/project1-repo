@@ -1,7 +1,7 @@
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_events.h>
-#include <SDL3/SDL_keyboard.h>
 #include <SDL3/SDL_main.h>
+
+#include <cstdint>
 
 #include "sdl3_common.h"
 #include "sdl3_main.h"
@@ -33,6 +33,11 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result) {
 static Key::Scancode convert_scancode(SDL_Scancode scancode) {
     ASSERT(scancode >= 0 && scancode < Key::SCANCODE_COUNT);
     return static_cast<Key::Scancode>(scancode);
+}
+
+static Key::MouseButtons convert_mouse_button(uint8_t button) {
+    ASSERT(button > 0 && button < Key::MOUSE_BUTTON_COUNT);
+    return static_cast<Key::MouseButtons>(button);
 }
 
 SDL_AppResult PlatformImpl::init() {
@@ -116,7 +121,7 @@ SDL_AppResult PlatformImpl::event(SDL_Event &event) {
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
         case SDL_EVENT_MOUSE_BUTTON_UP:
             m_platform.submit_event<EventInput>(EventInputMouseButton{
-                .button = event.button.button,
+                .button = convert_mouse_button(event.button.button),
                 .pressed = event.button.down,
             });
             break;

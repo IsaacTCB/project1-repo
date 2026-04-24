@@ -17,7 +17,7 @@ struct EventInputKey {
 /* Mouse events */
 
 struct EventInputMouseButton {
-    uint32_t button;
+    Key::MouseButtons button;
     bool pressed;
 };
 

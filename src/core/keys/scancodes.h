@@ -5,6 +5,16 @@
 
 namespace Key {
 
+enum class MouseButtons : uint8_t {
+    UNKNOWN = 0,
+
+    LEFT = 1,
+    MIDDLE = 2,
+    RIGHT = 3,
+    EXTRA1 = 4,
+    EXTRA2 = 5,
+};
+
 /* Adapted from SDL3:
  * https://github.com/libsdl-org/SDL/blob/main/include/SDL3/SDL_scancode.h
  */
@@ -290,6 +300,7 @@ enum class Scancode : uint16_t {
     ENDCALL = 290,
 };
 
+constexpr size_t MOUSE_BUTTON_COUNT = 6;
 constexpr size_t SCANCODE_COUNT = 512;
 
 } // namespace Key

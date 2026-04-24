@@ -5,9 +5,16 @@
 
 #include "core/keys/scancodes.h"
 
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
 
+#define GET_MOUSE_BIT(index) (1 << index)
+
 void InputService::init() {
+    m_mouse_state = 0;
+    m_mouse_state_previous = 0;
+
     /* SoA containing both current pressed keys and last pressed keys
     This gets stored contigously in memory, like: [keys][last keys] */
     m_key_state.resize(Key::SCANCODE_COUNT * 2, false);
@@ -18,6 +25,7 @@ void InputService::close() {
 }
 
 void InputService::update() {
+    m_mouse_state_previous = m_mouse_state;
     for (size_t i = 0; i < Key::SCANCODE_COUNT; ++i) {
         m_key_state[Key::SCANCODE_COUNT + i] = m_key_state[i];
     }
@@ -26,6 +34,13 @@ void InputService::update() {
 [[nodiscard]]
 static size_t get_scancode_index(Key::Scancode scancode) {
     return static_cast<size_t>(scancode);
+}
+
+[[nodiscard]]
+static size_t get_mouse_button_index(Key::MouseButtons button) {
+    auto index = static_cast<size_t>(button);
+    ASSERT(index > 0);
+    return index - 1;
 }
 
 void InputService::event(const EventInput &event) {
@@ -41,9 +56,13 @@ void InputService::event(const EventInput &event) {
         m_mouse_y = ptr->screen_y;
     }
     if (const auto *ptr = std::get_if<EventInputMouseButton>(&event)) {
-        LOG_TRACE("{} {}",
-            ptr->pressed ? "Pressed" : "Released",
-            ptr->button);
+        size_t idx = get_mouse_button_index(ptr->button);
+        uint8_t mask = GET_MOUSE_BIT(idx);
+        if (ptr->pressed) {
+            m_mouse_state |= mask;
+        } else {
+            m_mouse_state &= ~mask;
+        }
     }
 }
 
@@ -63,4 +82,29 @@ bool InputService::is_key_just_released(Key::Scancode scancode) const {
     size_t index = get_scancode_index(scancode);
     ASSERT(index < Key::SCANCODE_COUNT);
     return !m_key_state.at(index) && m_key_state.at(Key::SCANCODE_COUNT + index);
+}
+
+bool InputService::is_mouse_button_pressed(Key::MouseButtons button) const {
+    size_t index = get_mouse_button_index(button);
+    ASSERT(index < Key::MOUSE_BUTTON_COUNT);
+    uint8_t mask = GET_MOUSE_BIT(index);
+    return (m_mouse_state & mask) != 0;
+}
+
+bool InputService::is_mouse_button_just_pressed(Key::MouseButtons button) const {
+    size_t index = get_mouse_button_index(button);
+    ASSERT(index < Key::MOUSE_BUTTON_COUNT);
+    uint8_t mask = GET_MOUSE_BIT(index);
+    bool a = (m_mouse_state & mask) != 0;
+    bool b = (m_mouse_state_previous & mask) != 0;
+    return a && !b;
+}
+
+bool InputService::is_mouse_button_just_released(Key::MouseButtons button) const {
+    size_t index = get_mouse_button_index(button);
+    ASSERT(index < Key::MOUSE_BUTTON_COUNT);
+    uint8_t mask = GET_MOUSE_BIT(index);
+    bool a = (m_mouse_state & mask) != 0;
+    bool b = (m_mouse_state_previous & mask) != 0;
+    return !a && b;
 }

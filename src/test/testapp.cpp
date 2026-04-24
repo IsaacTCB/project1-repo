@@ -100,6 +100,13 @@ public:
         } else if (m_input_service.is_key_pressed(Key::Scancode::S)) {
             m_entity.y += PLAYER_SPEED;
         }
+
+        if (m_input_service.is_mouse_button_just_pressed(Key::MouseButtons::LEFT)) {
+            LOG_TRACE("Walk");
+        }
+        if (m_input_service.is_mouse_button_just_released(Key::MouseButtons::RIGHT)) {
+            LOG_TRACE("Walked");
+        }
     }
 
     void on_render() override {
