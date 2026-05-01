@@ -107,7 +107,7 @@ SDL_AppResult PlatformImpl::event(SDL_Event &event) {
             m_platform.submit_event<EventWindow>(EventWindowMinimized{});
             break;
 
-        /* Input events */
+        /* Keyboard/mouse input events */
         case SDL_EVENT_KEY_DOWN:
         case SDL_EVENT_KEY_UP:
             m_platform.submit_event<EventInput>(EventInputKey{
@@ -132,21 +132,23 @@ SDL_AppResult PlatformImpl::event(SDL_Event &event) {
                 .pressed = event.button.down,
             });
             break;
+
         /* Gamepad input events */
         case SDL_EVENT_GAMEPAD_ADDED:
             /* this event is sent for each hotplugged stick, but also each already-connected gamepad during SDL_Init(). */
             if (auto *pad = gamepad_init(event.gdevice.which)) {
                 LOG_TRACE("Opened gamepad ({0}): {1}", pad->index, pad->name);
             } else {
-                LOG_ERROR("failed to add gamepad {0}", event.gdevice.which);
+                LOG_ERROR("Failed to add gamepad {0}", event.gdevice.which);
             }
             break;
-        case SDL_EVENT_GAMEPAD_REMOVED: {
+        case SDL_EVENT_GAMEPAD_REMOVED:
             if (gamepad_close(event.gdevice.which)) {
                 LOG_TRACE("closed gamepad {0}", event.gdevice.which);
+            } else {
+                LOG_ERROR("Failed to close gamepad {0}", event.gdevice.which);
             }
             break;
-        }
         case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
         case SDL_EVENT_GAMEPAD_BUTTON_UP:
             if (auto *pad = gamepad_find(event.gbutton.which)) {
