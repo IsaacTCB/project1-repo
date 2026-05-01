@@ -137,14 +137,20 @@ SDL_AppResult PlatformImpl::event(SDL_Event &event) {
         case SDL_EVENT_GAMEPAD_ADDED:
             /* this event is sent for each hotplugged stick, but also each already-connected gamepad during SDL_Init(). */
             if (auto *pad = gamepad_init(event.gdevice.which)) {
-                LOG_TRACE("Opened gamepad ({0}): {1}", pad->index, pad->name);
+                m_platform.submit_event<EventInput>(EventInputGamepadConnected{
+                    .pad = pad->index,
+                    .name = pad->name,
+                });
             } else {
                 LOG_ERROR("Failed to add gamepad {0}", event.gdevice.which);
             }
             break;
         case SDL_EVENT_GAMEPAD_REMOVED:
-            if (gamepad_close(event.gdevice.which)) {
-                LOG_TRACE("closed gamepad {0}", event.gdevice.which);
+            if (auto *pad = gamepad_find(event.gdevice.which)) {
+                gamepad_close(event.gdevice.which);
+                m_platform.submit_event<EventInput>(EventInputGamepadDisconnected{
+                    .pad = pad->index,
+                });
             } else {
                 LOG_ERROR("Failed to close gamepad {0}", event.gdevice.which);
             }
@@ -152,12 +158,11 @@ SDL_AppResult PlatformImpl::event(SDL_Event &event) {
         case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
         case SDL_EVENT_GAMEPAD_BUTTON_UP:
             if (auto *pad = gamepad_find(event.gbutton.which)) {
-                LOG_TRACE("{0} ({1}) -> {2} ({3})",
-                    pad->name, pad->index,
-                    event.gbutton.button,
-                    event.gbutton.down
-                        ? "pressed"
-                        : "released");
+                m_platform.submit_event<EventInput>(EventInputGamepadButton{
+                    .pad = pad->index,
+                    .button = static_cast<Gamepad::Buttons>(event.gbutton.button),
+                    .pressed = event.gbutton.down,
+                });
             }
             break;
             /*

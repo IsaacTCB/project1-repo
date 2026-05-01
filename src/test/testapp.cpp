@@ -1,4 +1,3 @@
-#include <cmath>
 #include <memory>
 
 #include "core/events/input_events.h"

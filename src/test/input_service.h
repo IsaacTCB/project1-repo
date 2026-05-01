@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/events/input_events.h"
+#include "core/keys/gamepad.h"
 #include "core/keys/scancodes.h"
 
 #include <tuple>
@@ -41,4 +42,8 @@ private:
     uint8_t m_mouse_state, m_mouse_state_previous;
     std::vector<bool> m_key_state;
     float m_mouse_x = 0.0f, m_mouse_y = 0.0f;
+
+    bool m_gamepad_connected[Gamepad::GAMEPAD_MAX];
+    uint32_t m_pad_state[Gamepad::GAMEPAD_MAX];
+    uint32_t m_pad_state_previous[Gamepad::GAMEPAD_MAX];
 };

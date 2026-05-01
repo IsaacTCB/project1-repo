@@ -2,6 +2,7 @@
 
 #include "core/assertion.h"
 
+#include "core/keys/gamepad.h"
 #include "core/keys/scancodes.h"
 
 #include <cstddef>
@@ -25,6 +26,11 @@ void InputService::close() {
 
 void InputService::update() {
     m_mouse_state_previous = m_mouse_state;
+
+    std::copy(
+        m_pad_state,
+        m_pad_state + Gamepad::GAMEPAD_MAX,
+        m_pad_state_previous);
 
     /* update previous key state */
     ASSERT(m_key_state.size() >= Key::SCANCODE_COUNT * 2,
@@ -74,6 +80,18 @@ void InputService::event(const EventInput &event) {
             /* turn mouse bit off*/
             m_mouse_state &= ~mask;
         }
+    } else if (const auto *gamepad = std::get_if<EventInputGamepadConnected>(&event)) {
+        auto pad = static_cast<size_t>(gamepad->pad);
+        m_gamepad_connected[pad] = true;
+    } else if (const auto *gamepad = std::get_if<EventInputGamepadDisconnected>(&event)) {
+        auto pad = static_cast<size_t>(gamepad->pad);
+        m_gamepad_connected[pad] = false;
+    } else if (const auto *gamepad = std::get_if<EventInputGamepadButton>(&event)) {
+        auto pad = static_cast<size_t>(gamepad->pad);
+        ASSERT(m_gamepad_connected[pad], "Gamepad is not connected");
+
+        auto btn = static_cast<size_t>(gamepad->button);
+        m_pad_state[pad] = gamepad->pressed;
     }
 }
 

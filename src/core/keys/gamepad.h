@@ -4,6 +4,9 @@
 
 namespace Gamepad {
 
+using Handle = std::int8_t;
+constexpr int GAMEPAD_MAX = 16; /* Max number of gamepads supported at once. */
+
 enum class Buttons : uint8_t {
     /* Face buttons */
     SOUTH,
@@ -42,8 +45,8 @@ enum class Buttons : uint8_t {
     MISC4, /* (e.g. Nintendo GameCube right trigger click) */
     MISC5,
     MISC6,
-};
 
-constexpr int GAMEPAD_MAX = 16; /* Max number of gamepads supported at once. */
+    COUNT,
+};
 
 }; // namespace Gamepad
