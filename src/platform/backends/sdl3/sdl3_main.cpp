@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "sdl3_common.h"
+#include "sdl3_gamepad.h"
 #include "sdl3_main.h"
 
 #include "core/assertion.h"
@@ -43,10 +44,16 @@ static Key::MouseButtons convert_mouse_button(uint8_t button) {
 SDL_AppResult PlatformImpl::init() {
     log_init();
 
-    if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO)) {
-        LOG_CRITICAL("Failed to initialize SDL3");
+    if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
+        LOG_CRITICAL("Failed to initialize SDL3. Reason: {0}", SDL_GetError());
         m_state.running = false;
         return SDL_APP_FAILURE;
+    }
+
+    if (int result = SDL_AddGamepadMappingsFromFile("gamecontrollerdb.txt") >= 0) {
+        LOG_TRACE("Loaded {0} gamepad mappings.", result);
+    } else if (result < 0) {
+        LOG_ERROR("Failed to load gamecontrollerdb.txt mappings. Reason: {0}", SDL_GetError());
     }
 
     m_state.running = true;
@@ -125,6 +132,43 @@ SDL_AppResult PlatformImpl::event(SDL_Event &event) {
                 .pressed = event.button.down,
             });
             break;
+        /* Gamepad input events */
+        case SDL_EVENT_GAMEPAD_ADDED:
+            /* this event is sent for each hotplugged stick, but also each already-connected gamepad during SDL_Init(). */
+            if (auto *pad = gamepad_init(event.gdevice.which)) {
+                LOG_TRACE("Opened gamepad ({0}): {1}", pad->index, pad->name);
+            } else {
+                LOG_ERROR("failed to add gamepad {0}", event.gdevice.which);
+            }
+            break;
+        case SDL_EVENT_GAMEPAD_REMOVED: {
+            if (gamepad_close(event.gdevice.which)) {
+                LOG_TRACE("closed gamepad {0}", event.gdevice.which);
+            }
+            break;
+        }
+        case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+        case SDL_EVENT_GAMEPAD_BUTTON_UP:
+            if (auto *pad = gamepad_find(event.gbutton.which)) {
+                LOG_TRACE("{0} ({1}) -> {2} ({3})",
+                    pad->name, pad->index,
+                    event.gbutton.button,
+                    event.gbutton.down
+                        ? "pressed"
+                        : "released");
+            }
+            break;
+            /*
+            case SDL_EVENT_GAMEPAD_AXIS_MOTION:
+                if (auto *pad = gamepad_find(event.gaxis.which)) {
+                    if (event.gaxis.axis > 1) {
+                        break;
+                    }
+                    LOG_TRACE("{0} ({1}) -> {2}: {3}",
+                        pad->name, pad->index,
+                        event.gaxis.axis, event.gaxis.value);
+                }
+            */
     }
     return SDL_APP_CONTINUE;
 }
