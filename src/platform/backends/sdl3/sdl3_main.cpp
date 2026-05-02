@@ -82,6 +82,7 @@ SDL_AppResult PlatformImpl::event(const SDL_Event &event) {
                 .x = event.window.data1,
                 .y = event.window.data2,
             });
+            break;
         case SDL_EVENT_WINDOW_MAXIMIZED:
             m_platform.submit_event<EventWindow>(EventWindowMaximized{});
             break;
