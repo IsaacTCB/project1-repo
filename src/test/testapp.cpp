@@ -87,6 +87,14 @@ public:
             LOG_TRACE("Undamn");
         }
 
+        if (m_input_service.is_pad_button_just_pressed(0, Gamepad::Buttons::SOUTH)) {
+            LOG_TRACE("Hello");
+        }
+
+        if (m_input_service.is_pad_button_just_released(0, Gamepad::Buttons::SOUTH)) {
+            LOG_TRACE("Unhello");
+        }
+
         constexpr float PLAYER_SPEED = 3.0f;
         if (m_input_service.is_key_pressed(Key::Scancode::A)) {
             m_entity.x -= PLAYER_SPEED;
