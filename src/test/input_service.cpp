@@ -28,6 +28,7 @@ void InputService::close() {
 void InputService::update() {
     m_mouse_state_previous = m_mouse_state;
 
+    /* update previous pad state */
     std::ranges::copy(
         m_pad_state,
         m_pad_state_previous.begin());
@@ -43,10 +44,12 @@ void InputService::update() {
     /* clear all disconnected pads. */
     for (size_t i = 0; i < Gamepad::GAMEPAD_MAX; i++) {
         if (!m_pad_connected[i]) {
-            m_pad_state[i].buttons = 0u;
-            /* cleaning the previous state arent needed,
+            /* cleaning the previous state isnt needed,
              * because i'd like for them to trigger on
              * pad disconnect. */
+            auto *state = &m_pad_state[i];
+            state->buttons = 0u;
+            std::ranges::fill(state->axis, 0.0f);
         }
     }
 }

@@ -90,7 +90,7 @@ private:
 
     struct PadState {
         uint32_t buttons = 0;
-        float axis[Gamepad::AXIS_COUNT] = {0};
+        std::array<float, Gamepad::AXIS_COUNT> axis = {0};
     };
 
     std::array<bool, Gamepad::GAMEPAD_MAX> m_pad_connected;
