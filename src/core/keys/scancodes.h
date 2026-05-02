@@ -13,6 +13,8 @@ enum class MouseButtons : uint8_t {
     RIGHT = 3,
     EXTRA1 = 4,
     EXTRA2 = 5,
+
+    COUNT = 6,
 };
 
 /* Adapted from SDL3:
@@ -298,9 +300,11 @@ enum class Scancode : uint16_t {
 
     CALL = 289,
     ENDCALL = 290,
+
+    COUNT = 512,
 };
 
-constexpr size_t MOUSE_BUTTON_COUNT = 6;
-constexpr size_t SCANCODE_COUNT = 512;
+constexpr auto MOUSE_BUTTON_COUNT = static_cast<size_t>(MouseButtons::COUNT);
+constexpr auto SCANCODE_COUNT = static_cast<size_t>(Scancode::COUNT);
 
 } // namespace Key

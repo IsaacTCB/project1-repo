@@ -118,7 +118,7 @@ void InputService::event(const EventInput &event) {
         }
 
         size_t idx = get_pad_button_index(gamepad->button);
-        ASSERT(idx < 32, "Gamepad button out-of-range");
+        ASSERT(idx < Gamepad::BUTTON_COUNT, "Gamepad button out-of-range");
 
         uint32_t mask = GET_BIT(idx);
         if (gamepad->pressed) {
@@ -186,7 +186,7 @@ bool InputService::is_pad_button_pressed(Gamepad::Handle device, Gamepad::Button
     ASSERT(pad < Gamepad::GAMEPAD_MAX);
 
     size_t index = get_pad_button_index(button);
-    ASSERT(index < 32);
+    ASSERT(index < Gamepad::BUTTON_COUNT);
     return get_flag_at(m_pad_state[pad], index);
 }
 
@@ -195,7 +195,7 @@ bool InputService::is_pad_button_just_pressed(Gamepad::Handle device, Gamepad::B
     ASSERT(pad < Gamepad::GAMEPAD_MAX);
 
     size_t index = get_pad_button_index(button);
-    ASSERT(index < 32);
+    ASSERT(index < Gamepad::BUTTON_COUNT);
     return (get_flag_at(m_pad_state[pad], index) &&
             !get_flag_at(m_pad_state_previous[pad], index));
 }
@@ -205,7 +205,7 @@ bool InputService::is_pad_button_just_released(Gamepad::Handle device, Gamepad::
     ASSERT(pad < Gamepad::GAMEPAD_MAX);
 
     size_t index = get_pad_button_index(button);
-    ASSERT(index < 32);
+    ASSERT(index < Gamepad::BUTTON_COUNT);
     return (!get_flag_at(m_pad_state[pad], index) &&
             get_flag_at(m_pad_state_previous[pad], index));
 }

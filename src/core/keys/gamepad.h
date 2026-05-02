@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 
 namespace Gamepad {
@@ -48,5 +49,7 @@ enum class Buttons : uint8_t {
 
     COUNT,
 };
+
+constexpr auto BUTTON_COUNT = static_cast<size_t>(Gamepad::Buttons::COUNT);
 
 }; // namespace Gamepad
