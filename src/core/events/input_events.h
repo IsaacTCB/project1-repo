@@ -32,16 +32,16 @@ struct EventInputMouseMotion {
 /* Gamepad events */
 
 struct EventInputGamepadConnected {
-    Gamepad::Handle pad;
+    Gamepad::DeviceID pad;
     std::string_view name;
 };
 
 struct EventInputGamepadDisconnected {
-    Gamepad::Handle pad;
+    Gamepad::DeviceID pad;
 };
 
 struct EventInputGamepadButton {
-    Gamepad::Handle pad;
+    Gamepad::DeviceID pad;
     Gamepad::Buttons button;
     bool pressed;
 };

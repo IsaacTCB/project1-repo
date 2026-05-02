@@ -5,7 +5,7 @@
 
 namespace Gamepad {
 
-using Handle = std::int8_t;
+using DeviceID = std::int8_t;
 constexpr int GAMEPAD_MAX = 16; /* Max number of gamepads supported at once. */
 
 enum class Buttons : uint8_t {

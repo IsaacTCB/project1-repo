@@ -181,7 +181,7 @@ bool InputService::is_mouse_button_just_released(Key::MouseButtons button) const
 /*   Gamepad buttons   */
 /* =================== */
 
-bool InputService::is_pad_button_pressed(Gamepad::Handle device, Gamepad::Buttons button) const {
+bool InputService::is_pad_button_pressed(Gamepad::DeviceID device, Gamepad::Buttons button) const {
     auto pad = static_cast<size_t>(device);
     ASSERT(pad < Gamepad::GAMEPAD_MAX);
 
@@ -190,7 +190,7 @@ bool InputService::is_pad_button_pressed(Gamepad::Handle device, Gamepad::Button
     return get_flag_at(m_pad_state[pad], index);
 }
 
-bool InputService::is_pad_button_just_pressed(Gamepad::Handle device, Gamepad::Buttons button) const {
+bool InputService::is_pad_button_just_pressed(Gamepad::DeviceID device, Gamepad::Buttons button) const {
     auto pad = static_cast<size_t>(device);
     ASSERT(pad < Gamepad::GAMEPAD_MAX);
 
@@ -200,7 +200,7 @@ bool InputService::is_pad_button_just_pressed(Gamepad::Handle device, Gamepad::B
             !get_flag_at(m_pad_state_previous[pad], index));
 }
 
-bool InputService::is_pad_button_just_released(Gamepad::Handle device, Gamepad::Buttons button) const {
+bool InputService::is_pad_button_just_released(Gamepad::DeviceID device, Gamepad::Buttons button) const {
     auto pad = static_cast<size_t>(device);
     ASSERT(pad < Gamepad::GAMEPAD_MAX);
 

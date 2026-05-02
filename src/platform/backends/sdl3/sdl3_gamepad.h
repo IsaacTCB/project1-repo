@@ -8,7 +8,7 @@
 #include "core/keys/gamepad.h"
 
 struct ImplGamepad {
-    Gamepad::Handle index = 0;
+    Gamepad::DeviceID index = 0;
     SDL_JoystickID which = 0;
     SDL_Gamepad *gamepad = nullptr;
     std::string name;

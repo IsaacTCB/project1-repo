@@ -39,13 +39,13 @@ public:
     }
 
     [[nodiscard]]
-    bool is_pad_button_pressed(Gamepad::Handle device, Gamepad::Buttons button) const;
+    bool is_pad_button_pressed(Gamepad::DeviceID device, Gamepad::Buttons button) const;
 
     [[nodiscard]]
-    bool is_pad_button_just_pressed(Gamepad::Handle device, Gamepad::Buttons button) const;
+    bool is_pad_button_just_pressed(Gamepad::DeviceID device, Gamepad::Buttons button) const;
 
     [[nodiscard]]
-    bool is_pad_button_just_released(Gamepad::Handle device, Gamepad::Buttons button) const;
+    bool is_pad_button_just_released(Gamepad::DeviceID device, Gamepad::Buttons button) const;
 
 private:
     uint8_t m_mouse_state, m_mouse_state_previous;
