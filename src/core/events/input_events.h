@@ -46,10 +46,17 @@ struct EventInputGamepadButton {
     bool pressed;
 };
 
+struct EventInputGamepadAxisMotion {
+    Gamepad::DeviceID pad;
+    Gamepad::Axis axis;
+    float value;
+};
+
 using EventInput = std::variant<
     EventInputKey,
     EventInputMouseButton,
     EventInputMouseMotion,
     EventInputGamepadConnected,
     EventInputGamepadDisconnected,
-    EventInputGamepadButton>;
+    EventInputGamepadButton,
+    EventInputGamepadAxisMotion>;

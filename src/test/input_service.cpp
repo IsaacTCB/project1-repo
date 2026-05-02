@@ -43,7 +43,7 @@ void InputService::update() {
     /* clear all disconnected pads. */
     for (size_t i = 0; i < Gamepad::GAMEPAD_MAX; i++) {
         if (!m_pad_connected[i]) {
-            m_pad_state[i] = 0u;
+            m_pad_state[i].buttons = 0u;
             /* cleaning the previous state arent needed,
              * because i'd like for them to trigger on
              * pad disconnect. */
@@ -66,6 +66,14 @@ static size_t get_mouse_button_index(Key::MouseButtons button) {
 [[nodiscard]]
 static size_t get_pad_button_index(Gamepad::Buttons button) {
     auto index = static_cast<size_t>(button);
+    ASSERT(index >= 0);
+    return index;
+}
+
+[[nodiscard]]
+static size_t get_pad_axis_index(Gamepad::Axis axis) {
+    auto index = static_cast<size_t>(axis);
+    ASSERT(index >= 0);
     return index;
 }
 
@@ -131,11 +139,20 @@ void InputService::event(const EventInput &event) {
         uint32_t mask = GET_BIT(idx);
         if (gamepad->pressed) {
             /* turn pad bit on */
-            m_pad_state[pad] |= mask;
+            m_pad_state[pad].buttons |= mask;
         } else {
             /* turn pad bit off */
-            m_pad_state[pad] &= ~mask;
+            m_pad_state[pad].buttons &= ~mask;
         }
+        return;
+    }
+    if (const auto *gamepad = std::get_if<EventInputGamepadAxisMotion>(&event)) {
+        auto pad = static_cast<size_t>(gamepad->pad);
+        if (!m_pad_connected[pad]) {
+            return;
+        }
+        size_t axis = get_pad_axis_index(gamepad->axis);
+        m_pad_state[pad].axis[axis] = gamepad->value;
         return;
     }
 }
@@ -196,7 +213,7 @@ bool InputService::is_pad_button_pressed(Gamepad::DeviceID device, Gamepad::Butt
 
     size_t index = get_pad_button_index(button);
     ASSERT(index < Gamepad::BUTTON_COUNT);
-    return get_flag_at(m_pad_state[pad], index);
+    return get_flag_at(m_pad_state[pad].buttons, index);
 }
 
 bool InputService::is_pad_button_just_pressed(Gamepad::DeviceID device, Gamepad::Buttons button) const {
@@ -205,8 +222,8 @@ bool InputService::is_pad_button_just_pressed(Gamepad::DeviceID device, Gamepad:
 
     size_t index = get_pad_button_index(button);
     ASSERT(index < Gamepad::BUTTON_COUNT);
-    return (get_flag_at(m_pad_state[pad], index) &&
-            !get_flag_at(m_pad_state_previous[pad], index));
+    return (get_flag_at(m_pad_state[pad].buttons, index) &&
+            !get_flag_at(m_pad_state_previous[pad].buttons, index));
 }
 
 bool InputService::is_pad_button_just_released(Gamepad::DeviceID device, Gamepad::Buttons button) const {
@@ -215,6 +232,24 @@ bool InputService::is_pad_button_just_released(Gamepad::DeviceID device, Gamepad
 
     size_t index = get_pad_button_index(button);
     ASSERT(index < Gamepad::BUTTON_COUNT);
-    return (!get_flag_at(m_pad_state[pad], index) &&
-            get_flag_at(m_pad_state_previous[pad], index));
+    return (!get_flag_at(m_pad_state[pad].buttons, index) &&
+            get_flag_at(m_pad_state_previous[pad].buttons, index));
+}
+
+std::tuple<float, float> InputService::get_pad_stick(Gamepad::DeviceID device, bool right) const {
+    auto pad = static_cast<size_t>(device);
+    ASSERT(pad < Gamepad::GAMEPAD_MAX);
+
+    size_t x_axis, y_axis;
+    if (right) {
+        x_axis = get_pad_axis_index(Gamepad::Axis::RIGHT_HORIZONTAL);
+        y_axis = get_pad_axis_index(Gamepad::Axis::RIGHT_VERTICAL);
+    } else {
+        x_axis = get_pad_axis_index(Gamepad::Axis::LEFT_HORIZONTAL);
+        y_axis = get_pad_axis_index(Gamepad::Axis::LEFT_VERTICAL);
+    }
+
+    float x = m_pad_state[pad].axis[x_axis];
+    float y = m_pad_state[pad].axis[y_axis];
+    return {x, y};
 }

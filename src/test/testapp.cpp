@@ -1,3 +1,4 @@
+#include <cmath>
 #include <memory>
 
 #include "core/events/input_events.h"
@@ -88,19 +89,6 @@ public:
             LOG_TRACE("Undamn");
         }
 
-        constexpr float PLAYER_SPEED = 3.0f;
-        if (m_input_service.is_key_pressed(Key::Scancode::A)) {
-            m_entity.x -= PLAYER_SPEED;
-        } else if (m_input_service.is_key_pressed(Key::Scancode::D)) {
-            m_entity.x += PLAYER_SPEED;
-        }
-
-        if (m_input_service.is_key_pressed(Key::Scancode::W)) {
-            m_entity.y -= PLAYER_SPEED;
-        } else if (m_input_service.is_key_pressed(Key::Scancode::S)) {
-            m_entity.y += PLAYER_SPEED;
-        }
-
         if (m_input_service.is_mouse_button_just_pressed(Key::MouseButtons::LEFT)) {
             LOG_TRACE("Walk");
         }
@@ -108,13 +96,40 @@ public:
             LOG_TRACE("Walked");
         }
 
+        float move_x = 0.0f, move_y = 0.0f;
         m_input_service.pad_foreach([&](Gamepad::DeviceID gamepad) {
             if (m_input_service.is_pad_button_just_pressed(gamepad, Gamepad::Buttons::SOUTH)) {
                 LOG_TRACE("Pad {0} just pressed X.", gamepad);
             } else if (m_input_service.is_pad_button_just_released(gamepad, Gamepad::Buttons::SOUTH)) {
                 LOG_TRACE("Pad {0} just released X.", gamepad);
             }
+
+            auto [axis_x, axis_y] = m_input_service.get_pad_stick(gamepad, false);
+            move_x = axis_x;
+            move_y = axis_y;
         });
+
+        constexpr float PLAYER_SPEED = 3.0f;
+        if (m_input_service.is_key_pressed(Key::Scancode::A)) {
+            move_x = -1.0f;
+        } else if (m_input_service.is_key_pressed(Key::Scancode::D)) {
+            move_x = 1.0f;
+        }
+
+        if (m_input_service.is_key_pressed(Key::Scancode::W)) {
+            move_y = -1.0f;
+        } else if (m_input_service.is_key_pressed(Key::Scancode::S)) {
+            move_y = 1.0f;
+        }
+
+        float length = std::sqrt((move_x * move_x) + (move_y * move_y));
+        if (length > 1.0f) {
+            move_x /= length;
+            move_y /= length;
+        }
+
+        m_entity.x += move_x * PLAYER_SPEED;
+        m_entity.y += move_y * PLAYER_SPEED;
     }
 
     void on_render() override {

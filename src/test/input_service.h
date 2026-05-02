@@ -51,6 +51,9 @@ public:
     bool is_pad_button_just_released(Gamepad::DeviceID device, Gamepad::Buttons button) const;
 
     [[nodiscard]]
+    std::tuple<float, float> get_pad_stick(Gamepad::DeviceID device, bool right) const;
+
+    [[nodiscard]]
     bool is_pad_connected(Gamepad::DeviceID device) const {
         return m_pad_connected[device];
     }
@@ -80,7 +83,12 @@ private:
     std::vector<bool> m_key_state;
     float m_mouse_x = 0.0f, m_mouse_y = 0.0f;
 
+    struct PadState {
+        uint32_t buttons = 0;
+        float axis[Gamepad::AXIS_COUNT] = {0};
+    };
+
     std::array<bool, Gamepad::GAMEPAD_MAX> m_pad_connected;
-    std::array<uint32_t, Gamepad::GAMEPAD_MAX> m_pad_state;
-    std::array<uint32_t, Gamepad::GAMEPAD_MAX> m_pad_state_previous;
+    std::array<PadState, Gamepad::GAMEPAD_MAX> m_pad_state;
+    std::array<PadState, Gamepad::GAMEPAD_MAX> m_pad_state_previous;
 };

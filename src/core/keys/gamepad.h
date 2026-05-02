@@ -50,6 +50,20 @@ enum class Buttons : uint8_t {
     COUNT,
 };
 
+enum class Axis : uint8_t {
+    LEFT_HORIZONTAL,
+    LEFT_VERTICAL,
+
+    RIGHT_HORIZONTAL,
+    RIGHT_VERTICAL,
+
+    TRIGGER_LEFT,
+    TRIGGER_RIGHT,
+
+    COUNT,
+};
+
 constexpr auto BUTTON_COUNT = static_cast<size_t>(Gamepad::Buttons::COUNT);
+constexpr auto AXIS_COUNT = static_cast<size_t>(Gamepad::Axis::COUNT);
 
 }; // namespace Gamepad

@@ -1,4 +1,5 @@
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_gamepad.h>
 #include <SDL3/SDL_main.h>
 
 #include <cstdint>
@@ -166,17 +167,15 @@ SDL_AppResult PlatformImpl::event(SDL_Event &event) {
                 });
             }
             break;
-            /*
-            case SDL_EVENT_GAMEPAD_AXIS_MOTION:
-                if (auto *pad = gamepad_find(event.gaxis.which)) {
-                    if (event.gaxis.axis > 1) {
-                        break;
-                    }
-                    LOG_TRACE("{0} ({1}) -> {2}: {3}",
-                        pad->name, pad->index,
-                        event.gaxis.axis, event.gaxis.value);
-                }
-            */
+        case SDL_EVENT_GAMEPAD_AXIS_MOTION:
+            if (auto *pad = gamepad_find(event.gaxis.which)) {
+                m_platform.submit_event<EventInput>(EventInputGamepadAxisMotion{
+                    .pad = pad->index,
+                    .axis = static_cast<Gamepad::Axis>(event.gaxis.axis),
+                    .value = static_cast<float>(event.gaxis.value) / 32768.0f,
+                });
+            }
+            break;
     }
     return SDL_APP_CONTINUE;
 }
