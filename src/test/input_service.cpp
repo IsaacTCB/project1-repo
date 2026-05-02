@@ -113,7 +113,7 @@ void InputService::event(const EventInput &event) {
         m_gamepad_connected[pad] = false;
     } else if (const auto *gamepad = std::get_if<EventInputGamepadButton>(&event)) {
         auto pad = static_cast<size_t>(gamepad->pad);
-        if (m_gamepad_connected[pad]) {
+        if (!m_gamepad_connected[pad]) {
             return;
         }
 
