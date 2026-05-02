@@ -62,7 +62,6 @@ public:
     }
 
     void on_update(float delta) override {
-        // m_input_service.update(delta);
         for (const auto &event : m_platform->event().span<EventWindow>()) {
             if (const auto *ptr = std::get_if<EventWindowResized>(&event)) {
                 LOG_TRACE("{0}x{1}", ptr->width, ptr->height);
