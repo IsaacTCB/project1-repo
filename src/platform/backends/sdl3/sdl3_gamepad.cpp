@@ -26,6 +26,7 @@ static ImplGamepad *gamepad__reserve_slot() {
             gamepad.index = index++;
             if (!gamepad.alive) {
                 slot = &gamepad;
+                break;
             }
         }
     }
@@ -50,6 +51,7 @@ ImplGamepad *gamepad_init(SDL_JoystickID which) {
     LOG_TRACE("Gamepad {0} ({1}) added", which, name);
 
     *gamepad = {
+        .index = gamepad->index,
         .which = which,
         .gamepad = raw_gamepad,
         .name = std::move(name),
