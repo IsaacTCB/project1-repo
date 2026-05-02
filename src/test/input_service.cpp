@@ -6,9 +6,9 @@
 #include "core/keys/scancodes.h"
 #include "core/logger.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <cstring>
 
 #define GET_BIT(index) (1 << index)
 
@@ -28,10 +28,9 @@ void InputService::close() {
 void InputService::update() {
     m_mouse_state_previous = m_mouse_state;
 
-    std::copy(
+    std::ranges::copy(
         m_pad_state,
-        m_pad_state + Gamepad::GAMEPAD_MAX,
-        m_pad_state_previous);
+        m_pad_state_previous.begin());
 
     /* update previous key state */
     ASSERT(m_key_state.size() >= Key::SCANCODE_COUNT * 2,
@@ -43,7 +42,7 @@ void InputService::update() {
 
     /* clear all disconnected pads. */
     for (size_t i = 0; i < Gamepad::GAMEPAD_MAX; i++) {
-        if (!m_gamepad_connected[i]) {
+        if (!m_pad_connected[i]) {
             m_pad_state[i] = 0u;
             /* cleaning the previous state arent needed,
              * because i'd like for them to trigger on
@@ -111,18 +110,18 @@ void InputService::event(const EventInput &event) {
     if (const auto *gamepad = std::get_if<EventInputGamepadConnected>(&event)) {
         LOG_TRACE("Gamepad {0} connected ({1})", gamepad->pad, gamepad->name);
         auto pad = static_cast<size_t>(gamepad->pad);
-        m_gamepad_connected[pad] = true;
+        m_pad_connected[pad] = true;
         return;
     }
     if (const auto *gamepad = std::get_if<EventInputGamepadDisconnected>(&event)) {
         LOG_TRACE("Gamepad {0} disconnected", gamepad->pad);
         auto pad = static_cast<size_t>(gamepad->pad);
-        m_gamepad_connected[pad] = false;
+        m_pad_connected[pad] = false;
         return;
     }
     if (const auto *gamepad = std::get_if<EventInputGamepadButton>(&event)) {
         auto pad = static_cast<size_t>(gamepad->pad);
-        if (!m_gamepad_connected[pad]) {
+        if (!m_pad_connected[pad]) {
             return;
         }
 

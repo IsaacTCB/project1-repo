@@ -4,7 +4,10 @@
 #include "core/keys/gamepad.h"
 #include "core/keys/scancodes.h"
 
+#include <array>
+#include <functional>
 #include <tuple>
+#include <type_traits>
 #include <vector>
 
 class InputService {
@@ -47,12 +50,37 @@ public:
     [[nodiscard]]
     bool is_pad_button_just_released(Gamepad::DeviceID device, Gamepad::Buttons button) const;
 
+    [[nodiscard]]
+    bool is_pad_connected(Gamepad::DeviceID device) const {
+        return m_pad_connected[device];
+    }
+
+    template <typename Func>
+    void pad_foreach(Func &&func) {
+        for (size_t i = 0; i < m_pad_connected.size(); i++) {
+            if (!m_pad_connected[i]) {
+                continue;
+            }
+
+            using ReturnType = std::invoke_result_t<Func, Gamepad::DeviceID>;
+            if constexpr (std::is_void_v<ReturnType>) {
+                auto device = static_cast<Gamepad::DeviceID>(i);
+                std::invoke(func, device);
+            } else {
+                auto device = static_cast<Gamepad::DeviceID>(i);
+                if (std::invoke(func, device)) {
+                    return;
+                }
+            }
+        }
+    }
+
 private:
     uint8_t m_mouse_state, m_mouse_state_previous;
     std::vector<bool> m_key_state;
     float m_mouse_x = 0.0f, m_mouse_y = 0.0f;
 
-    bool m_gamepad_connected[Gamepad::GAMEPAD_MAX];
-    uint32_t m_pad_state[Gamepad::GAMEPAD_MAX];
-    uint32_t m_pad_state_previous[Gamepad::GAMEPAD_MAX];
+    std::array<bool, Gamepad::GAMEPAD_MAX> m_pad_connected;
+    std::array<uint32_t, Gamepad::GAMEPAD_MAX> m_pad_state;
+    std::array<uint32_t, Gamepad::GAMEPAD_MAX> m_pad_state_previous;
 };
