@@ -93,7 +93,7 @@ private:
         std::array<float, Gamepad::AXIS_COUNT> axis = {0};
     };
 
-    std::array<bool, Gamepad::GAMEPAD_MAX> m_pad_connected;
-    std::array<PadState, Gamepad::GAMEPAD_MAX> m_pad_state;
-    std::array<PadState, Gamepad::GAMEPAD_MAX> m_pad_state_previous;
+    std::array<bool, Gamepad::GAMEPAD_MAX> m_pad_connected{};
+    std::array<PadState, Gamepad::GAMEPAD_MAX> m_pad_state{};
+    std::array<PadState, Gamepad::GAMEPAD_MAX> m_pad_state_previous{};
 };
