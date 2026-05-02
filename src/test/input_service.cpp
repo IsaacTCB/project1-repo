@@ -51,30 +51,13 @@ void InputService::update() {
     }
 }
 
-[[nodiscard]]
-static size_t get_scancode_index(Key::Scancode scancode) {
-    return static_cast<size_t>(scancode);
-}
-
-[[nodiscard]]
-static size_t get_mouse_button_index(Key::MouseButtons button) {
-    auto index = static_cast<size_t>(button);
-    ASSERT(index > 0);
-    return index - 1;
-}
-
-[[nodiscard]]
-static size_t get_pad_button_index(Gamepad::Buttons button) {
-    auto index = static_cast<size_t>(button);
-    ASSERT(index >= 0);
-    return index;
-}
-
-[[nodiscard]]
-static size_t get_pad_axis_index(Gamepad::Axis axis) {
-    auto index = static_cast<size_t>(axis);
-    ASSERT(index >= 0);
-    return index;
+void InputService::event(const EventInput &event) {
+    if (keyboard_event(event)) {
+    } else if (mouse_event(event)) {
+    } else if (pad_event(event)) {
+    } else {
+        ASSERT(false, "Unsupported event!");
+    }
 }
 
 [[nodiscard]]
@@ -83,83 +66,28 @@ static inline bool get_flag_at(uint8_t bitfield, size_t index) {
     return (bitfield & mask) != 0;
 }
 
-void InputService::event(const EventInput &event) {
-    /* Keyboard-related events */
+/* ============== */
+/*    Keyboard    */
+/* ============== */
+
+[[nodiscard]]
+static size_t get_scancode_index(Key::Scancode scancode) {
+    return static_cast<size_t>(scancode);
+}
+
+bool InputService::keyboard_event(const EventInput &event) {
     if (const auto *kbkey = std::get_if<EventInputKey>(&event)) {
         if (kbkey->repeat) {
-            return;
+            return true;
         }
         size_t idx = get_scancode_index(kbkey->scancode);
         ASSERT(idx < Key::SCANCODE_COUNT, "Keyboard key out-of-range");
         m_key_state.at(idx) = kbkey->pressed;
-        return;
+        return true;
     }
-    /* Mouse-related events */
-    if (const auto *mouse = std::get_if<EventInputMouseMotion>(&event)) {
-        m_mouse_x = mouse->screen_x;
-        m_mouse_y = mouse->screen_y;
-        return;
-    }
-    if (const auto *mbutton = std::get_if<EventInputMouseButton>(&event)) {
-        size_t idx = get_mouse_button_index(mbutton->button);
-        ASSERT(idx < Key::MOUSE_BUTTON_COUNT - 1, "Mouse button out-of-range");
 
-        uint8_t mask = GET_BIT(idx);
-        if (mbutton->pressed) {
-            /* turn mouse bit on */
-            m_mouse_state |= mask;
-        } else {
-            /* turn mouse bit off*/
-            m_mouse_state &= ~mask;
-        }
-        return;
-    }
-    /* Gamepad-related events */
-    if (const auto *gamepad = std::get_if<EventInputGamepadConnected>(&event)) {
-        LOG_TRACE("Gamepad {0} connected ({1})", gamepad->pad, gamepad->name);
-        auto pad = static_cast<size_t>(gamepad->pad);
-        m_pad_connected[pad] = true;
-        return;
-    }
-    if (const auto *gamepad = std::get_if<EventInputGamepadDisconnected>(&event)) {
-        LOG_TRACE("Gamepad {0} disconnected", gamepad->pad);
-        auto pad = static_cast<size_t>(gamepad->pad);
-        m_pad_connected[pad] = false;
-        return;
-    }
-    if (const auto *gamepad = std::get_if<EventInputGamepadButton>(&event)) {
-        auto pad = static_cast<size_t>(gamepad->pad);
-        if (!m_pad_connected[pad]) {
-            return;
-        }
-
-        size_t idx = get_pad_button_index(gamepad->button);
-        ASSERT(idx < Gamepad::BUTTON_COUNT, "Gamepad button out-of-range");
-
-        uint32_t mask = GET_BIT(idx);
-        if (gamepad->pressed) {
-            /* turn pad bit on */
-            m_pad_state[pad].buttons |= mask;
-        } else {
-            /* turn pad bit off */
-            m_pad_state[pad].buttons &= ~mask;
-        }
-        return;
-    }
-    if (const auto *gamepad = std::get_if<EventInputGamepadAxisMotion>(&event)) {
-        auto pad = static_cast<size_t>(gamepad->pad);
-        if (!m_pad_connected[pad]) {
-            return;
-        }
-        size_t axis = get_pad_axis_index(gamepad->axis);
-        m_pad_state[pad].axis[axis] = gamepad->value;
-        return;
-    }
+    return false;
 }
-
-/* ============== */
-/*    Keyboard    */
-/* ============== */
 
 bool InputService::is_key_pressed(Key::Scancode scancode) const {
     size_t index = get_scancode_index(scancode);
@@ -183,6 +111,36 @@ bool InputService::is_key_just_released(Key::Scancode scancode) const {
 /*   Mouse buttons   */
 /* ================= */
 
+[[nodiscard]]
+static size_t get_mouse_button_index(Key::MouseButtons button) {
+    auto index = static_cast<size_t>(button);
+    ASSERT(index > 0);
+    return index - 1;
+}
+
+bool InputService::mouse_event(const EventInput &event) {
+    if (const auto *mouse = std::get_if<EventInputMouseMotion>(&event)) {
+        m_mouse_x = mouse->screen_x;
+        m_mouse_y = mouse->screen_y;
+        return true;
+    }
+    if (const auto *mbutton = std::get_if<EventInputMouseButton>(&event)) {
+        size_t idx = get_mouse_button_index(mbutton->button);
+        ASSERT(idx < Key::MOUSE_BUTTON_COUNT - 1, "Mouse button out-of-range");
+
+        uint8_t mask = GET_BIT(idx);
+        if (mbutton->pressed) {
+            /* turn mouse bit on */
+            m_mouse_state |= mask;
+        } else {
+            /* turn mouse bit off*/
+            m_mouse_state &= ~mask;
+        }
+        return true;
+    }
+    return false;
+}
+
 bool InputService::is_mouse_button_pressed(Key::MouseButtons button) const {
     size_t index = get_mouse_button_index(button);
     ASSERT(index < Key::MOUSE_BUTTON_COUNT);
@@ -203,9 +161,67 @@ bool InputService::is_mouse_button_just_released(Key::MouseButtons button) const
             get_flag_at(m_mouse_state_previous, index));
 }
 
-/* =================== */
-/*   Gamepad buttons   */
-/* =================== */
+/* =========== */
+/*   Gamepad   */
+/* =========== */
+
+[[nodiscard]]
+static size_t get_pad_button_index(Gamepad::Buttons button) {
+    auto index = static_cast<size_t>(button);
+    ASSERT(index >= 0);
+    return index;
+}
+
+[[nodiscard]]
+static size_t get_pad_axis_index(Gamepad::Axis axis) {
+    auto index = static_cast<size_t>(axis);
+    ASSERT(index >= 0);
+    return index;
+}
+
+bool InputService::pad_event(const EventInput &event) {
+    if (const auto *gamepad = std::get_if<EventInputGamepadConnected>(&event)) {
+        LOG_TRACE("Gamepad {0} connected ({1})", gamepad->pad, gamepad->name);
+        auto pad = static_cast<size_t>(gamepad->pad);
+        m_pad_connected[pad] = true;
+        return true;
+    }
+    if (const auto *gamepad = std::get_if<EventInputGamepadDisconnected>(&event)) {
+        LOG_TRACE("Gamepad {0} disconnected", gamepad->pad);
+        auto pad = static_cast<size_t>(gamepad->pad);
+        m_pad_connected[pad] = false;
+        return true;
+    }
+    if (const auto *gamepad = std::get_if<EventInputGamepadButton>(&event)) {
+        auto pad = static_cast<size_t>(gamepad->pad);
+        if (!m_pad_connected[pad]) {
+            return true;
+        }
+
+        size_t idx = get_pad_button_index(gamepad->button);
+        ASSERT(idx < Gamepad::BUTTON_COUNT, "Gamepad button out-of-range");
+
+        uint32_t mask = GET_BIT(idx);
+        if (gamepad->pressed) {
+            /* turn pad bit on */
+            m_pad_state[pad].buttons |= mask;
+        } else {
+            /* turn pad bit off */
+            m_pad_state[pad].buttons &= ~mask;
+        }
+        return true;
+    }
+    if (const auto *gamepad = std::get_if<EventInputGamepadAxisMotion>(&event)) {
+        auto pad = static_cast<size_t>(gamepad->pad);
+        if (!m_pad_connected[pad]) {
+            return true;
+        }
+        size_t axis = get_pad_axis_index(gamepad->axis);
+        m_pad_state[pad].axis[axis] = gamepad->value;
+        return true;
+    }
+    return false;
+}
 
 bool InputService::is_pad_button_pressed(Gamepad::DeviceID device, Gamepad::Buttons button) const {
     auto pad = static_cast<size_t>(device);

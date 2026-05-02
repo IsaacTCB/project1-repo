@@ -79,6 +79,11 @@ public:
     }
 
 private:
+    bool keyboard_event(const EventInput &event);
+    bool mouse_event(const EventInput &event);
+    bool pad_event(const EventInput &event);
+
+private:
     uint8_t m_mouse_state, m_mouse_state_previous;
     std::vector<bool> m_key_state;
     float m_mouse_x = 0.0f, m_mouse_y = 0.0f;
