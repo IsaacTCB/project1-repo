@@ -40,7 +40,7 @@ SDL_GamepadButton gamepad_button_to_sdl(Gamepad::Buttons button);
  *
  * @returns The corresponding Gamepad::Axis, or Gamepad::Axis::COUNT on failure.
  */
-Gamepad::Axis gamepad_sdl_to_axis(SDL_GamepadAxis button);
+Gamepad::Axis gamepad_sdl_to_axis(SDL_GamepadAxis axis);
 
 /**
  * @brief Converts Gamepad::Axis into SDL_GamepadAxis.
@@ -49,7 +49,7 @@ Gamepad::Axis gamepad_sdl_to_axis(SDL_GamepadAxis button);
  *
  * @returns The corresponding SDL_GamepadAxis, or SDL_GAMEPAD_AXIS_INVALID on failure.
  */
-SDL_GamepadAxis gamepad_axis_to_sdl(Gamepad::Axis button);
+SDL_GamepadAxis gamepad_axis_to_sdl(Gamepad::Axis axis);
 
 ImplGamepad *gamepad_init(SDL_JoystickID which);
 ImplGamepad *gamepad_find(SDL_JoystickID which);

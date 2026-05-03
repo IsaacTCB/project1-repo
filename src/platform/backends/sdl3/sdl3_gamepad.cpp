@@ -4,8 +4,6 @@
 #include <array>
 #include <stack>
 
-#include <SDL3/SDL_joystick.h>
-
 #include "core/keys/gamepad.h"
 #include "core/logger.h"
 
@@ -36,51 +34,37 @@ static ImplGamepad *gamepad__reserve_slot() {
 }
 
 Gamepad::Buttons gamepad_sdl_to_button(SDL_GamepadButton button) {
-    switch (button) {
-#define CASE(sdl_btn, btn) \
-    case sdl_btn:          \
-        return btn;
-        GAMEPAD_BUTTON_MAP(CASE)
-#undef CASE
-        default:
-            return Gamepad::Buttons::COUNT;
+    static constexpr auto s_sdl_to_btn_lookup = build_sdl_to_btn_lookup();
+    if (button < 0 || button >= s_sdl_to_btn_lookup.size()) {
+        return Gamepad::Buttons::COUNT;
     }
+    return s_sdl_to_btn_lookup[button];
 }
 
 SDL_GamepadButton gamepad_button_to_sdl(Gamepad::Buttons button) {
-    switch (button) {
-#define CASE(sdl_btn, btn) \
-    case btn:              \
-        return sdl_btn;
-        GAMEPAD_BUTTON_MAP(CASE)
-#undef CASE
-        default:
-            return SDL_GAMEPAD_BUTTON_INVALID;
+    static constexpr auto s_btn_to_sdl_lookup = build_btn_to_sdl_lookup();
+    auto idx = static_cast<size_t>(button);
+    if (idx < 0 || idx >= s_btn_to_sdl_lookup.size()) {
+        return SDL_GAMEPAD_BUTTON_INVALID;
     }
+    return s_btn_to_sdl_lookup[idx];
 }
 
-Gamepad::Axis gamepad_sdl_to_axis(SDL_GamepadAxis button) {
-    switch (button) {
-#define CASE(sdl_axis, axis) \
-    case sdl_axis:           \
-        return axis;
-        GAMEPAD_AXIS_MAP(CASE)
-#undef CASE
-        default:
-            return Gamepad::Axis::COUNT;
+Gamepad::Axis gamepad_sdl_to_axis(SDL_GamepadAxis axis) {
+    static constexpr auto s_sdl_to_axis_lookup = build_sdl_to_axis_lookup();
+    if (axis < 0 || axis >= s_sdl_to_axis_lookup.size()) {
+        return Gamepad::Axis::COUNT;
     }
+    return s_sdl_to_axis_lookup[axis];
 }
 
-SDL_GamepadAxis gamepad_axis_to_sdl(Gamepad::Axis button) {
-    switch (button) {
-#define CASE(sdl_axis, axis) \
-    case axis:               \
-        return sdl_axis;
-        GAMEPAD_AXIS_MAP(CASE)
-#undef CASE
-        default:
-            return SDL_GAMEPAD_AXIS_INVALID;
+SDL_GamepadAxis gamepad_axis_to_sdl(Gamepad::Axis axis) {
+    static constexpr auto s_axis_to_sdl_lookup = build_axis_to_sdl_lookup();
+    auto idx = static_cast<size_t>(axis);
+    if (idx < 0 || idx >= s_axis_to_sdl_lookup.size()) {
+        return SDL_GAMEPAD_AXIS_INVALID;
     }
+    return s_axis_to_sdl_lookup[idx];
 }
 
 ImplGamepad *gamepad_init(SDL_JoystickID which) {

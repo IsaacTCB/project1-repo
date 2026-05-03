@@ -3,6 +3,8 @@
 #include "core/keys/gamepad.h"
 #include <SDL3/SDL_gamepad.h>
 
+#include <array>
+
 /**
  * @brief X-macro conversion table between SDL_GamepadButton and ::Gamepad::Buttons.
  *
@@ -50,3 +52,59 @@
     X(SDL_GAMEPAD_AXIS_RIGHTY, Gamepad::Axis::RIGHT_VERTICAL)     \
     X(SDL_GAMEPAD_AXIS_LEFT_TRIGGER, Gamepad::Axis::TRIGGER_LEFT) \
     X(SDL_GAMEPAD_AXIS_RIGHT_TRIGGER, Gamepad::Axis::TRIGGER_RIGHT)
+
+/**
+ * @brief Builds SDL button -> engine button lookup table
+ *
+ * @return a std::array lookup table.
+ */
+static consteval auto build_sdl_to_btn_lookup() -> decltype(auto) {
+    std::array<Gamepad::Buttons, SDL_GAMEPAD_BUTTON_COUNT> lookup{};
+    lookup.fill(Gamepad::Buttons::COUNT);
+#define MAP(sdl3_btn, btn) lookup[sdl3_btn] = btn;
+    GAMEPAD_BUTTON_MAP(MAP);
+#undef MAP
+    return lookup;
+}
+
+/**
+ * @brief Builds engine button -> SDL button lookup table
+ *
+ * @return a std::array lookup table.
+ */
+static consteval auto build_btn_to_sdl_lookup() -> decltype(auto) {
+    std::array<SDL_GamepadButton, Gamepad::BUTTON_COUNT> lookup{};
+    lookup.fill(SDL_GAMEPAD_BUTTON_INVALID);
+#define MAP(sdl3_btn, btn) lookup[static_cast<size_t>(btn)] = sdl3_btn;
+    GAMEPAD_BUTTON_MAP(MAP);
+#undef MAP
+    return lookup;
+}
+
+/**
+ * @brief Builds SDL axis -> engine axis lookup table
+ *
+ * @return a std::array lookup table.
+ */
+static consteval auto build_sdl_to_axis_lookup() -> decltype(auto) {
+    std::array<Gamepad::Axis, SDL_GAMEPAD_AXIS_COUNT> lookup{};
+    lookup.fill(Gamepad::Axis::COUNT);
+#define MAP(sdl3_axis, axis) lookup[sdl3_axis] = axis;
+    GAMEPAD_AXIS_MAP(MAP);
+#undef MAP
+    return lookup;
+}
+
+/**
+ * @brief Builds engine axis -> SDL axis lookup table
+ *
+ * @return a std::array lookup table.
+ */
+static consteval auto build_axis_to_sdl_lookup() -> decltype(auto) {
+    std::array<SDL_GamepadAxis, Gamepad::AXIS_COUNT> lookup{};
+    lookup.fill(SDL_GAMEPAD_AXIS_INVALID);
+#define MAP(sdl3_axis, axis) lookup[static_cast<size_t>(axis)] = sdl3_axis;
+    GAMEPAD_AXIS_MAP(MAP);
+#undef MAP
+    return lookup;
+}
