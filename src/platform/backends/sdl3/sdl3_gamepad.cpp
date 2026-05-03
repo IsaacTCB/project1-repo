@@ -37,8 +37,8 @@ static ImplGamepad *gamepad__reserve_slot() {
 
 Gamepad::Buttons gamepad_sdl_to_button(SDL_GamepadButton button) {
     switch (button) {
-#define CASE(sdl, btn) \
-    case sdl:          \
+#define CASE(sdl_btn, btn) \
+    case sdl_btn:          \
         return btn;
         GAMEPAD_BUTTON_MAP(CASE)
 #undef CASE
@@ -49,9 +49,9 @@ Gamepad::Buttons gamepad_sdl_to_button(SDL_GamepadButton button) {
 
 SDL_GamepadButton gamepad_button_to_sdl(Gamepad::Buttons button) {
     switch (button) {
-#define CASE(sdl, btn) \
-    case btn:          \
-        return sdl;
+#define CASE(sdl_btn, btn) \
+    case btn:              \
+        return sdl_btn;
         GAMEPAD_BUTTON_MAP(CASE)
 #undef CASE
         default:
@@ -61,9 +61,9 @@ SDL_GamepadButton gamepad_button_to_sdl(Gamepad::Buttons button) {
 
 Gamepad::Axis gamepad_sdl_to_axis(SDL_GamepadAxis button) {
     switch (button) {
-#define CASE(sdl, btn) \
-    case sdl:          \
-        return btn;
+#define CASE(sdl_axis, axis) \
+    case sdl_axis:           \
+        return axis;
         GAMEPAD_AXIS_MAP(CASE)
 #undef CASE
         default:
@@ -73,9 +73,9 @@ Gamepad::Axis gamepad_sdl_to_axis(SDL_GamepadAxis button) {
 
 SDL_GamepadAxis gamepad_axis_to_sdl(Gamepad::Axis button) {
     switch (button) {
-#define CASE(sdl, btn) \
-    case btn:          \
-        return sdl;
+#define CASE(sdl_axis, axis) \
+    case axis:               \
+        return sdl_axis;
         GAMEPAD_AXIS_MAP(CASE)
 #undef CASE
         default:
