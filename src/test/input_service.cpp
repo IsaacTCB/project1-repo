@@ -49,7 +49,7 @@ void InputService::update() {
              * pad disconnect. */
             auto *state = &m_pad_state[i];
             state->buttons = 0u;
-            std::ranges::fill(state->axis, 0.0f);
+            state->axis.fill(0.0f);
         }
     }
 }
