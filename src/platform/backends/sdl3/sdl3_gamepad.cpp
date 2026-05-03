@@ -33,38 +33,37 @@ static ImplGamepad *gamepad__reserve_slot() {
     return slot;
 }
 
+template <typename Enum, typename Table>
+static constexpr auto gamepad__enum_lookup(
+    Enum value, const Table &table, typename Table::value_type fallback)
+    -> typename Table::value_type {
+    using Type = std::underlying_type_t<Enum>;
+    const Type idx = static_cast<Type>(value);
+
+    if (idx < 0 || static_cast<size_t>(idx) > table.size()) {
+        return fallback;
+    }
+    return table[static_cast<size_t>(idx)];
+}
+
 Gamepad::Buttons gamepad_sdl_to_button(SDL_GamepadButton button) {
     static constexpr auto s_sdl_to_btn_lookup = build_sdl_to_btn_lookup();
-    if (button < 0 || button >= s_sdl_to_btn_lookup.size()) {
-        return Gamepad::Buttons::COUNT;
-    }
-    return s_sdl_to_btn_lookup[button];
+    return gamepad__enum_lookup(button, s_sdl_to_btn_lookup, Gamepad::Buttons::COUNT);
 }
 
 SDL_GamepadButton gamepad_button_to_sdl(Gamepad::Buttons button) {
     static constexpr auto s_btn_to_sdl_lookup = build_btn_to_sdl_lookup();
-    auto idx = static_cast<size_t>(button);
-    if (idx < 0 || idx >= s_btn_to_sdl_lookup.size()) {
-        return SDL_GAMEPAD_BUTTON_INVALID;
-    }
-    return s_btn_to_sdl_lookup[idx];
+    return gamepad__enum_lookup(button, s_btn_to_sdl_lookup, SDL_GAMEPAD_BUTTON_INVALID);
 }
 
 Gamepad::Axis gamepad_sdl_to_axis(SDL_GamepadAxis axis) {
     static constexpr auto s_sdl_to_axis_lookup = build_sdl_to_axis_lookup();
-    if (axis < 0 || axis >= s_sdl_to_axis_lookup.size()) {
-        return Gamepad::Axis::COUNT;
-    }
-    return s_sdl_to_axis_lookup[axis];
+    return gamepad__enum_lookup(axis, s_sdl_to_axis_lookup, Gamepad::Axis::COUNT);
 }
 
 SDL_GamepadAxis gamepad_axis_to_sdl(Gamepad::Axis axis) {
     static constexpr auto s_axis_to_sdl_lookup = build_axis_to_sdl_lookup();
-    auto idx = static_cast<size_t>(axis);
-    if (idx < 0 || idx >= s_axis_to_sdl_lookup.size()) {
-        return SDL_GAMEPAD_AXIS_INVALID;
-    }
-    return s_axis_to_sdl_lookup[idx];
+    return gamepad__enum_lookup(axis, s_axis_to_sdl_lookup, SDL_GAMEPAD_AXIS_INVALID);
 }
 
 ImplGamepad *gamepad_init(SDL_JoystickID which) {
