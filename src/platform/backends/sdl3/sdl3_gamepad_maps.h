@@ -6,7 +6,8 @@
 /**
  * @brief X-macro conversion table between SDL_GamepadButton and ::Gamepad::Buttons.
  *
- * @param X X macro implementation.
+ * @param X X-macro implementation. Must contain 2 parameters, which are
+ * the SDL enum type, followed by the corresponding engine button.
  */
 #define GAMEPAD_BUTTON_MAP(X)                                              \
     X(SDL_GAMEPAD_BUTTON_SOUTH, Gamepad::Buttons::SOUTH)                   \
@@ -39,7 +40,8 @@
 /**
  * @brief X-macro conversion table between SDL_GamepadAxis and ::Gamepad::Axis.
  *
- * @param X X macro implementation.
+ * @param X X-macro implementation. Must contain 2 parameters, which are
+ * the SDL enum type, followed by the corresponding engine axis.
  */
 #define GAMEPAD_AXIS_MAP(X)                                       \
     X(SDL_GAMEPAD_AXIS_LEFTX, Gamepad::Axis::LEFT_HORIZONTAL)     \
