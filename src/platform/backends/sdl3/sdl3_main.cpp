@@ -160,18 +160,28 @@ SDL_AppResult PlatformImpl::event(SDL_Event &event) {
         case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
         case SDL_EVENT_GAMEPAD_BUTTON_UP:
             if (auto *pad = gamepad_find(event.gbutton.which)) {
+                auto button = gamepad_sdl_to_button(static_cast<SDL_GamepadButton>(event.gbutton.button));
+                if (button >= Gamepad::Buttons::COUNT) {
+                    break;
+                }
+                ASSERT(event.gbutton.button == gamepad_button_to_sdl(button), "Mapping is incorrect");
                 m_platform.submit_event<EventInput>(EventInputGamepadButton{
                     .pad = pad->index,
-                    .button = static_cast<Gamepad::Buttons>(event.gbutton.button),
+                    .button = button,
                     .pressed = event.gbutton.down,
                 });
             }
             break;
         case SDL_EVENT_GAMEPAD_AXIS_MOTION:
             if (auto *pad = gamepad_find(event.gaxis.which)) {
+                auto axis = gamepad_sdl_to_axis(static_cast<SDL_GamepadAxis>(event.gaxis.axis));
+                if (axis >= Gamepad::Axis::COUNT) {
+                    break;
+                }
+                ASSERT(event.gaxis.axis == gamepad_axis_to_sdl(axis), "Mapping is incorrect");
                 m_platform.submit_event<EventInput>(EventInputGamepadAxisMotion{
                     .pad = pad->index,
-                    .axis = static_cast<Gamepad::Axis>(event.gaxis.axis),
+                    .axis = axis,
                     .value = static_cast<float>(event.gaxis.value) / 32768.0f,
                 });
             }

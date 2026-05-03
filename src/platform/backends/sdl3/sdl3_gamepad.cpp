@@ -1,4 +1,5 @@
 #include "sdl3_gamepad.h"
+#include "sdl3_gamepad_maps.h"
 
 #include <array>
 #include <stack>
@@ -32,6 +33,54 @@ static ImplGamepad *gamepad__reserve_slot() {
     }
 
     return slot;
+}
+
+Gamepad::Buttons gamepad_sdl_to_button(SDL_GamepadButton button) {
+    switch (button) {
+#define CASE(sdl, btn) \
+    case sdl:          \
+        return btn;
+        GAMEPAD_BUTTON_MAP(CASE)
+#undef CASE
+        default:
+            return Gamepad::Buttons::COUNT;
+    }
+}
+
+SDL_GamepadButton gamepad_button_to_sdl(Gamepad::Buttons button) {
+    switch (button) {
+#define CASE(sdl, btn) \
+    case btn:          \
+        return sdl;
+        GAMEPAD_BUTTON_MAP(CASE)
+#undef CASE
+        default:
+            return SDL_GAMEPAD_BUTTON_INVALID;
+    }
+}
+
+Gamepad::Axis gamepad_sdl_to_axis(SDL_GamepadAxis button) {
+    switch (button) {
+#define CASE(sdl, btn) \
+    case sdl:          \
+        return btn;
+        GAMEPAD_AXIS_MAP(CASE)
+#undef CASE
+        default:
+            return Gamepad::Axis::COUNT;
+    }
+}
+
+SDL_GamepadAxis gamepad_axis_to_sdl(Gamepad::Axis button) {
+    switch (button) {
+#define CASE(sdl, btn) \
+    case btn:          \
+        return sdl;
+        GAMEPAD_AXIS_MAP(CASE)
+#undef CASE
+        default:
+            return SDL_GAMEPAD_AXIS_INVALID;
+    }
 }
 
 ImplGamepad *gamepad_init(SDL_JoystickID which) {
