@@ -7,7 +7,6 @@
 #include "io_server.h"
 #include "os_server.h"
 
-class PlatformImpl;
 struct PlatformImplState;
 
 /* This class is generic */
@@ -54,5 +53,5 @@ private:
           m_display_server{state},
           m_app_handler{*this} {}
 
-    friend PlatformImpl;
+    friend class PlatformImpl;
 };
