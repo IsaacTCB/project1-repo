@@ -184,13 +184,13 @@ static size_t get_pad_axis_index(Gamepad::Axis axis) {
 
 bool InputService::pad_event(const EventInput &event) {
     if (const auto *gamepad = std::get_if<EventInputGamepadConnected>(&event)) {
-        LOG_TRACE("Gamepad {0} connected ({1})", gamepad->pad, gamepad->name);
+        LOG_INFO("Gamepad device {0} connected (name: {1})", gamepad->pad, gamepad->name);
         auto pad = static_cast<size_t>(gamepad->pad);
         m_pad_connected[pad] = true;
         return true;
     }
     if (const auto *gamepad = std::get_if<EventInputGamepadDisconnected>(&event)) {
-        LOG_TRACE("Gamepad {0} disconnected", gamepad->pad);
+        LOG_INFO("Gamepad device {0} disconnected", gamepad->pad);
         auto pad = static_cast<size_t>(gamepad->pad);
         m_pad_connected[pad] = false;
         return true;

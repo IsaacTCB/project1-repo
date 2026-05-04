@@ -137,7 +137,6 @@ SDL_AppResult PlatformImpl::event(SDL_Event &event) {
 
         /* Gamepad input events */
         case SDL_EVENT_GAMEPAD_ADDED:
-            /* this event is sent for each hotplugged stick, but also each already-connected gamepad during SDL_Init(). */
             if (auto *pad = gamepad_init(event.gdevice.which)) {
                 m_platform.submit_event<EventInput>(EventInputGamepadConnected{
                     .pad = pad->index,

@@ -77,13 +77,15 @@ ImplGamepad *gamepad_init(SDL_JoystickID which) {
 
     SDL_Gamepad *raw_gamepad = SDL_OpenGamepad(which);
     if (!raw_gamepad) {
-        LOG_ERROR("Gamepad {0} added, but not opened: {1}", (unsigned int)which, SDL_GetError());
+        LOG_ERROR("SDL joystick id {0} detected, but not opened. Reason: {1}",
+            static_cast<uint32_t>(which),
+            SDL_GetError());
         gamepad->alive = false;
         return nullptr;
     }
 
     std::string name = SDL_GetGamepadName(raw_gamepad);
-    LOG_TRACE("Gamepad {0} ({1}) added", which, name);
+    LOG_TRACE("SDL joystick id {0} (name: {1}) bound to gamepad device {2}", which, name, gamepad->index);
 
     *gamepad = {
         .index = gamepad->index,
