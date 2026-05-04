@@ -12,16 +12,10 @@
 SDL_AppResult PlatformImpl::init() {
     log_init();
 
-    if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
+    if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO)) {
         LOG_CRITICAL("Failed to initialize SDL3. Reason: {0}", SDL_GetError());
         m_state.running = false;
         return SDL_APP_FAILURE;
-    }
-
-    if (int result = SDL_AddGamepadMappingsFromFile("gamecontrollerdb.txt") >= 0) {
-        LOG_TRACE("Loaded {0} gamepad mappings.", result);
-    } else if (result < 0) {
-        LOG_ERROR("Failed to load gamecontrollerdb.txt mappings. Reason: {0}", SDL_GetError());
     }
 
     m_state.running = true;
