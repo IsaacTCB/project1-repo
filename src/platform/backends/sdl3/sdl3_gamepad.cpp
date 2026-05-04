@@ -37,9 +37,12 @@ template <typename Enum, typename Table>
 static constexpr auto gamepad__enum_lookup(
     Enum value, const Table &table, typename Table::value_type fallback)
     -> typename Table::value_type {
-    using Type = std::underlying_type_t<Enum>;
-    const Type idx = static_cast<Type>(value);
+    using Type = std::conditional_t<
+        std::is_enum_v<Enum>,
+        std::underlying_type_t<Enum>,
+        Enum>;
 
+    const Type idx = static_cast<Type>(value);
     if (idx < 0 || static_cast<size_t>(idx) > table.size()) {
         return fallback;
     }
