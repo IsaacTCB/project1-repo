@@ -25,7 +25,7 @@ endif()
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     # HACK: This command affects all targets, including dependencies.
     # This should get replaced by target_compile_definitions().
-    add_compile_definitions("-DENABLE_ASSERTS=1")
+    add_compile_definitions(ENABLE_ASSERTS=1)
 endif()
 
 # Used by platform projects to add renderers.
