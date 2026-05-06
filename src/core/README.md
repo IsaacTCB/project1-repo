@@ -2,5 +2,6 @@
 
 Common utilities and resources across every part of the engine.
 
-This module only contains utility classes. Systems (or any other
-similar component in complexity) do not belong here.
+This module only contains utility classes and trivial structures.
+Systems (or any other similar component in complexity) do not
+belong here.

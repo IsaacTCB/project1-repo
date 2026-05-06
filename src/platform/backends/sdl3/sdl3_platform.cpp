@@ -3,19 +3,37 @@
 #include <cstdint>
 
 #include "sdl3_common.h"
+#include "sdl3_gamepad.h"
+
+#include "core/assertion.h"
+#include "core/logger.h"
 
 #include "core/events/input_events.h"
 #include "core/events/window_events.h"
 
-#include "core/logger.h"
+static Input::Key::Scancode convert_scancode(SDL_Scancode scancode) {
+    ASSERT(scancode >= 0 && scancode < Input::Key::SCANCODE_COUNT);
+    return static_cast<Input::Key::Scancode>(scancode);
+}
+
+static Input::Mouse::Buttons convert_mouse_button(uint8_t button) {
+    ASSERT(button > 0 && button < Input::Mouse::BUTTON_COUNT);
+    return static_cast<Input::Mouse::Buttons>(button);
+}
 
 SDL_AppResult PlatformImpl::init() {
     log_init();
 
-    if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO)) {
+    if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
         LOG_CRITICAL("Failed to initialize SDL3. Reason: {0}", SDL_GetError());
         m_state.running = false;
         return SDL_APP_FAILURE;
+    }
+
+    if (int result = SDL_AddGamepadMappingsFromFile("gamecontrollerdb.txt") >= 0) {
+        LOG_TRACE("Loaded {0} gamepad mappings.", result);
+    } else if (result < 0) {
+        LOG_ERROR("Failed to load gamecontrollerdb.txt mappings. Reason: {0}", SDL_GetError());
     }
 
     m_state.running = true;
@@ -44,7 +62,7 @@ SDL_AppResult PlatformImpl::iterate() {
     return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult PlatformImpl::event(const SDL_Event &event) {
+SDL_AppResult PlatformImpl::event(SDL_Event &event) {
     switch (event.type) {
         case SDL_EVENT_QUIT:
             m_state.running = false;
@@ -70,12 +88,12 @@ SDL_AppResult PlatformImpl::event(const SDL_Event &event) {
             m_platform.submit_event<EventWindow>(EventWindowMinimized{});
             break;
 
-        /* Input events */
+        /* Keyboard/mouse input events */
         case SDL_EVENT_KEY_DOWN:
         case SDL_EVENT_KEY_UP:
             m_platform.submit_event<EventInput>(EventInputKey{
-                .key = event.key.key,
-                .scancode = event.key.scancode,
+                .key = convert_scancode(SDL_GetScancodeFromKey(event.key.key, &event.key.mod)),
+                .scancode = convert_scancode(event.key.scancode),
                 .pressed = event.key.down,
                 .repeat = event.key.repeat,
             });
@@ -91,9 +109,60 @@ SDL_AppResult PlatformImpl::event(const SDL_Event &event) {
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
         case SDL_EVENT_MOUSE_BUTTON_UP:
             m_platform.submit_event<EventInput>(EventInputMouseButton{
-                .button = event.button.button,
+                .button = convert_mouse_button(event.button.button),
                 .pressed = event.button.down,
             });
+            break;
+
+        /* Gamepad input events */
+        case SDL_EVENT_GAMEPAD_ADDED:
+            if (auto *pad = gamepad_init(event.gdevice.which)) {
+                m_platform.submit_event<EventInput>(EventInputGamepadConnected{
+                    .pad = pad->index,
+                    .name = pad->name,
+                });
+            } else {
+                LOG_ERROR("Failed to add gamepad {0}", event.gdevice.which);
+            }
+            break;
+        case SDL_EVENT_GAMEPAD_REMOVED:
+            if (auto *pad = gamepad_find(event.gdevice.which)) {
+                gamepad_close(event.gdevice.which);
+                m_platform.submit_event<EventInput>(EventInputGamepadDisconnected{
+                    .pad = pad->index,
+                });
+            } else {
+                LOG_ERROR("Failed to close gamepad {0}", event.gdevice.which);
+            }
+            break;
+        case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+        case SDL_EVENT_GAMEPAD_BUTTON_UP:
+            if (auto *pad = gamepad_find(event.gbutton.which)) {
+                auto button = gamepad_sdl_to_button(static_cast<SDL_GamepadButton>(event.gbutton.button));
+                if (button >= Input::Gamepad::Buttons::COUNT) {
+                    break;
+                }
+                ASSERT(event.gbutton.button == gamepad_button_to_sdl(button), "Mapping is incorrect");
+                m_platform.submit_event<EventInput>(EventInputGamepadButton{
+                    .pad = pad->index,
+                    .button = button,
+                    .pressed = event.gbutton.down,
+                });
+            }
+            break;
+        case SDL_EVENT_GAMEPAD_AXIS_MOTION:
+            if (auto *pad = gamepad_find(event.gaxis.which)) {
+                auto axis = gamepad_sdl_to_axis(static_cast<SDL_GamepadAxis>(event.gaxis.axis));
+                if (axis >= Input::Gamepad::Axis::COUNT) {
+                    break;
+                }
+                ASSERT(event.gaxis.axis == gamepad_axis_to_sdl(axis), "Mapping is incorrect");
+                m_platform.submit_event<EventInput>(EventInputGamepadAxisMotion{
+                    .pad = pad->index,
+                    .axis = axis,
+                    .value = static_cast<float>(event.gaxis.value) / 32768.0f,
+                });
+            }
             break;
     }
     return SDL_APP_CONTINUE;

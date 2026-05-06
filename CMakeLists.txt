@@ -42,6 +42,7 @@ endfunction()
 # Common stuff included here too.
 add_library(engine STATIC
     src/test/testapp.cpp
+    src/test/input_service.cpp
     src/core/logger.cpp
     src/core/image/decoder.cpp
     src/platform/api/platform.cpp
