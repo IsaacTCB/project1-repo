@@ -17,7 +17,7 @@ static Input::Key::Scancode convert_scancode(SDL_Scancode scancode) {
 }
 
 static Input::Mouse::Buttons convert_mouse_button(uint8_t button) {
-    ASSERT(button > 0 && button < Input::Key::MOUSE_BUTTON_COUNT);
+    ASSERT(button > 0 && button < Input::Mouse::BUTTON_COUNT);
     return static_cast<Input::Mouse::Buttons>(button);
 }
 

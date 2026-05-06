@@ -130,7 +130,7 @@ bool InputService::mouse_event(const EventInput &event) {
     }
     if (const auto *mbutton = std::get_if<EventInputMouseButton>(&event)) {
         size_t idx = get_mouse_button_index(mbutton->button);
-        ASSERT(idx < Input::Key::MOUSE_BUTTON_COUNT - 1, "Mouse button out-of-range");
+        ASSERT(idx < Input::Mouse::BUTTON_COUNT - 1, "Mouse button out-of-range");
 
         uint8_t mask = GET_BIT(idx);
         if (mbutton->pressed) {
@@ -147,20 +147,20 @@ bool InputService::mouse_event(const EventInput &event) {
 
 bool InputService::is_mouse_button_pressed(Input::Mouse::Buttons button) const {
     size_t index = get_mouse_button_index(button);
-    ASSERT(index < Input::Key::MOUSE_BUTTON_COUNT);
+    ASSERT(index < Input::Mouse::BUTTON_COUNT);
     return get_flag_at(m_mouse_state, index);
 }
 
 bool InputService::is_mouse_button_just_pressed(Input::Mouse::Buttons button) const {
     size_t index = get_mouse_button_index(button);
-    ASSERT(index < Input::Key::MOUSE_BUTTON_COUNT);
+    ASSERT(index < Input::Mouse::BUTTON_COUNT);
     return (get_flag_at(m_mouse_state, index) &&
             !get_flag_at(m_mouse_state_previous, index));
 }
 
 bool InputService::is_mouse_button_just_released(Input::Mouse::Buttons button) const {
     size_t index = get_mouse_button_index(button);
-    ASSERT(index < Input::Key::MOUSE_BUTTON_COUNT);
+    ASSERT(index < Input::Mouse::BUTTON_COUNT);
     return (!get_flag_at(m_mouse_state, index) &&
             get_flag_at(m_mouse_state_previous, index));
 }
@@ -172,14 +172,12 @@ bool InputService::is_mouse_button_just_released(Input::Mouse::Buttons button) c
 [[nodiscard]]
 static size_t get_pad_button_index(Input::Gamepad::Buttons button) {
     auto index = static_cast<size_t>(button);
-    ASSERT(index >= 0);
     return index;
 }
 
 [[nodiscard]]
 static size_t get_pad_axis_index(Input::Gamepad::Axis axis) {
     auto index = static_cast<size_t>(axis);
-    ASSERT(index >= 0);
     return index;
 }
 
