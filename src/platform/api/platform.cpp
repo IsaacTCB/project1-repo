@@ -1,9 +1,5 @@
 #include "platform.h"
 
-#include "core/events/input_events.h"
-#include "core/events/window_events.h"
-#include "core/logger.h"
-
 void Platform::init() {
     m_app_handler.init();
 }
@@ -14,41 +10,7 @@ void Platform::close() {
 
 void Platform::update(float ts) {
     m_app_handler.update(ts);
-
-    for (const auto &event : m_events.span<EventWindow>()) {
-        if (const auto *ptr = std::get_if<EventWindowResized>(&event)) {
-            LOG_TRACE("{0}x{1}", ptr->width, ptr->height);
-        }
-        if (std::get_if<EventWindowMaximized>(&event)) {
-            LOG_TRACE("maximized");
-        }
-        if (std::get_if<EventWindowMinimized>(&event)) {
-            LOG_TRACE("minimized");
-        }
-    }
-
-    for (const auto &event : m_events.span<EventInput>()) {
-        if (const auto *ptr = std::get_if<EventInputKey>(&event)) {
-            if (ptr->repeat) {
-                continue;
-            }
-            LOG_TRACE("mouse: {} {}",
-                ptr->pressed ? "Pressed" : "Released",
-                ptr->key);
-        }
-        if (const auto *ptr = std::get_if<EventInputMouseMotion>(&event)) {
-            LOG_TRACE("{} {}",
-                ptr->rel_x,
-                ptr->rel_y);
-        }
-        if (const auto *ptr = std::get_if<EventInputMouseButton>(&event)) {
-            LOG_TRACE("{} {}",
-                ptr->pressed ? "Pressed" : "Released",
-                ptr->button);
-        }
-    }
-
-    m_events.clear();
+    m_event_server.m_events.clear();
 }
 
 void Platform::render() {

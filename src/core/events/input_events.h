@@ -1,13 +1,17 @@
 #pragma once
 
-#include <cstdint>
+#include <string_view>
 #include <variant>
+
+#include "core/input/gamepad.h"
+#include "core/input/keyboard.h"
+#include "core/input/mouse.h"
 
 /* Keyboard events */
 
 struct EventInputKey {
-    uint32_t key;
-    uint32_t scancode;
+    Input::Key::Scancode key;
+    Input::Key::Scancode scancode;
     bool pressed;
     bool repeat;
 };
@@ -15,7 +19,7 @@ struct EventInputKey {
 /* Mouse events */
 
 struct EventInputMouseButton {
-    uint32_t button;
+    Input::Mouse::Buttons button;
     bool pressed;
 };
 
@@ -26,7 +30,34 @@ struct EventInputMouseMotion {
     float rel_y;
 };
 
+/* Gamepad events */
+
+struct EventInputGamepadConnected {
+    Input::Gamepad::DeviceID pad;
+    std::string_view name;
+};
+
+struct EventInputGamepadDisconnected {
+    Input::Gamepad::DeviceID pad;
+};
+
+struct EventInputGamepadButton {
+    Input::Gamepad::DeviceID pad;
+    Input::Gamepad::Buttons button;
+    bool pressed;
+};
+
+struct EventInputGamepadAxisMotion {
+    Input::Gamepad::DeviceID pad;
+    Input::Gamepad::Axis axis;
+    float value;
+};
+
 using EventInput = std::variant<
     EventInputKey,
     EventInputMouseButton,
-    EventInputMouseMotion>;
+    EventInputMouseMotion,
+    EventInputGamepadConnected,
+    EventInputGamepadDisconnected,
+    EventInputGamepadButton,
+    EventInputGamepadAxisMotion>;
