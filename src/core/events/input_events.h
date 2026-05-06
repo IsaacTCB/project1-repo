@@ -3,14 +3,15 @@
 #include <string_view>
 #include <variant>
 
-#include "core/keys/gamepad.h"
-#include "core/keys/scancodes.h"
+#include "core/input/gamepad.h"
+#include "core/input/keyboard.h"
+#include "core/input/mouse.h"
 
 /* Keyboard events */
 
 struct EventInputKey {
-    Key::Scancode key;
-    Key::Scancode scancode;
+    Input::Key::Scancode key;
+    Input::Key::Scancode scancode;
     bool pressed;
     bool repeat;
 };
@@ -18,7 +19,7 @@ struct EventInputKey {
 /* Mouse events */
 
 struct EventInputMouseButton {
-    Key::MouseButtons button;
+    Input::Mouse::Buttons button;
     bool pressed;
 };
 
@@ -32,23 +33,23 @@ struct EventInputMouseMotion {
 /* Gamepad events */
 
 struct EventInputGamepadConnected {
-    Gamepad::DeviceID pad;
+    Input::Gamepad::DeviceID pad;
     std::string_view name;
 };
 
 struct EventInputGamepadDisconnected {
-    Gamepad::DeviceID pad;
+    Input::Gamepad::DeviceID pad;
 };
 
 struct EventInputGamepadButton {
-    Gamepad::DeviceID pad;
-    Gamepad::Buttons button;
+    Input::Gamepad::DeviceID pad;
+    Input::Gamepad::Buttons button;
     bool pressed;
 };
 
 struct EventInputGamepadAxisMotion {
-    Gamepad::DeviceID pad;
-    Gamepad::Axis axis;
+    Input::Gamepad::DeviceID pad;
+    Input::Gamepad::Axis axis;
     float value;
 };
 

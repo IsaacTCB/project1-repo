@@ -3,19 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace Key {
-
-enum class MouseButtons : uint8_t {
-    UNKNOWN = 0,
-
-    LEFT = 1,
-    MIDDLE = 2,
-    RIGHT = 3,
-    EXTRA1 = 4,
-    EXTRA2 = 5,
-
-    COUNT = 6,
-};
+namespace Input::Key {
 
 /* Adapted from SDL3:
  * https://github.com/libsdl-org/SDL/blob/main/include/SDL3/SDL_scancode.h
@@ -304,7 +292,6 @@ enum class Scancode : uint16_t {
     COUNT = 512,
 };
 
-constexpr auto MOUSE_BUTTON_COUNT = static_cast<size_t>(MouseButtons::COUNT);
-constexpr auto SCANCODE_COUNT = static_cast<size_t>(Scancode::COUNT);
+constexpr auto SCANCODE_COUNT = static_cast<size_t>(::Input::Key::Scancode::COUNT);
 
-} // namespace Key
+} // namespace Input::Key

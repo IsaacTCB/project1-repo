@@ -6,18 +6,19 @@
 #include "sdl3_gamepad.h"
 
 #include "core/assertion.h"
-#include "core/events/input_events.h"
-#include "core/events/window_events.h"
 #include "core/logger.h"
 
-static Key::Scancode convert_scancode(SDL_Scancode scancode) {
-    ASSERT(scancode >= 0 && scancode < Key::SCANCODE_COUNT);
-    return static_cast<Key::Scancode>(scancode);
+#include "core/events/input_events.h"
+#include "core/events/window_events.h"
+
+static Input::Key::Scancode convert_scancode(SDL_Scancode scancode) {
+    ASSERT(scancode >= 0 && scancode < Input::Key::SCANCODE_COUNT);
+    return static_cast<Input::Key::Scancode>(scancode);
 }
 
-static Key::MouseButtons convert_mouse_button(uint8_t button) {
-    ASSERT(button > 0 && button < Key::MOUSE_BUTTON_COUNT);
-    return static_cast<Key::MouseButtons>(button);
+static Input::Mouse::Buttons convert_mouse_button(uint8_t button) {
+    ASSERT(button > 0 && button < Input::Key::MOUSE_BUTTON_COUNT);
+    return static_cast<Input::Mouse::Buttons>(button);
 }
 
 SDL_AppResult PlatformImpl::init() {
@@ -138,7 +139,7 @@ SDL_AppResult PlatformImpl::event(SDL_Event &event) {
         case SDL_EVENT_GAMEPAD_BUTTON_UP:
             if (auto *pad = gamepad_find(event.gbutton.which)) {
                 auto button = gamepad_sdl_to_button(static_cast<SDL_GamepadButton>(event.gbutton.button));
-                if (button >= Gamepad::Buttons::COUNT) {
+                if (button >= Input::Gamepad::Buttons::COUNT) {
                     break;
                 }
                 ASSERT(event.gbutton.button == gamepad_button_to_sdl(button), "Mapping is incorrect");
@@ -152,7 +153,7 @@ SDL_AppResult PlatformImpl::event(SDL_Event &event) {
         case SDL_EVENT_GAMEPAD_AXIS_MOTION:
             if (auto *pad = gamepad_find(event.gaxis.which)) {
                 auto axis = gamepad_sdl_to_axis(static_cast<SDL_GamepadAxis>(event.gaxis.axis));
-                if (axis >= Gamepad::Axis::COUNT) {
+                if (axis >= Input::Gamepad::Axis::COUNT) {
                     break;
                 }
                 ASSERT(event.gaxis.axis == gamepad_axis_to_sdl(axis), "Mapping is incorrect");

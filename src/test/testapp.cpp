@@ -4,7 +4,7 @@
 #include "core/events/input_events.h"
 #include "core/events/window_events.h"
 #include "core/image/decoder.h"
-#include "core/keys/gamepad.h"
+#include "core/input/gamepad.h"
 #include "core/logger.h"
 
 #include "platform/api/application.h"
@@ -80,26 +80,26 @@ public:
             m_input_service.event(event);
         }
 
-        if (m_input_service.is_key_just_pressed(Key::Scancode::SPACE)) {
+        if (m_input_service.is_key_just_pressed(Input::Key::Scancode::SPACE)) {
             LOG_TRACE("Damn");
         }
 
-        if (m_input_service.is_key_just_released(Key::Scancode::SPACE)) {
+        if (m_input_service.is_key_just_released(Input::Key::Scancode::SPACE)) {
             LOG_TRACE("Undamn");
         }
 
-        if (m_input_service.is_mouse_button_just_pressed(Key::MouseButtons::LEFT)) {
+        if (m_input_service.is_mouse_button_just_pressed(Input::Mouse::Buttons::LEFT)) {
             LOG_TRACE("Walk");
         }
-        if (m_input_service.is_mouse_button_just_released(Key::MouseButtons::RIGHT)) {
+        if (m_input_service.is_mouse_button_just_released(Input::Mouse::Buttons::RIGHT)) {
             LOG_TRACE("Walked");
         }
 
         float move_x = 0.0f, move_y = 0.0f;
-        m_input_service.pad_foreach([&](Gamepad::DeviceID gamepad) {
-            if (m_input_service.is_pad_button_just_pressed(gamepad, Gamepad::Buttons::SOUTH)) {
+        m_input_service.pad_foreach([&](Input::Gamepad::DeviceID gamepad) {
+            if (m_input_service.is_pad_button_just_pressed(gamepad, Input::Gamepad::Buttons::SOUTH)) {
                 LOG_TRACE("Pad {0} just pressed X.", gamepad);
-            } else if (m_input_service.is_pad_button_just_released(gamepad, Gamepad::Buttons::SOUTH)) {
+            } else if (m_input_service.is_pad_button_just_released(gamepad, Input::Gamepad::Buttons::SOUTH)) {
                 LOG_TRACE("Pad {0} just released X.", gamepad);
             }
 
@@ -109,15 +109,15 @@ public:
         });
 
         constexpr float PLAYER_SPEED = 3.0f;
-        if (m_input_service.is_key_pressed(Key::Scancode::A)) {
+        if (m_input_service.is_key_pressed(Input::Key::Scancode::A)) {
             move_x = -1.0f;
-        } else if (m_input_service.is_key_pressed(Key::Scancode::D)) {
+        } else if (m_input_service.is_key_pressed(Input::Key::Scancode::D)) {
             move_x = 1.0f;
         }
 
-        if (m_input_service.is_key_pressed(Key::Scancode::W)) {
+        if (m_input_service.is_key_pressed(Input::Key::Scancode::W)) {
             move_y = -1.0f;
-        } else if (m_input_service.is_key_pressed(Key::Scancode::S)) {
+        } else if (m_input_service.is_key_pressed(Input::Key::Scancode::S)) {
             move_y = 1.0f;
         }
 

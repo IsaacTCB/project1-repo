@@ -1,8 +1,10 @@
 #pragma once
 
 #include "core/events/input_events.h"
-#include "core/keys/gamepad.h"
-#include "core/keys/scancodes.h"
+
+#include "core/input/gamepad.h"
+#include "core/input/keyboard.h"
+#include "core/input/mouse.h"
 
 #include <array>
 #include <functional>
@@ -19,22 +21,22 @@ public:
     void event(const EventInput &event);
 
     [[nodiscard]]
-    bool is_key_pressed(Key::Scancode scancode) const;
+    bool is_key_pressed(Input::Key::Scancode scancode) const;
 
     [[nodiscard]]
-    bool is_key_just_pressed(Key::Scancode scancode) const;
+    bool is_key_just_pressed(Input::Key::Scancode scancode) const;
 
     [[nodiscard]]
-    bool is_key_just_released(Key::Scancode scancode) const;
+    bool is_key_just_released(Input::Key::Scancode scancode) const;
 
     [[nodiscard]]
-    bool is_mouse_button_pressed(Key::MouseButtons button) const;
+    bool is_mouse_button_pressed(Input::Mouse::Buttons button) const;
 
     [[nodiscard]]
-    bool is_mouse_button_just_pressed(Key::MouseButtons button) const;
+    bool is_mouse_button_just_pressed(Input::Mouse::Buttons button) const;
 
     [[nodiscard]]
-    bool is_mouse_button_just_released(Key::MouseButtons button) const;
+    bool is_mouse_button_just_released(Input::Mouse::Buttons button) const;
 
     [[nodiscard]]
     std::tuple<float, float> get_mouse_pos() const {
@@ -42,19 +44,19 @@ public:
     }
 
     [[nodiscard]]
-    bool is_pad_button_pressed(Gamepad::DeviceID device, Gamepad::Buttons button) const;
+    bool is_pad_button_pressed(Input::Gamepad::DeviceID device, Input::Gamepad::Buttons button) const;
 
     [[nodiscard]]
-    bool is_pad_button_just_pressed(Gamepad::DeviceID device, Gamepad::Buttons button) const;
+    bool is_pad_button_just_pressed(Input::Gamepad::DeviceID device, Input::Gamepad::Buttons button) const;
 
     [[nodiscard]]
-    bool is_pad_button_just_released(Gamepad::DeviceID device, Gamepad::Buttons button) const;
+    bool is_pad_button_just_released(Input::Gamepad::DeviceID device, Input::Gamepad::Buttons button) const;
 
     [[nodiscard]]
-    std::tuple<float, float> get_pad_stick(Gamepad::DeviceID device, bool right) const;
+    std::tuple<float, float> get_pad_stick(Input::Gamepad::DeviceID device, bool right) const;
 
     [[nodiscard]]
-    bool is_pad_connected(Gamepad::DeviceID device) const {
+    bool is_pad_connected(Input::Gamepad::DeviceID device) const {
         return m_pad_connected[device];
     }
 
@@ -65,12 +67,12 @@ public:
                 continue;
             }
 
-            using ReturnType = std::invoke_result_t<Func, Gamepad::DeviceID>;
+            using ReturnType = std::invoke_result_t<Func, Input::Gamepad::DeviceID>;
             if constexpr (std::is_void_v<ReturnType>) {
-                auto device = static_cast<Gamepad::DeviceID>(i);
+                auto device = static_cast<Input::Gamepad::DeviceID>(i);
                 std::invoke(func, device);
             } else {
-                auto device = static_cast<Gamepad::DeviceID>(i);
+                auto device = static_cast<Input::Gamepad::DeviceID>(i);
                 if (std::invoke(func, device)) {
                     return;
                 }
@@ -90,10 +92,10 @@ private:
 
     struct PadState {
         uint32_t buttons = 0;
-        std::array<float, Gamepad::AXIS_COUNT> axis = {0};
+        std::array<float, Input::Gamepad::AXIS_COUNT> axis = {0};
     };
 
-    std::array<bool, Gamepad::GAMEPAD_MAX> m_pad_connected{};
-    std::array<PadState, Gamepad::GAMEPAD_MAX> m_pad_state{};
-    std::array<PadState, Gamepad::GAMEPAD_MAX> m_pad_state_previous{};
+    std::array<bool, Input::Gamepad::GAMEPAD_MAX> m_pad_connected{};
+    std::array<PadState, Input::Gamepad::GAMEPAD_MAX> m_pad_state{};
+    std::array<PadState, Input::Gamepad::GAMEPAD_MAX> m_pad_state_previous{};
 };

@@ -4,10 +4,10 @@
 #include <array>
 #include <stack>
 
-#include "core/keys/gamepad.h"
+#include "core/input/gamepad.h"
 #include "core/logger.h"
 
-static std::array<ImplGamepad, Gamepad::GAMEPAD_MAX> s_gamepads;
+static std::array<ImplGamepad, Input::Gamepad::GAMEPAD_MAX> s_gamepads;
 static std::stack<size_t> s_gamepads_available;
 
 static ImplGamepad *gamepad__reserve_slot() {
@@ -49,22 +49,22 @@ static constexpr auto gamepad__enum_lookup(
     return table[static_cast<size_t>(idx)];
 }
 
-Gamepad::Buttons gamepad_sdl_to_button(SDL_GamepadButton button) {
+Input::Gamepad::Buttons gamepad_sdl_to_button(SDL_GamepadButton button) {
     static constexpr auto s_sdl_to_btn_lookup = build_sdl_to_btn_lookup();
-    return gamepad__enum_lookup(button, s_sdl_to_btn_lookup, Gamepad::Buttons::COUNT);
+    return gamepad__enum_lookup(button, s_sdl_to_btn_lookup, Input::Gamepad::Buttons::COUNT);
 }
 
-SDL_GamepadButton gamepad_button_to_sdl(Gamepad::Buttons button) {
+SDL_GamepadButton gamepad_button_to_sdl(Input::Gamepad::Buttons button) {
     static constexpr auto s_btn_to_sdl_lookup = build_btn_to_sdl_lookup();
     return gamepad__enum_lookup(button, s_btn_to_sdl_lookup, SDL_GAMEPAD_BUTTON_INVALID);
 }
 
-Gamepad::Axis gamepad_sdl_to_axis(SDL_GamepadAxis axis) {
+Input::Gamepad::Axis gamepad_sdl_to_axis(SDL_GamepadAxis axis) {
     static constexpr auto s_sdl_to_axis_lookup = build_sdl_to_axis_lookup();
-    return gamepad__enum_lookup(axis, s_sdl_to_axis_lookup, Gamepad::Axis::COUNT);
+    return gamepad__enum_lookup(axis, s_sdl_to_axis_lookup, Input::Gamepad::Axis::COUNT);
 }
 
-SDL_GamepadAxis gamepad_axis_to_sdl(Gamepad::Axis axis) {
+SDL_GamepadAxis gamepad_axis_to_sdl(Input::Gamepad::Axis axis) {
     static constexpr auto s_axis_to_sdl_lookup = build_axis_to_sdl_lookup();
     return gamepad__enum_lookup(axis, s_axis_to_sdl_lookup, SDL_GAMEPAD_AXIS_INVALID);
 }

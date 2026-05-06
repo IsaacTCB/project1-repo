@@ -3,11 +3,11 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace Gamepad {
+namespace Input::Gamepad {
 
-using DeviceID = std::uint8_t;
-constexpr int GAMEPAD_MAX = 16; /* Max number of gamepads supported at once. */
-
+/* Adapted from SDL3:
+ * https://github.com/libsdl-org/SDL/blob/main/include/SDL3/SDL_scancode.h
+ */
 enum class Buttons : uint8_t {
     /* Face buttons */
     SOUTH,
@@ -63,7 +63,9 @@ enum class Axis : uint8_t {
     COUNT,
 };
 
-constexpr auto BUTTON_COUNT = static_cast<size_t>(Gamepad::Buttons::COUNT);
-constexpr auto AXIS_COUNT = static_cast<size_t>(Gamepad::Axis::COUNT);
+using DeviceID = std::uint8_t;
+constexpr auto BUTTON_COUNT = static_cast<size_t>(::Input::Gamepad::Buttons::COUNT);
+constexpr auto AXIS_COUNT = static_cast<size_t>(::Input::Gamepad::Axis::COUNT);
+constexpr int GAMEPAD_MAX = 16; /* Max number of gamepads supported at once. */
 
-}; // namespace Gamepad
+}; // namespace Input::Gamepad
