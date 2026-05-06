@@ -6,7 +6,7 @@
 namespace Input::Gamepad {
 
 /* Adapted from SDL3:
- * https://github.com/libsdl-org/SDL/blob/main/include/SDL3/SDL_scancode.h
+ * https://github.com/libsdl-org/SDL/blob/main/include/SDL3/SDL_gamepad.h
  */
 enum class Buttons : uint8_t {
     /* Face buttons */
