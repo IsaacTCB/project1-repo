@@ -43,8 +43,8 @@ endfunction()
 add_library(engine STATIC
     src/test/testapp.cpp
     src/test/input_service.cpp
+    src/test/image/decoder.cpp
     src/core/logger.cpp
-    src/core/image/decoder.cpp
     src/platform/api/platform.cpp
     src/platform/api/application_handler.cpp
     src/renderer/api/renderer.cpp)

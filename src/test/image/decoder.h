@@ -1,6 +1,6 @@
 #pragma once
 
-#include "image.h"
+#include "core/image/image.h"
 
 #include <string_view>
 

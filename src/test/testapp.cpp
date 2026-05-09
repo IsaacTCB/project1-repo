@@ -3,7 +3,6 @@
 
 #include "core/events/input_events.h"
 #include "core/events/window_events.h"
-#include "core/image/decoder.h"
 #include "core/input/gamepad.h"
 #include "core/logger.h"
 
@@ -13,6 +12,7 @@
 #include "renderer/api/render_queue.h"
 #include "renderer/api/renderer.h"
 
+#include "test/image/decoder.h"
 #include "test/input_service.h"
 
 class TestApplication : public IApplication {
