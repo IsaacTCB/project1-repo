@@ -26,6 +26,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     # HACK: This command affects all targets, including dependencies.
     # This should get replaced by target_compile_definitions().
     add_compile_definitions(ENABLE_ASSERTS=1)
+    if(MSVC)
+        add_compile_options(/W4)
+    else()
+        add_compile_options(-Wall -Wextra -Wpedantic)
+    endif()
 endif()
 
 # Used by platform projects to add renderers.
