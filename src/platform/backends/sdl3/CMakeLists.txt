@@ -46,13 +46,6 @@ endif()
 target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_compile_definitions(${TARGET_NAME} PRIVATE SDL_MAIN_USE_CALLBACKS)
 
-if(MSVC)
-    # Ignore unused parameters
-    target_compile_options(${TARGET_NAME} PRIVATE /wd4100)
-else()
-    target_compile_options(${TARGET_NAME} PRIVATE -Wno-unused-parameter)
-endif()
-
 if(EMSCRIPTEN)
     target_compile_definitions(${TARGET_NAME} PRIVATE -DUSE_THREADS=0)
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
