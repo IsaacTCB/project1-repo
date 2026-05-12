@@ -171,4 +171,10 @@ SDL_AppResult PlatformImpl::event(SDL_Event &event) {
 void PlatformImpl::close(SDL_AppResult result) {
     m_platform.close();
     m_state.running = false;
+
+    if (result == SDL_APP_SUCCESS) {
+        LOG_INFO("App closed successfully!");
+    } else {
+        LOG_ERROR("App closed with errors.");
+    }
 }
