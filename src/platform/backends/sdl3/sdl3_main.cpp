@@ -3,10 +3,10 @@
 
 #include "sdl3_platform.h"
 
-SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
+SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
     static PlatformImpl s_impl;
     *appstate = &s_impl;
-    return s_impl.init();
+    return s_impl.init(argc, argv);
 }
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {

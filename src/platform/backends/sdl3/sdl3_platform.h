@@ -11,7 +11,7 @@ public:
     PlatformImpl()
         : m_state{}, m_platform{m_state} {}
 
-    SDL_AppResult init();
+    SDL_AppResult init(int argc, char *argv[]);
     SDL_AppResult iterate();
     SDL_AppResult event(SDL_Event &event);
     void close(SDL_AppResult result);

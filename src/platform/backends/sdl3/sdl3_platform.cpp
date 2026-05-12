@@ -21,7 +21,7 @@ static Input::Mouse::Buttons convert_mouse_button(uint8_t button) {
     return static_cast<Input::Mouse::Buttons>(button);
 }
 
-SDL_AppResult PlatformImpl::init() {
+SDL_AppResult PlatformImpl::init([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
     log_init();
 
     if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
