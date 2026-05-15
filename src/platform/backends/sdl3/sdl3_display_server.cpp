@@ -48,7 +48,8 @@ std::tuple<uint32_t, uint32_t> DisplayServer::get_size(const DisplayWindowHandle
     SDL_GetWindowSize(window, &width, &height);
     return {
         static_cast<uint32_t>(width),
-        static_cast<uint32_t>(height)};
+        static_cast<uint32_t>(height),
+    };
 }
 
 /**

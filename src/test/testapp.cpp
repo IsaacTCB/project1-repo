@@ -1,9 +1,9 @@
+#include <algorithm>
 #include <cmath>
 #include <memory>
 
 #include "core/events/input_events.h"
 #include "core/events/window_events.h"
-#include "core/image/decoder.h"
 #include "core/input/gamepad.h"
 #include "core/logger.h"
 
@@ -13,6 +13,7 @@
 #include "renderer/api/render_queue.h"
 #include "renderer/api/renderer.h"
 
+#include "test/image/decoder.h"
 #include "test/input_service.h"
 
 class TestApplication : public IApplication {
@@ -62,6 +63,9 @@ public:
     }
 
     void on_update(float delta) override {
+        /* clamps deltatime to avoid huge skips */
+        delta = std::min(delta, 0.25f);
+
         for (const auto &event : m_platform->event().span<EventWindow>()) {
             if (const auto *ptr = std::get_if<EventWindowResized>(&event)) {
                 LOG_TRACE("{0}x{1}", ptr->width, ptr->height);
@@ -108,7 +112,7 @@ public:
             move_y = axis_y;
         });
 
-        constexpr float PLAYER_SPEED = 3.0f;
+        constexpr float PLAYER_SPEED = 60 * 3.0f;
         if (m_input_service.is_key_pressed(Input::Key::Scancode::A)) {
             move_x = -1.0f;
         } else if (m_input_service.is_key_pressed(Input::Key::Scancode::D)) {
@@ -127,8 +131,8 @@ public:
             move_y /= length;
         }
 
-        m_entity.x += move_x * PLAYER_SPEED;
-        m_entity.y += move_y * PLAYER_SPEED;
+        m_entity.x += move_x * PLAYER_SPEED * delta;
+        m_entity.y += move_y * PLAYER_SPEED * delta;
     }
 
     void on_render() override {

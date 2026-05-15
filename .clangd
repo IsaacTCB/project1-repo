@@ -3,7 +3,10 @@ If:
     - "external/.*"
 
 CompileFlags:
-  Add: [-Wall]
+  Add:
+    - -Wall
+    - -Wextra
+    - -Wpedantic
 
 Diagnostics:
   ClangTidy:

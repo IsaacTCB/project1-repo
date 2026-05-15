@@ -21,7 +21,7 @@ static Input::Mouse::Buttons convert_mouse_button(uint8_t button) {
     return static_cast<Input::Mouse::Buttons>(button);
 }
 
-SDL_AppResult PlatformImpl::init() {
+SDL_AppResult PlatformImpl::init([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
     log_init();
 
     if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
@@ -36,6 +36,8 @@ SDL_AppResult PlatformImpl::init() {
         LOG_ERROR("Failed to load gamecontrollerdb.txt mappings. Reason: {0}", SDL_GetError());
     }
 
+    m_last_tick = SDL_GetTicks();
+
     m_state.running = true;
     m_platform.init();
 
@@ -43,22 +45,23 @@ SDL_AppResult PlatformImpl::init() {
 }
 
 SDL_AppResult PlatformImpl::iterate() {
-    constexpr uint64_t TARGET_TICKRATE = (1.0 / TARGET_FPS) * 1000;
+    /* get delta */
+    uint64_t current_tick = SDL_GetTicksNS();
+    float delta = (current_tick - m_last_tick) / 1000000000.0f;
+    m_last_tick = current_tick;
 
-    uint64_t tick = SDL_GetTicks();
-
-    m_platform.update(1.0f);
+    /* process game */
+    m_platform.update(delta);
     m_platform.render();
 
+    /* apply framelimit */
+    constexpr uint64_t TARGET_TICKRATE = 1000000000 / TARGET_FPS;
+    apply_framelimit(current_tick, TARGET_TICKRATE);
+
+    /* exit or continue loop */
     if (!m_state.running) {
         return SDL_APP_SUCCESS;
     }
-
-    uint64_t delta = SDL_GetTicks() - tick;
-    if (delta < TARGET_TICKRATE) {
-        SDL_Delay(TARGET_TICKRATE - delta);
-    }
-
     return SDL_APP_CONTINUE;
 }
 
@@ -171,4 +174,22 @@ SDL_AppResult PlatformImpl::event(SDL_Event &event) {
 void PlatformImpl::close(SDL_AppResult result) {
     m_platform.close();
     m_state.running = false;
+
+    if (result == SDL_APP_SUCCESS) {
+        LOG_INFO("App closed successfully!");
+    } else {
+        LOG_ERROR("App closed with errors.");
+    }
+}
+
+bool PlatformImpl::apply_framelimit(uint64_t start_tick, uint64_t target_ms_rate) {
+    bool capped = false;
+
+    uint64_t work_time = SDL_GetTicksNS() - start_tick;
+    if (work_time < target_ms_rate) {
+        SDL_DelayNS(target_ms_rate - work_time);
+        capped = true;
+    }
+
+    return capped;
 }

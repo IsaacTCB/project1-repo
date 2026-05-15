@@ -1,5 +1,5 @@
 #include "decoder.h"
-#include "image.h"
+#include "core/image/image.h"
 
 #include <cstdint>
 
