@@ -56,7 +56,8 @@ SDL_AppResult PlatformImpl::iterate() {
 
     /* apply framelimit */
     constexpr uint64_t TARGET_TICKRATE = 1000000000 / TARGET_FPS;
-    apply_framelimit(current_tick, TARGET_TICKRATE);
+    uint64_t work_time = SDL_GetTicksNS() - current_tick;
+    apply_framelimit(work_time, TARGET_TICKRATE);
 
     /* exit or continue loop */
     if (!m_state.running) {
@@ -182,12 +183,11 @@ void PlatformImpl::close(SDL_AppResult result) {
     }
 }
 
-bool PlatformImpl::apply_framelimit(uint64_t start_tick, uint64_t target_ms_rate) {
+bool PlatformImpl::apply_framelimit(uint64_t work_ms_time, uint64_t target_ms_rate) {
     bool capped = false;
 
-    uint64_t work_time = SDL_GetTicksNS() - start_tick;
-    if (work_time < target_ms_rate) {
-        SDL_DelayNS(target_ms_rate - work_time);
+    if (work_ms_time < target_ms_rate) {
+        SDL_DelayNS(target_ms_rate - work_ms_time);
         capped = true;
     }
 
