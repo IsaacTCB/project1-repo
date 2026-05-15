@@ -9,6 +9,7 @@
 #include "core/logger.h"
 
 #include "core/events/input_events.h"
+#include "core/events/platform_events.h"
 #include "core/events/window_events.h"
 
 static Input::Key::Scancode convert_scancode(SDL_Scancode scancode) {
@@ -69,7 +70,7 @@ SDL_AppResult PlatformImpl::iterate() {
 SDL_AppResult PlatformImpl::event(SDL_Event &event) {
     switch (event.type) {
         case SDL_EVENT_QUIT:
-            m_state.running = false;
+            m_platform.submit_event<EventPlatformExited>();
             break;
 
         /* Window events */

@@ -8,6 +8,8 @@ class OSServer {
     DECLARE_SERVER(OSServer);
 
 public:
+    void exit_app();
+
     [[nodiscard]] const char *get_os() const;
     [[nodiscard]] const char *get_platform() const;
 
