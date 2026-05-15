@@ -51,9 +51,9 @@ endfunction()
 
 # Common stuff
 add_library(engine STATIC
-    src/test/testapp.cpp
-    src/test/input_service.cpp
-    src/test/image/decoder.cpp
+    src/runtime/testapp.cpp
+    src/runtime/input_service.cpp
+    src/runtime/image/decoder.cpp
     src/core/logger.cpp
     src/platform/api/platform.cpp
     src/platform/api/application_handler.cpp

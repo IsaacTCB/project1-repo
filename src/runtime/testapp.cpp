@@ -13,8 +13,8 @@
 #include "renderer/api/render_queue.h"
 #include "renderer/api/renderer.h"
 
-#include "test/image/decoder.h"
-#include "test/input_service.h"
+#include "image/decoder.h"
+#include "input_service.h"
 
 class TestApplication : public IApplication {
     DECLARE_APP(TestApplication);
