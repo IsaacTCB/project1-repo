@@ -46,8 +46,8 @@ SDL_AppResult PlatformImpl::init([[maybe_unused]] int argc, [[maybe_unused]] cha
 
 SDL_AppResult PlatformImpl::iterate() {
     /* get delta */
-    uint64_t current_tick = SDL_GetTicks();
-    float delta = (current_tick - m_last_tick) / 1000.0f;
+    uint64_t current_tick = SDL_GetTicksNS();
+    float delta = (current_tick - m_last_tick) / 1000000000.0f;
     m_last_tick = current_tick;
 
     /* process game */
@@ -55,7 +55,7 @@ SDL_AppResult PlatformImpl::iterate() {
     m_platform.render();
 
     /* apply framelimit */
-    constexpr uint64_t TARGET_TICKRATE = 1000 / TARGET_FPS;
+    constexpr uint64_t TARGET_TICKRATE = 1000000000 / TARGET_FPS;
     apply_framelimit(current_tick, TARGET_TICKRATE);
 
     /* exit or continue loop */
@@ -185,9 +185,9 @@ void PlatformImpl::close(SDL_AppResult result) {
 bool PlatformImpl::apply_framelimit(uint64_t start_tick, uint64_t target_ms_rate) {
     bool capped = false;
 
-    uint64_t work_time = SDL_GetTicks() - start_tick;
+    uint64_t work_time = SDL_GetTicksNS() - start_tick;
     if (work_time < target_ms_rate) {
-        SDL_Delay(target_ms_rate - work_time);
+        SDL_DelayNS(target_ms_rate - work_time);
         capped = true;
     }
 
