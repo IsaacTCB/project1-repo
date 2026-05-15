@@ -112,7 +112,7 @@ public:
             move_y = axis_y;
         });
 
-        constexpr float PLAYER_SPEED = 3.0f;
+        constexpr float PLAYER_SPEED = 60 * 3.0f;
         if (m_input_service.is_key_pressed(Input::Key::Scancode::A)) {
             move_x = -1.0f;
         } else if (m_input_service.is_key_pressed(Input::Key::Scancode::D)) {
@@ -131,8 +131,8 @@ public:
             move_y /= length;
         }
 
-        m_entity.x += move_x * PLAYER_SPEED;
-        m_entity.y += move_y * PLAYER_SPEED;
+        m_entity.x += move_x * PLAYER_SPEED * delta;
+        m_entity.y += move_y * PLAYER_SPEED * delta;
     }
 
     void on_render() override {
