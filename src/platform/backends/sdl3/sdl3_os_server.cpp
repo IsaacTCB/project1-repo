@@ -1,6 +1,12 @@
 #include "platform/api/os_server.h"
 
+#include "sdl3_common.h"
+
 #include <SDL3/SDL.h>
+
+void OSServer::exit_app() {
+    m_state.running = false;
+}
 
 const char *OSServer::get_os() const {
     return SDL_GetPlatform();

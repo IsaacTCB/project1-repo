@@ -19,7 +19,7 @@ public:
     bool is_running() const noexcept { return m_state.running; }
 
 private:
-    static bool apply_framelimit(uint64_t start_tick, uint64_t target_ms_rate);
+    static bool apply_framelimit(uint64_t work_ms_time, uint64_t target_ms_rate);
 
 private:
     uint64_t m_last_tick{};

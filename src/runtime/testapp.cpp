@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "core/events/input_events.h"
+#include "core/events/platform_events.h"
 #include "core/events/window_events.h"
 #include "core/input/gamepad.h"
 #include "core/logger.h"
@@ -66,9 +67,16 @@ public:
         /* clamps deltatime to avoid huge skips */
         delta = std::min(delta, 0.25f);
 
+        /* close application if requested */
+        for ([[maybe_unused]] const auto &event : m_platform->event().span<EventPlatformExited>()) {
+            m_platform->os().exit_app();
+            return;
+        }
+
         for (const auto &event : m_platform->event().span<EventWindow>()) {
             if (const auto *ptr = std::get_if<EventWindowResized>(&event)) {
                 LOG_TRACE("{0}x{1}", ptr->width, ptr->height);
+                m_renderer->on_screen_resized(ptr->width, ptr->height);
             }
             if (std::get_if<EventWindowMaximized>(&event)) {
                 LOG_TRACE("maximized");

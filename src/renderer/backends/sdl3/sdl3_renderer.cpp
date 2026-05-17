@@ -39,6 +39,10 @@ void SDL3Renderer::swap_buffers() {
     SDL_RenderPresent(m_impl->renderer);
 }
 
+void SDL3Renderer::on_screen_resized(uint32_t width, uint32_t height) {
+    SDL_SetRenderLogicalPresentation(m_impl->renderer, width, height, SDL_LOGICAL_PRESENTATION_STRETCH);
+}
+
 TextureHandle SDL3Renderer::load_texture(ImageData &image) {
     ASSERT(image.pixels.size() > 0, "Image is not loaded");
 

@@ -9,6 +9,7 @@
 #include "core/logger.h"
 
 #include "core/events/input_events.h"
+#include "core/events/platform_events.h"
 #include "core/events/window_events.h"
 
 static Input::Key::Scancode convert_scancode(SDL_Scancode scancode) {
@@ -56,7 +57,8 @@ SDL_AppResult PlatformImpl::iterate() {
 
     /* apply framelimit */
     constexpr uint64_t TARGET_TICKRATE = 1000000000 / TARGET_FPS;
-    apply_framelimit(current_tick, TARGET_TICKRATE);
+    uint64_t work_time = SDL_GetTicksNS() - current_tick;
+    apply_framelimit(work_time, TARGET_TICKRATE);
 
     /* exit or continue loop */
     if (!m_state.running) {
@@ -68,7 +70,7 @@ SDL_AppResult PlatformImpl::iterate() {
 SDL_AppResult PlatformImpl::event(SDL_Event &event) {
     switch (event.type) {
         case SDL_EVENT_QUIT:
-            m_state.running = false;
+            m_platform.submit_event<EventPlatformExited>();
             break;
 
         /* Window events */
@@ -182,12 +184,11 @@ void PlatformImpl::close(SDL_AppResult result) {
     }
 }
 
-bool PlatformImpl::apply_framelimit(uint64_t start_tick, uint64_t target_ms_rate) {
+bool PlatformImpl::apply_framelimit(uint64_t work_ms_time, uint64_t target_ms_rate) {
     bool capped = false;
 
-    uint64_t work_time = SDL_GetTicksNS() - start_tick;
-    if (work_time < target_ms_rate) {
-        SDL_DelayNS(target_ms_rate - work_time);
+    if (work_ms_time < target_ms_rate) {
+        SDL_DelayNS(target_ms_rate - work_ms_time);
         capped = true;
     }
 
