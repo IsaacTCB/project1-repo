@@ -101,13 +101,9 @@ GLRenderer::GLRenderer(DisplayWindowHandle &window_data)
     glUseProgram(m_impl->shader->get_program());
     m_impl->shader->set_int("u_texture", 0);
 
-    /* TODO: allow resize. need to implement a event dispatcher/listener
-     * for this one. */
-    float window_width = window_data.props.width;
-    float window_height = window_data.props.height;
-    glViewport(0, 0, (GLsizei)window_width, (GLsizei)window_height);
-    m_impl->proj = glm::ortho(0.0f, window_width, window_height, 0.0f, -1.0f, 1.0f);
-    m_impl->shader->set_mat4("u_view_proj", m_impl->proj);
+    on_screen_resized(
+        window_data.props.width,
+        window_data.props.height);
 }
 
 GLRenderer::~GLRenderer() {
@@ -125,6 +121,12 @@ void GLRenderer::clear(float r, float g, float b, float a) {
 void GLRenderer::swap_buffers() {
     m_impl->context.bind();
     m_impl->context.swap_buffers();
+}
+
+void GLRenderer::on_screen_resized(uint32_t width, uint32_t height) {
+    glViewport(0, 0, (GLsizei)width, (GLsizei)height);
+    m_impl->proj = glm::ortho(0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, -1.0f, 1.0f);
+    m_impl->shader->set_mat4("u_view_proj", m_impl->proj);
 }
 
 TextureHandle GLRenderer::load_texture(ImageData &image) {
