@@ -22,10 +22,10 @@ RenderView Renderer::get_render_view(ICamera &target_camera, const Viewport &vie
     return RenderView{
         .camera = &target_camera,
         .viewport = {
-            .x = 800.0f * viewport.x,
-            .y = 600.0f * viewport.y,
-            .width = 800.0f * viewport.width,
-            .height = 600.0f * viewport.height,
+            .x = m_screen_viewport.width * viewport.x,
+            .y = m_screen_viewport.height * viewport.y,
+            .width = m_screen_viewport.width * viewport.width,
+            .height = m_screen_viewport.height * viewport.height,
         },
     };
 }

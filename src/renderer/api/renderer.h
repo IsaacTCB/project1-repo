@@ -35,5 +35,6 @@ public:
     virtual void render_pass(const RenderView &view, const RenderQueue &queue) = 0;
 
 protected:
+    Viewport m_screen_viewport;
     Renderer() = default;
 };

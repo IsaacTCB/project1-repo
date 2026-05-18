@@ -125,6 +125,12 @@ void GLRenderer::swap_buffers() {
 
 void GLRenderer::on_screen_resized(uint32_t width, uint32_t height) {
     ASSERT(width != 0 && height != 0, "Width & height must not be 0.");
+    m_screen_viewport = {
+        .x = 0.0f,
+        .y = 0.0f,
+        .width = static_cast<float>(width),
+        .height = static_cast<float>(height),
+    };
     glViewport(0, 0, (GLsizei)width, (GLsizei)height);
     m_impl->proj = glm::ortho(0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, -1.0f, 1.0f);
     m_impl->shader->set_mat4("u_view_proj", m_impl->proj);

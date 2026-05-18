@@ -40,6 +40,12 @@ void SDL3Renderer::swap_buffers() {
 }
 
 void SDL3Renderer::on_screen_resized(uint32_t width, uint32_t height) {
+    m_screen_viewport = {
+        .x = 0.0f,
+        .y = 0.0f,
+        .width = static_cast<float>(width),
+        .height = static_cast<float>(height),
+    };
     SDL_SetRenderLogicalPresentation(m_impl->renderer, width, height, SDL_LOGICAL_PRESENTATION_STRETCH);
 }
 
