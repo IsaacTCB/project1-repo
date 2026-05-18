@@ -5,5 +5,5 @@
 
 struct RenderView {
     ICamera *camera;
-    Viewport viewport;
+    const Viewport viewport;
 };

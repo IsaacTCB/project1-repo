@@ -22,7 +22,7 @@ public:
     Renderer(Renderer &&rhs) = delete;
     Renderer operator=(Renderer &&rhs) = delete;
 
-    RenderView get_render_view(ICamera &target_camera, const Viewport &viewport);
+    RenderView get_render_view(ICamera &target_camera, const Viewport &viewport) const;
 
 public:
     virtual void clear(float r, float g, float b, float a = 255) = 0;

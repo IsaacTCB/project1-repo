@@ -18,7 +18,7 @@ std::unique_ptr<Renderer> Renderer::create(DisplayWindowHandle &window_data) {
     }
 }
 
-RenderView Renderer::get_render_view(ICamera &target_camera, const Viewport &viewport) {
+RenderView Renderer::get_render_view(ICamera &target_camera, const Viewport &viewport) const {
     return RenderView{
         .camera = &target_camera,
         .viewport = {
