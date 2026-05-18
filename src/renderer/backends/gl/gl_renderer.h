@@ -3,6 +3,8 @@
 #include "renderer/api/render_queue.h"
 #include "renderer/api/renderer.h"
 
+#include "core/viewport.h"
+
 #include <memory>
 
 class GLRenderer : public Renderer {
@@ -18,12 +20,14 @@ public:
     TextureHandle load_texture(ImageData &image) override;
     void destroy_texture(TextureHandle handle) override;
 
-    void render_pass(const RenderQueue &queue) override;
+    void render_pass(const RenderView &view, const RenderQueue &queue) override;
 
 private:
     template <typename T>
     void command(T &) = delete;
     void command(const RenderCommandDraw &command);
+
+    void apply_viewport(const Viewport &viewport);
 
 private:
     struct Impl;

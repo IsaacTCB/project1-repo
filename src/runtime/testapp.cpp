@@ -2,6 +2,7 @@
 #include <cmath>
 #include <memory>
 
+#include "core/camera.h"
 #include "core/events/input_events.h"
 #include "core/events/platform_events.h"
 #include "core/events/window_events.h"
@@ -35,6 +36,7 @@ public:
         DisplayWindowProps props{};
         props.width = 800;
         props.height = 600;
+        props.resizable = true;
         props.api = RendererAPI::OpenGL;
 
         m_window = display.init_display(props);
@@ -154,8 +156,24 @@ public:
         auto [mouse_x, mouse_y] = m_input_service.get_mouse_pos();
         m_queue.draw_color(0xFF00FFFF, mouse_x, mouse_y, 8, 8);
 
+        Camera2D m_camera;
+        m_camera.x = 0.0f;
+        m_camera.y = 0.0f;
+        m_camera.anchor = Camera2D::AnchorMode::CENTER;
+        m_camera.zoom = 1.0f;
+
+        Viewport viewports[4] = {
+            {.x = 0.0f, .y = 0.0f, .width = 0.5f, .height = 0.5f},
+            {.x = 0.5f, .y = 0.0f, .width = 0.5f, .height = 0.5f},
+            {.x = 0.0f, .y = 0.5f, .width = 0.5f, .height = 0.5f},
+            {.x = 0.5f, .y = 0.5f, .width = 0.5f, .height = 0.5f},
+        };
+
         m_renderer->clear(0.1f, 0.1f, 0.1f, 0.0f);
-        m_renderer->render_pass(m_queue);
+        for (const auto &viewport : viewports) {
+            auto render_view = m_renderer->get_render_view(m_camera, viewport);
+            m_renderer->render_pass(render_view, m_queue);
+        }
         m_renderer->swap_buffers();
     }
 

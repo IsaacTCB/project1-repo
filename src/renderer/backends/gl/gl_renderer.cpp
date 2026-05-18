@@ -144,8 +144,10 @@ void GLRenderer::destroy_texture(TextureHandle handle) {
     glDeleteTextures(1, &texture->id);
 }
 
-void GLRenderer::render_pass(const RenderQueue &queue) {
+void GLRenderer::render_pass(const RenderView &view, const RenderQueue &queue) {
     m_impl->context.bind();
+    apply_viewport(view.viewport);
+
     for (const auto &command : queue.get()) {
         std::visit([this](const auto &cmd) {
             this->command(cmd);
@@ -227,4 +229,12 @@ void GLRenderer::command(const RenderCommandDraw &command) {
     glBindTexture(GL_TEXTURE_2D, texture->id);
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+}
+
+void GLRenderer::apply_viewport(const Viewport &viewport) {
+    glViewport(
+        viewport.x,
+        viewport.y,
+        viewport.width,
+        viewport.height);
 }
