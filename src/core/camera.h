@@ -12,8 +12,13 @@ public:
     };
 
 public:
-    float x;
-    float y;
-    float zoom;
-    AnchorMode anchor;
+    /* TODO: make vec2 structs and then replace these */
+    float x = 0.0f;
+    float y = 0.0f;
+    float offset_x = 0.0f;
+    float offset_y = 0.0f;
+
+    float rotation = 0.0f; /* in radians */
+    float zoom = 1.0f;
+    AnchorMode anchor = AnchorMode::TOP_LEFT;
 };

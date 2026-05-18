@@ -3,7 +3,9 @@
 #include "gl_shader.h"
 #include "gl_shader_sources.h"
 
+#include "core/camera.h"
 #include "core/logger.h"
+#include "core/viewport.h"
 
 #include <glad/gl.h>
 #include <glm/glm.hpp>
@@ -132,8 +134,6 @@ void GLRenderer::on_screen_resized(uint32_t width, uint32_t height) {
         .height = static_cast<float>(height),
     };
     glViewport(0, 0, (GLsizei)width, (GLsizei)height);
-    m_impl->proj = glm::ortho(0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, -1.0f, 1.0f);
-    m_impl->shader->set_mat4("u_view_proj", m_impl->proj);
 }
 
 TextureHandle GLRenderer::load_texture(ImageData &image) {
@@ -150,9 +150,50 @@ void GLRenderer::destroy_texture(TextureHandle handle) {
     glDeleteTextures(1, &texture->id);
 }
 
+static glm::mat4 get_camera_projection(Camera2D *camera, const Viewport &viewport) {
+    float left, right, top, bottom;
+    if (camera->anchor == Camera2D::AnchorMode::CENTER) {
+        float width_half = viewport.width * 0.5f;
+        float height_half = viewport.height * 0.5f;
+
+        left = -width_half;
+        right = width_half;
+        bottom = height_half; /* flip it cuz opengl... */
+        top = -height_half;
+    } else {
+        left = 0.0f;
+        right = viewport.width;
+        bottom = viewport.height; /* same as above */
+        top = 0.0f;
+    }
+
+    float zoom = 1.0f / std::max(camera->zoom, 0.0001f);
+    left *= zoom;
+    right *= zoom;
+    top *= zoom;
+    bottom *= zoom;
+
+    return glm::ortho(left, right, bottom, top, -1.0f, 1.0f);
+}
+
+static glm::mat4 get_camera_view_matrix(Camera2D *camera, [[maybe_unused]] const Viewport &viewport) {
+    auto i = glm::identity<glm::mat4>();
+
+    return glm::translate(i, {camera->x, camera->y, 0.0f}) *
+           glm::rotate(i, camera->rotation, {0.0f, 0.0f, 1.0f}) *
+           glm::translate(i, {camera->offset_x, camera->offset_y, 0.0f});
+}
+
 void GLRenderer::render_pass(const RenderView &view, const RenderQueue &queue) {
     m_impl->context.bind();
     apply_viewport(view.viewport);
+
+    glm::mat4 proj_matrix = get_camera_projection(static_cast<Camera2D *>(view.camera), view.viewport);
+    glm::mat4 view_matrix = get_camera_view_matrix(static_cast<Camera2D *>(view.camera), view.viewport);
+    m_impl->proj = proj_matrix * glm::inverse(view_matrix);
+
+    glUseProgram(m_impl->shader->get_program());
+    m_impl->shader->set_mat4("u_view_proj", m_impl->proj);
 
     for (const auto &command : queue.get()) {
         std::visit([this](const auto &cmd) {

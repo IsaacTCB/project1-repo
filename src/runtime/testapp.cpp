@@ -157,9 +157,13 @@ public:
         m_queue.draw_color(0xFF00FFFF, mouse_x, mouse_y, 8, 8);
 
         Camera2D m_camera;
-        m_camera.x = 0.0f;
-        m_camera.y = 0.0f;
+        m_camera.x = m_entity.x;
+        m_camera.y = m_entity.y;
+
+        m_camera.offset_x = 200.0f;
+
         m_camera.anchor = Camera2D::AnchorMode::CENTER;
+        m_camera.rotation = m_platform->os().get_ticks_sec() * 0.5f;
         m_camera.zoom = 1.0f;
 
         Viewport viewports[4] = {
