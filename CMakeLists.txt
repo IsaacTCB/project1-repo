@@ -55,6 +55,7 @@ add_library(engine STATIC
     src/runtime/input_service.cpp
     src/runtime/image/decoder.cpp
     src/core/logger.cpp
+    src/core/view_context_2d.cpp
     src/platform/api/platform.cpp
     src/platform/api/application_handler.cpp
     src/renderer/api/renderer.cpp)

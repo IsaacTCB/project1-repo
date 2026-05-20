@@ -162,9 +162,8 @@ public:
         m_queue.draw_texture(m_texture, m_entity.x, m_entity.y, 200, 200);
 
         auto [mouse_x, mouse_y] = m_input_service.get_mouse_pos();
-        m_queue.draw_color(0xFF00FFFF, mouse_x, mouse_y, 8, 8);
 
-        Viewport viewports[4] = {
+        Viewport viewports[] = {
             {.x = 0.0f, .y = 0.0f, .width = 0.5f, .height = 0.5f},
             {.x = 0.5f, .y = 0.0f, .width = 0.5f, .height = 0.5f},
             {.x = 0.0f, .y = 0.5f, .width = 0.5f, .height = 0.5f},
@@ -174,7 +173,11 @@ public:
         m_renderer->clear(0.1f, 0.1f, 0.1f, 0.0f);
         for (const auto &viewport : viewports) {
             Viewport abs_viewport = m_renderer->get_absolute_viewport(viewport);
+
             ViewContext2D ctx = Camera2DUtils::build_view_context(m_camera, abs_viewport);
+            auto [world_x, world_y] = ctx.screen_to_world(mouse_x, mouse_y);
+            m_queue.draw_color(0xFF00FFFF, world_x, world_y, 8, 8);
+
             m_renderer->render_pass(ctx, m_queue);
         }
         m_renderer->swap_buffers();
