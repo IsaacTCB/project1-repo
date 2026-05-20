@@ -21,7 +21,7 @@ std::tuple<float, float> ViewContext2D::screen_to_world(float x, float y) const 
     /* offset and zoom (scale) */
     float zoom_factor = 1.0f / std::max(view_camera->zoom, EPSILON_APPROX);
     float world_x = view_camera->offset_x +
-                    (local_x / zoom_factor);
+                    (local_x * zoom_factor);
     float world_y = view_camera->offset_y +
                     (local_y * zoom_factor);
 
