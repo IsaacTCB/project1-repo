@@ -6,7 +6,7 @@
 namespace Camera2DUtils {
 
 [[nodiscard]]
-inline static ViewContext2D build_view_context(Camera2D &camera, Viewport viewport) noexcept {
+inline static ViewContext2D build_view_context(Camera2D &camera, const Viewport &viewport) noexcept {
     ASSERT(viewport.width != 0 && viewport.height != 0, "Width & height must not be 0.");
     return {
         .view_camera = &camera,
