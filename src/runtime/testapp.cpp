@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 #include <memory>
+#include <numbers>
 
 #include "core/camera.h"
 #include "core/events/input_events.h"
@@ -66,6 +67,9 @@ public:
         LOG_INFO("display size: {0}x{1}", width, height);
 
         m_input_service.init();
+
+        m_camera.zoom = 0.8f;
+        m_camera.anchor = Camera2D::AnchorMode::CENTER;
     }
 
     void on_update(float delta) override {
@@ -138,19 +142,25 @@ public:
             move_y = 1.0f;
         }
 
+        if (m_input_service.is_key_pressed(Input::Key::Scancode::Q)) {
+            m_camera.rotation -= 0.6 * std::numbers::pi * delta;
+        } else if (m_input_service.is_key_pressed(Input::Key::Scancode::E)) {
+            m_camera.rotation += 0.6 * std::numbers::pi * delta;
+        }
+
         float length = std::sqrt((move_x * move_x) + (move_y * move_y));
         if (length > 1.0f) {
             move_x /= length;
             move_y /= length;
         }
 
-        m_entity.x += move_x * PLAYER_SPEED * delta;
-        m_entity.y += move_y * PLAYER_SPEED * delta;
+        float cam_cos = std::cosf(m_camera.rotation);
+        float cam_sin = std::sinf(m_camera.rotation);
+        m_entity.x += ((move_x * cam_cos) - (cam_sin * move_y)) * (PLAYER_SPEED * delta);
+        m_entity.y += ((move_x * cam_sin) + (cam_cos * move_y)) * (PLAYER_SPEED * delta);
 
-        m_camera.x = m_entity.x + 100.0f;
-        m_camera.y = m_entity.y + 100.0f;
-        m_camera.anchor = Camera2D::AnchorMode::CENTER;
-        m_camera.rotation = m_platform->os().get_ticks_sec() * 0.5f;
+        m_camera.x = std::floor(m_entity.x + 100.0f);
+        m_camera.y = std::floor(m_entity.y + 100.0f);
     }
 
     void on_render() override {
@@ -159,7 +169,7 @@ public:
         /* TODO: verify if texture actually exists. */
         m_queue.draw_color(RGB8(88, 90, 220), 0, 0, 400, 400);
         m_queue.draw_color(RGBA8(48, 45, 120, 80), 40, 40, 320, 320);
-        m_queue.draw_texture(m_texture, m_entity.x, m_entity.y, 200, 200);
+        m_queue.draw_texture(m_texture, std::floor(m_entity.x), std::floor(m_entity.y), 200, 200);
 
         auto [mouse_x, mouse_y] = m_input_service.get_mouse_pos();
 
