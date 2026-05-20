@@ -9,6 +9,7 @@
 #include "core/input/gamepad.h"
 #include "core/logger.h"
 #include "core/view_context_2d.h"
+#include "core/viewport.h"
 
 #include "platform/api/application.h"
 #include "platform/api/platform.h"
@@ -16,6 +17,7 @@
 #include "renderer/api/render_queue.h"
 #include "renderer/api/renderer.h"
 
+#include "camera_2d_utils.h"
 #include "image/decoder.h"
 #include "input_service.h"
 
@@ -171,9 +173,9 @@ public:
 
         m_renderer->clear(0.1f, 0.1f, 0.1f, 0.0f);
         for (const auto &viewport : viewports) {
-            auto abs_viewport = m_renderer->get_absolute_viewport(viewport);
-            auto view = ViewContext2D::build(m_camera, abs_viewport);
-            m_renderer->render_pass(view, m_queue);
+            Viewport abs_viewport = m_renderer->get_absolute_viewport(viewport);
+            ViewContext2D ctx = Camera2DUtils::build_view_context(m_camera, abs_viewport);
+            m_renderer->render_pass(ctx, m_queue);
         }
         m_renderer->swap_buffers();
     }
