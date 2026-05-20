@@ -283,7 +283,7 @@ void GLRenderer::command(const RenderCommandDraw &command) {
 void GLRenderer::apply_viewport(const Viewport &viewport) {
     glViewport(
         viewport.x,
-        viewport.y,
+        m_screen_viewport.height - (viewport.y + viewport.height), /* flips the Y axis cuz gl... */
         viewport.width,
         viewport.height);
 }
