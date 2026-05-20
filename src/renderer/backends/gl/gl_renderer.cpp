@@ -5,6 +5,7 @@
 
 #include "core/camera.h"
 #include "core/logger.h"
+#include "core/view_context_2d.h"
 #include "core/viewport.h"
 
 #include <glad/gl.h>
@@ -150,11 +151,11 @@ void GLRenderer::destroy_texture(TextureHandle handle) {
     glDeleteTextures(1, &texture->id);
 }
 
-static glm::mat4 get_camera_projection(Camera2D *camera, const Viewport &viewport) {
+static glm::mat4 get_camera_projection(Camera2D *camera, const glm::vec2 &size) {
     float left, right, top, bottom;
     if (camera->anchor == Camera2D::AnchorMode::CENTER) {
-        float width_half = viewport.width * 0.5f;
-        float height_half = viewport.height * 0.5f;
+        float width_half = size.x * 0.5f;
+        float height_half = size.y * 0.5f;
 
         left = -width_half;
         right = width_half;
@@ -162,8 +163,8 @@ static glm::mat4 get_camera_projection(Camera2D *camera, const Viewport &viewpor
         top = -height_half;
     } else {
         left = 0.0f;
-        right = viewport.width;
-        bottom = viewport.height; /* same as above */
+        right = size.x;
+        bottom = size.y; /* same as above */
         top = 0.0f;
     }
 
@@ -176,7 +177,7 @@ static glm::mat4 get_camera_projection(Camera2D *camera, const Viewport &viewpor
     return glm::ortho(left, right, bottom, top, -1.0f, 1.0f);
 }
 
-static glm::mat4 get_camera_view_matrix(Camera2D *camera, [[maybe_unused]] const Viewport &viewport) {
+static glm::mat4 get_camera_view_matrix(Camera2D *camera) {
     auto i = glm::identity<glm::mat4>();
 
     return glm::translate(i, {camera->x, camera->y, 0.0f}) *
@@ -184,12 +185,13 @@ static glm::mat4 get_camera_view_matrix(Camera2D *camera, [[maybe_unused]] const
            glm::translate(i, {camera->offset_x, camera->offset_y, 0.0f});
 }
 
-void GLRenderer::render_pass(const RenderView &view, const RenderQueue &queue) {
+void GLRenderer::render_pass(const ViewContext2D &view, const RenderQueue &queue) {
     m_impl->context.bind();
-    apply_viewport(view.viewport);
+    apply_viewport(view.window_viewport);
 
-    glm::mat4 proj_matrix = get_camera_projection(static_cast<Camera2D *>(view.camera), view.viewport);
-    glm::mat4 view_matrix = get_camera_view_matrix(static_cast<Camera2D *>(view.camera), view.viewport);
+    glm::vec2 view_size{view.view_width, view.view_height};
+    glm::mat4 proj_matrix = get_camera_projection(view.view_camera, view_size);
+    glm::mat4 view_matrix = get_camera_view_matrix(view.view_camera);
     m_impl->proj = proj_matrix * glm::inverse(view_matrix);
 
     glUseProgram(m_impl->shader->get_program());

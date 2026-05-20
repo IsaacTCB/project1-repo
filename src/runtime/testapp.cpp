@@ -8,6 +8,7 @@
 #include "core/events/window_events.h"
 #include "core/input/gamepad.h"
 #include "core/logger.h"
+#include "core/view_context_2d.h"
 
 #include "platform/api/application.h"
 #include "platform/api/platform.h"
@@ -143,6 +144,11 @@ public:
 
         m_entity.x += move_x * PLAYER_SPEED * delta;
         m_entity.y += move_y * PLAYER_SPEED * delta;
+
+        m_camera.x = m_entity.x + 100.0f;
+        m_camera.y = m_entity.y + 100.0f;
+        m_camera.anchor = Camera2D::AnchorMode::CENTER;
+        m_camera.rotation = m_platform->os().get_ticks_sec() * 0.5f;
     }
 
     void on_render() override {
@@ -156,16 +162,6 @@ public:
         auto [mouse_x, mouse_y] = m_input_service.get_mouse_pos();
         m_queue.draw_color(0xFF00FFFF, mouse_x, mouse_y, 8, 8);
 
-        Camera2D m_camera;
-        m_camera.x = m_entity.x;
-        m_camera.y = m_entity.y;
-
-        m_camera.offset_x = 200.0f;
-
-        m_camera.anchor = Camera2D::AnchorMode::CENTER;
-        m_camera.rotation = m_platform->os().get_ticks_sec() * 0.5f;
-        m_camera.zoom = 1.0f;
-
         Viewport viewports[4] = {
             {.x = 0.0f, .y = 0.0f, .width = 0.5f, .height = 0.5f},
             {.x = 0.5f, .y = 0.0f, .width = 0.5f, .height = 0.5f},
@@ -175,8 +171,9 @@ public:
 
         m_renderer->clear(0.1f, 0.1f, 0.1f, 0.0f);
         for (const auto &viewport : viewports) {
-            auto render_view = m_renderer->get_render_view(m_camera, viewport);
-            m_renderer->render_pass(render_view, m_queue);
+            auto abs_viewport = m_renderer->get_absolute_viewport(viewport);
+            auto view = ViewContext2D::build(m_camera, abs_viewport);
+            m_renderer->render_pass(view, m_queue);
         }
         m_renderer->swap_buffers();
     }
@@ -204,6 +201,7 @@ private:
     RenderQueue m_queue;
 
     InputService m_input_service;
+    Camera2D m_camera;
 };
 
 SET_APP(TestApplication)

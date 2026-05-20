@@ -2,14 +2,15 @@
 
 #include <memory>
 
-#include "core/camera.h"
+#include "platform/api/display_server.h"
+
 #include "core/image/image.h"
 #include "core/viewport.h"
-#include "platform/api/display_server.h"
 
 #include "render_handles.h"
 #include "render_queue.h"
-#include "render_view.h"
+
+class ViewContext2D;
 
 class Renderer {
 public:
@@ -22,7 +23,7 @@ public:
     Renderer(Renderer &&rhs) = delete;
     Renderer operator=(Renderer &&rhs) = delete;
 
-    RenderView get_render_view(ICamera &target_camera, const Viewport &viewport) const;
+    Viewport get_absolute_viewport(const Viewport &viewport);
 
 public:
     virtual void clear(float r, float g, float b, float a = 255) = 0;
@@ -32,7 +33,7 @@ public:
     virtual TextureHandle load_texture(ImageData &image) = 0;
     virtual void destroy_texture(TextureHandle texture) = 0;
 
-    virtual void render_pass(const RenderView &view, const RenderQueue &queue) = 0;
+    virtual void render_pass(const ViewContext2D &view, const RenderQueue &queue) = 0;
 
 protected:
     Viewport m_screen_viewport;

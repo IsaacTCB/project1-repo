@@ -129,7 +129,7 @@ void SDL3Renderer::command(const RenderCommandDraw &command) {
     }
 }
 
-void SDL3Renderer::render_pass(const RenderView &view, const RenderQueue &queue) {
+void SDL3Renderer::render_pass([[maybe_unused]] const ViewContext2D &view, const RenderQueue &queue) {
     for (const auto &command : queue.get()) {
         std::visit([this](const auto &cmd) {
             this->command(cmd);

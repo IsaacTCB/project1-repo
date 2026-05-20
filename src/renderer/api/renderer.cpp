@@ -4,7 +4,6 @@
 #include "../backends/sdl3/sdl3_renderer.h"
 
 #include "core/logger.h"
-#include "renderer/api/render_view.h"
 
 std::unique_ptr<Renderer> Renderer::create(DisplayWindowHandle &window_data) {
     switch (window_data.props.api) {
@@ -18,14 +17,11 @@ std::unique_ptr<Renderer> Renderer::create(DisplayWindowHandle &window_data) {
     }
 }
 
-RenderView Renderer::get_render_view(ICamera &target_camera, const Viewport &viewport) const {
-    return RenderView{
-        .camera = &target_camera,
-        .viewport = {
-            .x = m_screen_viewport.width * viewport.x,
-            .y = m_screen_viewport.height * viewport.y,
-            .width = m_screen_viewport.width * viewport.width,
-            .height = m_screen_viewport.height * viewport.height,
-        },
+Viewport Renderer::get_absolute_viewport(const Viewport &viewport) {
+    return {
+        .x = m_screen_viewport.width * viewport.x,
+        .y = m_screen_viewport.height * viewport.y,
+        .width = m_screen_viewport.width * viewport.width,
+        .height = m_screen_viewport.height * viewport.height,
     };
 }

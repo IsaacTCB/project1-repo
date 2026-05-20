@@ -20,7 +20,7 @@ public:
     TextureHandle load_texture(ImageData &image) override;
     void destroy_texture(TextureHandle handle) override;
 
-    void render_pass(const RenderView &view, const RenderQueue &queue) override;
+    void render_pass(const ViewContext2D &view, const RenderQueue &queue) override;
 
 private:
     template <typename T>
