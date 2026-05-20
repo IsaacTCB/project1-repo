@@ -10,6 +10,6 @@ public:
 public:
     [[nodiscard]]
     float get_aspect_ratio() const {
-        return height / width;
+        return width / height;
     }
 };
