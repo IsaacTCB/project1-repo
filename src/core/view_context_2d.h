@@ -44,5 +44,20 @@ public:
     std::tuple<float, float> screen_to_world(float x, float y) const;
 
     [[nodiscard]]
+    std::tuple<float, float> world_to_screen(float x, float y) const;
+
+    [[nodiscard]]
+    std::tuple<float, float> screen_to_view(float x, float y) const;
+
+    [[nodiscard]]
+    std::tuple<float, float> view_to_screen(float x, float y) const;
+
+    [[nodiscard]]
+    std::tuple<float, float> world_to_view(float x, float y) const;
+
+    [[nodiscard]]
+    std::tuple<float, float> view_to_world(float x, float y) const;
+
+    [[nodiscard]]
     BoundRect get_bounds_aabb() const;
 };

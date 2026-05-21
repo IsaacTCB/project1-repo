@@ -13,6 +13,16 @@ inline static bool angle_is_rotated(float angle) {
 }
 
 std::tuple<float, float> ViewContext2D::screen_to_world(float x, float y) const {
+    auto [local_x, local_y] = screen_to_view(x, y);
+    return view_to_world(local_x, local_y);
+}
+
+std::tuple<float, float> ViewContext2D::world_to_screen(float x, float y) const {
+    auto [local_x, local_y] = world_to_view(x, y);
+    return view_to_screen(local_x, local_y);
+}
+
+std::tuple<float, float> ViewContext2D::screen_to_view(float x, float y) const {
     float local_x = x - window_viewport.x;
     float local_y = y - window_viewport.y;
 
@@ -26,12 +36,62 @@ std::tuple<float, float> ViewContext2D::screen_to_world(float x, float y) const 
         local_y -= view_height * 0.5f;
     }
 
+    return {local_x, local_y};
+}
+
+std::tuple<float, float> ViewContext2D::view_to_screen(float x, float y) const {
+    /* apply center offset */
+    if (view_camera->anchor == Camera2D::AnchorMode::CENTER) {
+        x += view_width * 0.5f;
+        y += view_height * 0.5f;
+    }
+
+    /* convert view coords into screen coords */
+    float screen_x = x * (window_viewport.width / view_width);
+    float screen_y = y * (window_viewport.height / view_height);
+    screen_x += window_viewport.x;
+    screen_y += window_viewport.y;
+
+    return {screen_x, screen_y};
+}
+
+std::tuple<float, float> ViewContext2D::world_to_view(float x, float y) const {
+    /* apply camera translate */
+    x -= view_camera->x;
+    y -= view_camera->y;
+
+    /* transform around rotation */
+    if (angle_is_rotated(view_camera->rotation)) {
+        /* TODO: cache sine and cosine directly within the camera object.
+         * This should happen only if rotation has changed and is dirty. */
+        float sin = std::sinf(view_camera->rotation);
+        float cos = std::cosf(view_camera->rotation);
+
+        float temp_x = x;
+        float temp_y = y;
+        x = (temp_x * cos) + (temp_y * sin);
+        y = (-temp_x * sin) + (temp_y * cos);
+    }
+
+    x -= view_camera->offset_x;
+    y -= view_camera->offset_y;
+
+    /* offset and zoom (scale) */
+    float zoom_factor = std::max(view_camera->zoom, EPSILON_APPROX);
+    x *= zoom_factor;
+    y *= zoom_factor;
+
+    return {x, y};
+}
+
+std::tuple<float, float> ViewContext2D::view_to_world(float x, float y) const {
     /* offset and zoom (scale) */
     float zoom_factor = 1.0f / std::max(view_camera->zoom, EPSILON_APPROX);
-    float world_x = view_camera->offset_x +
-                    (local_x * zoom_factor);
-    float world_y = view_camera->offset_y +
-                    (local_y * zoom_factor);
+    x *= zoom_factor;
+    y *= zoom_factor;
+
+    float world_x = view_camera->offset_x + x;
+    float world_y = view_camera->offset_y + y;
 
     /* transform around rotation */
     if (angle_is_rotated(view_camera->rotation)) {
