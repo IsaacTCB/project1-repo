@@ -148,6 +148,14 @@ public:
             m_camera.rotation += 0.6 * std::numbers::pi * delta;
         }
 
+        if (m_input_service.is_key_pressed(Input::Key::Scancode::KP_PLUS)) {
+            m_camera.zoom += 1.0f * delta;
+            m_camera.zoom = std::min(m_camera.zoom, 2.0f);
+        } else if (m_input_service.is_key_pressed(Input::Key::Scancode::KP_MINUS)) {
+            m_camera.zoom -= 1.0f * delta;
+            m_camera.zoom = std::max(m_camera.zoom, 0.2f);
+        }
+
         float length = std::sqrt((move_x * move_x) + (move_y * move_y));
         if (length > 1.0f) {
             move_x /= length;
@@ -185,8 +193,21 @@ public:
             Viewport abs_viewport = m_renderer->get_absolute_viewport(viewport);
 
             ViewContext2D ctx = Camera2DUtils::build_view_context(m_camera, abs_viewport);
+
             auto [world_x, world_y] = ctx.screen_to_world(mouse_x, mouse_y);
+
+            auto [mx, my] = ctx.world_to_screen(world_x, world_y);
+            auto [world2_x, world2_y] = ctx.screen_to_world(mx, my);
+            m_queue.draw_color(0xFF000060, world2_x - 4, world2_y - 4, 16, 16);
             m_queue.draw_color(0xFF00FFFF, world_x, world_y, 8, 8);
+
+            auto bounds = ctx.get_bounds_aabb();
+            m_queue.draw_color(
+                0xFF00FF20,
+                bounds.left + 8,
+                bounds.top + 8,
+                bounds.width() - 16,
+                bounds.height() - 16);
 
             m_renderer->render_pass(ctx, m_queue);
         }
