@@ -53,6 +53,10 @@ void InputService::update() {
             state->axis.fill(0.0f);
         }
     }
+
+    /* reset mouse wheel */
+    m_mouse_wheel_x = 0.0f;
+    m_mouse_wheel_y = 0.0f;
 }
 
 void InputService::event(const EventInput &event) {
@@ -140,6 +144,11 @@ bool InputService::mouse_event(const EventInput &event) {
             /* turn mouse bit off*/
             m_mouse_state &= ~mask;
         }
+        return true;
+    }
+    if (const auto *wheel = std::get_if<EventInputMouseWheel>(&event)) {
+        m_mouse_wheel_x += wheel->x;
+        m_mouse_wheel_y += wheel->y;
         return true;
     }
     return false;

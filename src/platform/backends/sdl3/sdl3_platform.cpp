@@ -118,6 +118,13 @@ SDL_AppResult PlatformImpl::event(SDL_Event &event) {
                 .pressed = event.button.down,
             });
             break;
+        case SDL_EVENT_MOUSE_WHEEL:
+            m_platform.submit_event<EventInput>(EventInputMouseWheel{
+                .x = event.wheel.x,
+                .y = event.wheel.y,
+                .flipped = (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED),
+            });
+            break;
 
         /* Gamepad input events */
         case SDL_EVENT_GAMEPAD_ADDED:
