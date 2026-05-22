@@ -46,21 +46,23 @@ public:
         m_window = display.init_display(props);
         if (!m_window) {
             LOG_CRITICAL("run_platform_test(): Failed to create main window");
-            exit(0);
+            exit(-1);
         }
 
         /* initialize renderer */
         m_renderer = Renderer::create(m_window);
         if (!m_renderer) {
             LOG_CRITICAL("run_platform_test(): Failed to create renderer");
-            exit(0);
+            exit(-1);
         }
 
         ImageData image = Image::decode("test.png");
-        if (image) {
-            LOG_INFO("Loaded 'test.png'");
-            m_texture = m_renderer->load_texture(image);
+        if (!image) {
+            LOG_CRITICAL("No 'test.png' image file found in the current working directory.");
+            exit(-1);
         }
+
+        m_texture = m_renderer->load_texture(image);
 
         /* poll window size */
         auto [width, height] = display.get_size(m_window);
