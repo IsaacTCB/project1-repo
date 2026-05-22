@@ -51,6 +51,10 @@ GLRenderer::GLRenderer(DisplayWindowHandle &window_data)
         }
     }
 
+    /* This allows gl to load images whose
+    * data size are not a multiple of 4. */
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
