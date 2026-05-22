@@ -20,6 +20,10 @@ SDL3Renderer::SDL3Renderer(DisplayWindowHandle &window_data)
     m_impl->renderer = SDL_CreateRenderer(m_impl->window, nullptr);
     SDL_SetRenderDrawBlendMode(m_impl->renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderVSync(m_impl->renderer, 1);
+
+    on_screen_resized(
+        window_data.props.width,
+        window_data.props.height);
 }
 
 SDL3Renderer::~SDL3Renderer() {
