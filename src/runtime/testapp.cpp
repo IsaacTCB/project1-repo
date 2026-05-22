@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <memory>
 #include <numbers>
@@ -185,12 +186,12 @@ public:
 
         auto [mouse_x, mouse_y] = m_input_service.get_mouse_pos();
 
-        Viewport viewports[] = {
+        constexpr std::array<Viewport, 4> viewports{{
             {.x = 0.0f, .y = 0.0f, .width = 0.5f, .height = 0.5f},
             {.x = 0.5f, .y = 0.0f, .width = 0.5f, .height = 0.5f},
             {.x = 0.0f, .y = 0.5f, .width = 0.5f, .height = 0.5f},
             {.x = 0.5f, .y = 0.5f, .width = 0.5f, .height = 0.5f},
-        };
+        }};
 
         m_renderer->clear(0.1f, 0.1f, 0.1f, 0.0f);
         for (const auto &viewport : viewports) {
