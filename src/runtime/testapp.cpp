@@ -152,11 +152,13 @@ public:
 
         if (m_input_service.is_key_pressed(Input::Key::Scancode::KP_PLUS)) {
             m_camera.zoom += 1.0f * delta;
-            m_camera.zoom = std::min(m_camera.zoom, 2.0f);
         } else if (m_input_service.is_key_pressed(Input::Key::Scancode::KP_MINUS)) {
             m_camera.zoom -= 1.0f * delta;
-            m_camera.zoom = std::max(m_camera.zoom, 0.2f);
         }
+
+        m_camera.zoom += 0.1f * m_input_service.get_mouse_wheel_y();
+        m_camera.zoom = std::min(m_camera.zoom, 2.0f);
+        m_camera.zoom = std::max(m_camera.zoom, 0.2f);
 
         float length = std::sqrt((move_x * move_x) + (move_y * move_y));
         if (length > 1.0f) {
