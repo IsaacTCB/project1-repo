@@ -159,7 +159,7 @@ public:
 
         m_camera.zoom += 0.1f * m_input_service.get_mouse_wheel_y();
         m_camera.zoom = std::min(m_camera.zoom, 2.0f);
-        m_camera.zoom = std::max(m_camera.zoom, 0.2f);
+        m_camera.zoom = std::max(m_camera.zoom, 0.1f);
 
         float length = std::sqrt((move_x * move_x) + (move_y * move_y));
         if (length > 1.0f) {
