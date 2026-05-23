@@ -32,7 +32,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     if(MSVC)
         list(APPEND ENGINE_COMPILE_OPTIONS /W4)
     else()
-        list(APPEND ENGINE_COMPILE_OPTIONS -Wall -Wextra -Wpedantic -Wconversion)
+        list(APPEND ENGINE_COMPILE_OPTIONS -Wall -Wextra -Wpedantic -Wconversion -Wno-sign-conversion)
     endif()
 endif()
 
