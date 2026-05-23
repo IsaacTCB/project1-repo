@@ -68,9 +68,10 @@ void InputService::event(const EventInput &event) {
     }
 }
 
+template <typename T>
 [[nodiscard]]
-static inline bool get_flag_at(uint8_t bitfield, size_t index) {
-    uint8_t mask = GET_BIT(index);
+static inline bool get_flag_at(T bitfield, size_t index) {
+    T mask = GET_BIT(index);
     return (bitfield & mask) != 0;
 }
 
