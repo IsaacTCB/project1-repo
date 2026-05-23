@@ -44,6 +44,12 @@ public:
     }
 
     [[nodiscard]]
+    float get_mouse_wheel_x() const { return m_mouse_wheel_x; }
+
+    [[nodiscard]]
+    float get_mouse_wheel_y() const { return m_mouse_wheel_y; }
+
+    [[nodiscard]]
     bool is_pad_button_pressed(Input::Gamepad::DeviceID device, Input::Gamepad::Buttons button) const;
 
     [[nodiscard]]
@@ -89,6 +95,7 @@ private:
     uint8_t m_mouse_state, m_mouse_state_previous;
     std::vector<bool> m_key_state;
     float m_mouse_x = 0.0f, m_mouse_y = 0.0f;
+    float m_mouse_wheel_x{}, m_mouse_wheel_y{};
 
     struct PadState {
         uint32_t buttons = 0;
