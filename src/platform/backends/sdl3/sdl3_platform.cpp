@@ -48,7 +48,7 @@ SDL_AppResult PlatformImpl::init([[maybe_unused]] int argc, [[maybe_unused]] cha
 SDL_AppResult PlatformImpl::iterate() {
     /* get delta */
     uint64_t current_tick = SDL_GetTicksNS();
-    float delta = (current_tick - m_last_tick) / 1000000000.0f;
+    float delta = static_cast<float>(current_tick - m_last_tick) / 1000000000.0f;
     m_last_tick = current_tick;
 
     /* process game */
@@ -116,6 +116,13 @@ SDL_AppResult PlatformImpl::event(SDL_Event &event) {
             m_platform.submit_event<EventInput>(EventInputMouseButton{
                 .button = convert_mouse_button(event.button.button),
                 .pressed = event.button.down,
+            });
+            break;
+        case SDL_EVENT_MOUSE_WHEEL:
+            m_platform.submit_event<EventInput>(EventInputMouseWheel{
+                .x = event.wheel.x,
+                .y = event.wheel.y,
+                .flipped = (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED),
             });
             break;
 

@@ -56,14 +56,14 @@ TextureHandle SDL3Renderer::load_texture(ImageData &image) {
             break;
         default:
             ASSERT(false, "Invalid bpp");
-            break;
+            return {};
     }
 
-    int pitch = image.width * image.channels;
+    auto pitch = static_cast<int>(image.width * image.channels);
     ASSERT(pitch > 0, "Invalid pitch size: pitch <= 0");
 
     SDL_Surface *surface = SDL_CreateSurfaceFrom(
-        image.width, image.height, format,
+        (int)image.width, (int)image.height, format,
         image.pixels.data(), pitch);
     ASSERT(surface, "Unable to create SDL surface");
 
@@ -97,10 +97,10 @@ void SDL3Renderer::command(const RenderCommandDraw &command) {
         .h = static_cast<float>(command.height),
     };
 
-    Uint8 r = ((command.color & 0xFF000000) >> 24);
-    Uint8 g = ((command.color & 0x00FF0000) >> 16);
-    Uint8 b = ((command.color & 0x0000FF00) >> 8);
-    Uint8 a = ((command.color & 0x000000FF) >> 0);
+    auto r = static_cast<Uint8>((command.color & 0xFF000000) >> 24);
+    auto g = static_cast<Uint8>((command.color & 0x00FF0000) >> 16);
+    auto b = static_cast<Uint8>((command.color & 0x0000FF00) >> 8);
+    auto a = static_cast<Uint8>((command.color & 0x000000FF) >> 0);
 
     if (command.texture.has_value()) {
         Handle handle = command.texture.value();

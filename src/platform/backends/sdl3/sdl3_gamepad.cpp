@@ -22,7 +22,7 @@ static ImplGamepad *gamepad__reserve_slot() {
         /* find new allocated slot */
         size_t index = 0;
         for (auto &gamepad : s_gamepads) {
-            gamepad.index = index++;
+            gamepad.index = static_cast<Input::Gamepad::DeviceID>(index++);
             if (!gamepad.alive) {
                 slot = &gamepad;
                 break;

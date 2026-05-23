@@ -23,6 +23,12 @@ struct EventInputMouseButton {
     bool pressed;
 };
 
+struct EventInputMouseWheel {
+    float x;
+    float y;
+    bool flipped;
+};
+
 struct EventInputMouseMotion {
     float screen_x;
     float screen_y;
@@ -57,6 +63,7 @@ using EventInput = std::variant<
     EventInputKey,
     EventInputMouseButton,
     EventInputMouseMotion,
+    EventInputMouseWheel,
     EventInputGamepadConnected,
     EventInputGamepadDisconnected,
     EventInputGamepadButton,
