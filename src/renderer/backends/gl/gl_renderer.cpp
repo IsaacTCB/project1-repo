@@ -9,6 +9,7 @@
 #include "core/viewport.h"
 
 #include <glad/gl.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -239,8 +240,9 @@ static ImplTexture gl_create_texture(ImageData &image) {
 
     glTexImage2D(
         GL_TEXTURE_2D, 0, internal_format,
-        image.width, image.height, 0,
-        data_format, GL_UNSIGNED_BYTE,
+        static_cast<GLsizei>(image.width),
+        static_cast<GLsizei>(image.height),
+        0, data_format, GL_UNSIGNED_BYTE,
         image.pixels.data());
 
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -267,10 +269,10 @@ void GLRenderer::command(const RenderCommandDraw &command) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_impl->ibo);
 
     glm::vec4 color;
-    color.r = ((command.color & 0xFF000000) >> 24) / static_cast<float>(0xFF);
-    color.g = ((command.color & 0x00FF0000) >> 16) / static_cast<float>(0xFF);
-    color.b = ((command.color & 0x0000FF00) >> 8) / static_cast<float>(0xFF);
-    color.a = ((command.color & 0x000000FF) >> 0) / static_cast<float>(0xFF);
+    color.r = static_cast<float>((command.color & 0xFF000000) >> 24) / static_cast<float>(0xFF);
+    color.g = static_cast<float>((command.color & 0x00FF0000) >> 16) / static_cast<float>(0xFF);
+    color.b = static_cast<float>((command.color & 0x0000FF00) >> 8) / static_cast<float>(0xFF);
+    color.a = static_cast<float>((command.color & 0x000000FF) >> 0) / static_cast<float>(0xFF);
 
     glm::mat4 model{1.0f};
     model = glm::translate(model, {command.x, command.y, 0.0f});

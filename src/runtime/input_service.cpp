@@ -11,7 +11,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#define GET_BIT(index) (1 << index)
+#define GET_BIT(index) (1u << index)
 
 void InputService::init() {
     m_mouse_state = 0;
@@ -71,7 +71,7 @@ void InputService::event(const EventInput &event) {
 template <typename T>
 [[nodiscard]]
 static inline bool get_flag_at(T bitfield, size_t index) {
-    T mask = GET_BIT(index);
+    T mask = static_cast<T>(GET_BIT(index));
     return (bitfield & mask) != 0;
 }
 
@@ -137,7 +137,7 @@ bool InputService::mouse_event(const EventInput &event) {
         size_t idx = get_mouse_button_index(mbutton->button);
         ASSERT(idx < Input::Mouse::BUTTON_COUNT - 1, "Mouse button out-of-range");
 
-        uint8_t mask = GET_BIT(idx);
+        auto mask = static_cast<uint8_t>(GET_BIT(idx));
         if (mbutton->pressed) {
             /* turn mouse bit on */
             m_mouse_state |= mask;
