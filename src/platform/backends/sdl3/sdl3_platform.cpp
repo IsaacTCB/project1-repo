@@ -48,7 +48,7 @@ SDL_AppResult PlatformImpl::init([[maybe_unused]] int argc, [[maybe_unused]] cha
 SDL_AppResult PlatformImpl::iterate() {
     /* get delta */
     uint64_t current_tick = SDL_GetTicksNS();
-    float delta = (current_tick - m_last_tick) / 1000000000.0f;
+    float delta = static_cast<float>(current_tick - m_last_tick) / 1000000000.0f;
     m_last_tick = current_tick;
 
     /* process game */
