@@ -225,7 +225,7 @@ static ImplTexture gl_create_texture(ImageData &image) {
             break;
         default:
             ASSERT(false, "Unsupported bpp");
-            break;
+            return {};
     }
 
     GLuint texture_id;
