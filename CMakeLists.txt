@@ -22,14 +22,17 @@ if(NOT CMAKE_BUILD_TYPE)
     "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
+# These should be included in ALL engine modules.
+# TODO: make a proper macro for adding these!
+set(ENGINE_COMPILE_DEFINITIONS)
+set(ENGINE_COMPILE_OPTIONS)
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    # HACK: This command affects all targets, including dependencies.
-    # This should get replaced by target_compile_definitions().
-    add_compile_definitions(ENABLE_ASSERTS=1)
+    list(APPEND ENGINE_COMPILE_DEFINITIONS "ENABLE_ASSERTS=1")
     if(MSVC)
-        add_compile_options(/W4)
+        list(APPEND ENGINE_COMPILE_OPTIONS /W4)
     else()
-        add_compile_options(-Wall -Wextra -Wpedantic -Wconversion)
+        list(APPEND ENGINE_COMPILE_OPTIONS -Wall -Wextra -Wpedantic -Wconversion)
     endif()
 endif()
 
@@ -38,9 +41,13 @@ function(target_add_renderer target name)
     add_subdirectory(
         ${CMAKE_SOURCE_DIR}/src/renderer/backends/${name}
         ${CMAKE_CURRENT_BINARY_DIR}/renderer_${name})
-    target_include_directories(renderer_${name} PUBLIC ${CMAKE_SOURCE_DIR}/src)
-    target_link_libraries(${target} PRIVATE renderer_${name})
 
+    set(renderer_target renderer_${name})
+    target_include_directories(${renderer_target} PUBLIC ${CMAKE_SOURCE_DIR}/src)
+    target_compile_options(${renderer_target} PRIVATE ${ENGINE_COMPILE_OPTIONS})
+    target_compile_definitions(${renderer_target} PRIVATE ${ENGINE_COMPILE_DEFINITIONS})
+
+    target_link_libraries(${target} PRIVATE ${renderer_target})
     message(STATUS "Linked renderer ${name} to ${target}")
 endfunction()
 
@@ -60,10 +67,12 @@ add_library(engine STATIC
     src/platform/api/application_handler.cpp
     src/renderer/api/renderer.cpp)
 
+target_include_directories(engine PUBLIC src)
+target_compile_options(engine PUBLIC ${ENGINE_COMPILE_OPTIONS})
+target_compile_definitions(engine PUBLIC ${ENGINE_COMPILE_DEFINITIONS})
+
 add_subdirectory(${CMAKE_SOURCE_DIR}/external/stb_image)
 target_link_libraries(engine PRIVATE stb_image)
-
-target_include_directories(engine PUBLIC src)
 
 # Platform (entrypoint)
 if(PLATFORM_SDL3)
