@@ -151,10 +151,10 @@ public:
         /* TODO: verify if texture actually exists. */
         m_queue.draw_color(RGB8(88, 90, 220), 0, 0, 400, 400);
         m_queue.draw_color(RGBA8(48, 45, 120, 80), 40, 40, 320, 320);
-        m_queue.draw_texture(m_texture, m_entity.x, m_entity.y, 200, 200);
+        m_queue.draw_texture(m_texture, (int)m_entity.x, (int)m_entity.y, 200, 200);
 
         auto [mouse_x, mouse_y] = m_input_service.get_mouse_pos();
-        m_queue.draw_color(0xFF00FFFF, mouse_x, mouse_y, 8, 8);
+        m_queue.draw_color(0xFF00FFFF, (int)mouse_x, (int)mouse_y, 8, 8);
 
         m_renderer->clear(0.1f, 0.1f, 0.1f, 0.0f);
         m_renderer->render_pass(m_queue);
