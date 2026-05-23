@@ -146,9 +146,9 @@ public:
         }
 
         if (m_input_service.is_key_pressed(Input::Key::Scancode::Q)) {
-            m_camera.rotation -= 0.6 * std::numbers::pi * delta;
+            m_camera.rotation -= 0.6f * (float)std::numbers::pi * delta;
         } else if (m_input_service.is_key_pressed(Input::Key::Scancode::E)) {
-            m_camera.rotation += 0.6 * std::numbers::pi * delta;
+            m_camera.rotation += 0.6f * (float)std::numbers::pi * delta;
         }
 
         if (m_input_service.is_key_pressed(Input::Key::Scancode::KP_PLUS)) {
@@ -182,7 +182,7 @@ public:
         /* TODO: verify if texture actually exists. */
         m_queue.draw_color(RGB8(88, 90, 220), 0, 0, 400, 400);
         m_queue.draw_color(RGBA8(48, 45, 120, 80), 40, 40, 320, 320);
-        m_queue.draw_texture(m_texture, std::floor(m_entity.x), std::floor(m_entity.y), 200, 200);
+        m_queue.draw_texture(m_texture, (int)std::floor(m_entity.x), (int)std::floor(m_entity.y), 200, 200);
 
         auto [mouse_x, mouse_y] = m_input_service.get_mouse_pos();
 
@@ -203,16 +203,16 @@ public:
 
             auto [mx, my] = ctx.world_to_screen(world_x, world_y);
             auto [world2_x, world2_y] = ctx.screen_to_world(mx, my);
-            m_queue.draw_color(0xFF000060, world2_x - 4, world2_y - 4, 16, 16);
-            m_queue.draw_color(0xFF00FFFF, world_x, world_y, 8, 8);
+            m_queue.draw_color(0xFF000060, (int)world2_x - 4, (int)world2_y - 4, 16, 16);
+            m_queue.draw_color(0xFF00FFFF, (int)world_x, (int)world_y, 8, 8);
 
             auto bounds = ctx.get_bounds_aabb();
             m_queue.draw_color(
                 0xFF00FF20,
-                bounds.left + 8,
-                bounds.top + 8,
-                bounds.width() - 16,
-                bounds.height() - 16);
+                (int)bounds.left + 8,
+                (int)bounds.top + 8,
+                (int)bounds.width() - 16,
+                (int)bounds.height() - 16);
 
             m_renderer->render_pass(ctx, m_queue);
         }

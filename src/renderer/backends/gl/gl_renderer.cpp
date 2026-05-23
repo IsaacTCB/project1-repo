@@ -55,7 +55,7 @@ GLRenderer::GLRenderer(DisplayWindowHandle &window_data)
     }
 
     /* This allows gl to load images whose
-    * data size are not a multiple of 4. */
+     * data size are not a multiple of 4. */
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     glEnable(GL_BLEND);
@@ -286,8 +286,10 @@ void GLRenderer::command(const RenderCommandDraw &command) {
 
 void GLRenderer::apply_viewport(const Viewport &viewport) {
     glViewport(
-        viewport.x,
-        m_screen_viewport.height - (viewport.y + viewport.height), /* flips the Y axis cuz gl... */
-        viewport.width,
-        viewport.height);
+        static_cast<GLint>(viewport.x),
+        static_cast<GLint>(
+            /* flips the Y axis cuz gl... */
+            m_screen_viewport.height - (viewport.y + viewport.height)),
+        static_cast<GLint>(viewport.width),
+        static_cast<GLint>(viewport.height));
 }
