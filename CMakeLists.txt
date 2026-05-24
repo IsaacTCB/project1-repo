@@ -17,7 +17,7 @@ endif()
 if(NOT CMAKE_BUILD_TYPE)
     set(default_build_type "Debug")
     message(STATUS "Set the build type to `${default_build_type}` as none was specified.")
-    set(CMAKE_BUILD_TYPE ${default_build_type} CACHE STRING "Chooce the build type." FORCE)
+    set(CMAKE_BUILD_TYPE ${default_build_type} CACHE STRING "Choose the build type." FORCE)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
     "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
