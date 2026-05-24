@@ -5,7 +5,7 @@ set(SDL3_FETCH_VERSION 3.4.2)
 
 find_package(SDL3 ${SDL3_VERSION} QUIET)
 if(NOT SDL3_FOUND)
-    message(INFO "The SDL3 installation was not found. Downloading SDL3 ${SDL3_VERSION}...")
+    message(VERBOSE "SDL3 installation was not found on system. Downloading SDL3 ${SDL3_VERSION}...")
 
     include(FetchContent)
     FetchContent_Declare("SDL3"
