@@ -13,6 +13,12 @@ static inline void vec3_expect_near(const Vec3 &a, const Vec3 &b, float epsilon 
     EXPECT_NEAR(a.z, b.z, epsilon);
 }
 
+/* Size tests */
+
+TEST(Vec3SizeTest, EnsureSize) {
+    EXPECT_EQ(sizeof(Vec3), sizeof(float) * 3);
+}
+
 /* Constructor tests */
 
 TEST(Vec3ConstructorTest, DefaultConstructor) {

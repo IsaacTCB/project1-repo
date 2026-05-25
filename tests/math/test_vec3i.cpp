@@ -13,6 +13,12 @@ static inline void vec3i_eq(const Vec3i &a, const Vec3i &b) {
     EXPECT_EQ(a.z, b.z);
 }
 
+/* Size tests */
+
+TEST(Vec3iSizeTest, EnsureSize) {
+    EXPECT_EQ(sizeof(Vec3i), sizeof(int) * 3);
+}
+
 /* Constructor tests */
 
 TEST(Vec3iConstructorTest, DefaultConstructor) {

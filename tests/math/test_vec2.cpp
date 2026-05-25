@@ -11,6 +11,12 @@ static inline void vec2_expect_near(const Vec2 &a, const Vec2 &b, float epsilon 
     EXPECT_NEAR(a.y, b.y, epsilon);
 }
 
+/* Size tests */
+
+TEST(Vec2SizeTest, EnsureSize) {
+    EXPECT_EQ(sizeof(Vec2), sizeof(float) * 2);
+}
+
 /* Constructor tests */
 
 TEST(Vec2ConstructorTest, DefaultConstructor) {

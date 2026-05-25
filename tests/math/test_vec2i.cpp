@@ -11,6 +11,12 @@ static inline void vec2i_eq(const Vec2i &a, const Vec2i &b) {
     EXPECT_EQ(a.y, b.y);
 }
 
+/* Size tests */
+
+TEST(Vec2iSizeTest, EnsureSize) {
+    EXPECT_EQ(sizeof(Vec2i), sizeof(int) * 2);
+}
+
 /* Constructor tests */
 
 TEST(Vec2iConstructorTest, DefaultConstructor) {
