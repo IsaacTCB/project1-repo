@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <cmath>
 #include <memory>
 
 #include "core/events/input_events.h"
@@ -7,6 +6,8 @@
 #include "core/events/window_events.h"
 #include "core/input/gamepad.h"
 #include "core/logger.h"
+#include "core/math/vec2.h"
+#include "core/math/vec2i.h"
 
 #include "platform/api/application.h"
 #include "platform/api/platform.h"
@@ -109,7 +110,7 @@ public:
             LOG_TRACE("Walked");
         }
 
-        float move_x = 0.0f, move_y = 0.0f;
+        Vec2 move{};
         m_input_service.pad_foreach([&](Input::Gamepad::DeviceID gamepad) {
             if (m_input_service.is_pad_button_just_pressed(gamepad, Input::Gamepad::Buttons::SOUTH)) {
                 LOG_TRACE("Pad {0} just pressed X.", gamepad);
@@ -118,31 +119,25 @@ public:
             }
 
             auto [axis_x, axis_y] = m_input_service.get_pad_stick(gamepad, false);
-            move_x = axis_x;
-            move_y = axis_y;
+            move.x = axis_x;
+            move.y = axis_y;
         });
 
         constexpr float PLAYER_SPEED = 60 * 3.0f;
         if (m_input_service.is_key_pressed(Input::Key::Scancode::A)) {
-            move_x = -1.0f;
+            move.x = -1.0f;
         } else if (m_input_service.is_key_pressed(Input::Key::Scancode::D)) {
-            move_x = 1.0f;
+            move.x = 1.0f;
         }
 
         if (m_input_service.is_key_pressed(Input::Key::Scancode::W)) {
-            move_y = -1.0f;
+            move.y = -1.0f;
         } else if (m_input_service.is_key_pressed(Input::Key::Scancode::S)) {
-            move_y = 1.0f;
+            move.y = 1.0f;
         }
 
-        float length = std::sqrt((move_x * move_x) + (move_y * move_y));
-        if (length > 1.0f) {
-            move_x /= length;
-            move_y /= length;
-        }
-
-        m_entity.x += move_x * PLAYER_SPEED * delta;
-        m_entity.y += move_y * PLAYER_SPEED * delta;
+        move.limit_length(1.0f);
+        m_entity.pos += move * PLAYER_SPEED * delta;
     }
 
     void on_render() override {
@@ -151,7 +146,9 @@ public:
         /* TODO: verify if texture actually exists. */
         m_queue.draw_color(RGB8(88, 90, 220), 0, 0, 400, 400);
         m_queue.draw_color(RGBA8(48, 45, 120, 80), 40, 40, 320, 320);
-        m_queue.draw_texture(m_texture, (int)m_entity.x, (int)m_entity.y, 200, 200);
+
+        Vec2i draw_pos{m_entity.pos};
+        m_queue.draw_texture(m_texture, draw_pos.x, draw_pos.y, 200, 200);
 
         auto [mouse_x, mouse_y] = m_input_service.get_mouse_pos();
         m_queue.draw_color(0xFF00FFFF, (int)mouse_x, (int)mouse_y, 8, 8);
@@ -172,8 +169,7 @@ public:
 
 private:
     struct Entity {
-        float x = 0.0f;
-        float y = 0.0f;
+        Vec2 pos;
     };
 
     Entity m_entity;
