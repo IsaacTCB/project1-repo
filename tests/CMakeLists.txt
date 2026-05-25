@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 enable_testing()
 
+include(GoogleTest)
 set(GTEST_VERSION 1.17)
 set(GTEST_FETCH_VERSION 1.17.0)
 
@@ -23,7 +24,7 @@ endif()
 function(create_test name)
     add_executable(${name} ${name}.cpp)
     target_link_libraries(${name} PRIVATE GTest::gtest_main)
-    add_test(NAME ${name} COMMAND $<TARGET_FILE:${name}>)
+    gtest_discover_tests(${name})
 endfunction()
 
 # Math tests
