@@ -8,7 +8,7 @@ set(GTEST_FETCH_VERSION 1.17.0)
 
 find_package(GTest ${GTEST_VERSION} QUIET)
 if(NOT GTest_FOUND)
-    message(VERBOSE "Google Test installation was not found on system. Downloading SDL3 ${SDL3_VERSION}...")
+    message(VERBOSE "Google Test installation was not found on system. Downloading GTest ${GTEST_VERSION}...")
 
     include(FetchContent)
     FetchContent_Declare("GTest"
