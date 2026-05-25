@@ -28,18 +28,20 @@ set(SDL3_SOURCES
     sdl3_main.cpp
 )
 
-set(BUILD_DEBUG (CMAKE_BUILD_TYPE STREQUAL "Debug"))
-
 if(ANDROID)
     add_library(main SHARED ${SDL3_SOURCES})
     # target_add_renderer(main sdl3)
     add_library(${TARGET_NAME} ALIAS main)
 else()
-    if(BUILD_DEBUG)
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         add_executable(${TARGET_NAME} ${SDL3_SOURCES})
     else()
         # For non-debug builds, disable console on Windows.
         add_executable(${TARGET_NAME} WIN32 ${SDL3_SOURCES})
+    endif()
+
+    if(MINGW)
+        target_link_options(${TARGET_NAME} PRIVATE -static-libgcc -static-libstdc++ -static)
     endif()
 endif()
 

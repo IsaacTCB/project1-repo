@@ -8,6 +8,8 @@ set(CMAKE_C_STANDARD 11)
 set(TARGET_PLATFORM "sdl3" CACHE STRING "Platform to configure for")
 set(TARGET_NAME "game" CACHE STRING "Hello world")
 
+option(BUILD_TESTS "Build test suite" ${PROJECT_IS_TOP_LEVEL})
+
 if(TARGET_PLATFORM STREQUAL "sdl3")
     set(PLATFORM_SDL3 true)
 else()
@@ -63,6 +65,10 @@ add_library(engine STATIC
     src/runtime/image/decoder.cpp
     src/core/logger.cpp
     src/core/view_context_2d.cpp
+    src/core/math/vec2.cpp
+    src/core/math/vec2i.cpp
+    src/core/math/vec3.cpp
+    src/core/math/vec3i.cpp
     src/platform/api/platform.cpp
     src/platform/api/application_handler.cpp
     src/renderer/api/renderer.cpp)
@@ -80,4 +86,8 @@ if(PLATFORM_SDL3)
         src/platform/backends/sdl3
         ${CMAKE_CURRENT_BINARY_DIR}/sdl3
     )
+endif()
+
+if(BUILD_TESTS)
+    add_subdirectory(tests)
 endif()

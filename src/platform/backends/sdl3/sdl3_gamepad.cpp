@@ -20,13 +20,15 @@ static ImplGamepad *gamepad__reserve_slot() {
         s_gamepads_available.pop();
     } else {
         /* find new allocated slot */
-        size_t index = 0;
         for (auto &gamepad : s_gamepads) {
-            gamepad.index = static_cast<Input::Gamepad::DeviceID>(index++);
-            if (!gamepad.alive) {
-                slot = &gamepad;
-                break;
+            if (gamepad.alive) {
+                continue;
             }
+            /* update index */
+            auto idx = static_cast<size_t>(&gamepad - s_gamepads.data());
+            gamepad.index = static_cast<Input::Gamepad::DeviceID>(idx);
+            slot = &gamepad;
+            break;
         }
     }
 
