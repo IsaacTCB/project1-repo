@@ -64,6 +64,11 @@ void Vec3::normalize() {
 }
 
 void Vec3::limit_length(float length) {
+    if (length <= EPSILON) {
+        *this = {};
+        return;
+    }
+
     float len = this->length();
     if (len > length) {
         float factor = (length / len);

@@ -145,6 +145,15 @@ TEST(Vec2LengthTest, LimitLengthHasNotExceeded) {
     vec2_expect_near(len, v);
 }
 
+TEST(Vec2LengthTest, LimitLengthToZeroAndUnder) {
+    Vec2 v{4.0f, 5.0f};
+    Vec2 len = v.limited_length(0.0f);
+    vec2_expect_near(len, {});
+
+    len = v.limited_length(-4.0f);
+    vec2_expect_near(len, {});
+}
+
 /* dot & cross product */
 
 TEST(Vec2ProductTest, DotProduct) {

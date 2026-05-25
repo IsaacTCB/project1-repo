@@ -148,6 +148,15 @@ TEST(Vec3LengthTest, LimitLengthHasNotExceeded) {
     vec3_expect_near(len, v);
 }
 
+TEST(Vec3LengthTest, LimitLengthToZeroAndUnder) {
+    Vec3 v{4.0f, 1.0f, 3.0f};
+    Vec3 len = v.limited_length(0.0f);
+    vec3_expect_near(len, {});
+
+    len = v.limited_length(-4.0f);
+    vec3_expect_near(len, {});
+}
+
 /* dot & cross product */
 
 TEST(Vec3ProductTest, DotProduct) {
