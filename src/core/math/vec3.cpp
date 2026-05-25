@@ -1,8 +1,16 @@
 #include "vec3.h"
+#include "vec2.h"
+#include "vec3i.h"
 
 #include "base.h"
 
 #include <cmath>
+
+Vec3::Vec3(const Vec2 &vec, float z)
+    : x(vec.x), y(vec.y), z(z) {}
+
+Vec3::Vec3(const Vec3i &vec)
+    : x((float)vec.x), y((float)vec.y), z((float)vec.z) {}
 
 float Vec3::length_squared() const {
     return (x * x) + (y * y) + (z * z);
@@ -31,15 +39,15 @@ float Vec3::distance_squared(const Vec3 &other) const {
 }
 
 Vec3 Vec3::normalized() const {
-    float len = length();
-    if (len > 0.0001f) {
-        return {
-            x / len,
-            y / len,
-            z / len,
-        };
-    }
-    return Vec3{};
+    Vec3 v{*this};
+    v.normalize();
+    return v;
+}
+
+Vec3 Vec3::limited_length(float length) const {
+    Vec3 v{*this};
+    v.limit_length(length);
+    return v;
 }
 
 Vec3 Vec3::abs() const {
@@ -61,4 +69,19 @@ void Vec3::normalize() {
     x = 0.0f;
     y = 0.0f;
     z = 0.0f;
+}
+
+void Vec3::limit_length(float length) {
+    if (length <= EPSILON) {
+        *this = {};
+        return;
+    }
+
+    float len = this->length();
+    if (len > length) {
+        float factor = (length / len);
+        x *= factor;
+        y *= factor;
+        z *= factor;
+    }
 }

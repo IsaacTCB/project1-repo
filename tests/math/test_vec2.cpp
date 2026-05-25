@@ -1,5 +1,7 @@
 #include "core/math/vec2.h"
 
+#include "core/math/vec2i.h"
+
 #include <gtest/gtest.h>
 
 constexpr float EPSILON = 0.001f;
@@ -7,6 +9,12 @@ constexpr float EPSILON = 0.001f;
 static inline void vec2_expect_near(const Vec2 &a, const Vec2 &b, float epsilon = EPSILON) {
     EXPECT_NEAR(a.x, b.x, epsilon);
     EXPECT_NEAR(a.y, b.y, epsilon);
+}
+
+/* Size tests */
+
+TEST(Vec2SizeTest, EnsureSize) {
+    EXPECT_EQ(sizeof(Vec2), sizeof(float) * 2);
 }
 
 /* Constructor tests */
@@ -21,6 +29,13 @@ TEST(Vec2ConstructorTest, ValueConstructor) {
     Vec2 v{3.0f, 4.0f};
     EXPECT_FLOAT_EQ(v.x, 3.0f);
     EXPECT_FLOAT_EQ(v.y, 4.0f);
+}
+
+TEST(Vec2ConstructorTest, IntConversionConstructor) {
+    Vec2i a{4, 2};
+    Vec2 b{a};
+    EXPECT_FLOAT_EQ(b.x, (float)a.x);
+    EXPECT_FLOAT_EQ(b.y, (float)a.y);
 }
 
 /* Arithmetic Operations */
@@ -128,6 +143,30 @@ TEST(Vec2LengthTest, SameDistance) {
     Vec2 a{4.0f, 2.0f};
     EXPECT_FLOAT_EQ(a.distance(a), 0.0f);
     EXPECT_FLOAT_EQ(a.distance_squared(a), 0.0f);
+}
+
+TEST(Vec2LengthTest, LimitLengthHasExceeded) {
+    Vec2 v{4.0f, 5.0f};
+    float length = 3.0f;
+
+    Vec2 len = v.limited_length(length);
+    Vec2 expected = v.normalized() * length;
+    vec2_expect_near(len, expected);
+}
+
+TEST(Vec2LengthTest, LimitLengthHasNotExceeded) {
+    Vec2 v{4.0f, 5.0f};
+    Vec2 len = v.limited_length(50.0f);
+    vec2_expect_near(len, v);
+}
+
+TEST(Vec2LengthTest, LimitLengthToZeroAndUnder) {
+    Vec2 v{4.0f, 5.0f};
+    Vec2 len = v.limited_length(0.0f);
+    vec2_expect_near(len, {});
+
+    len = v.limited_length(-4.0f);
+    vec2_expect_near(len, {});
 }
 
 /* dot & cross product */
