@@ -1,5 +1,7 @@
 #pragma once
 
+class Vec2i;
+
 class Vec2 {
 public:
     float x;
@@ -8,6 +10,8 @@ public:
 public:
     Vec2()
         : x(0.0f), y(0.0f) {}
+
+    explicit Vec2(const Vec2i &vec);
 
     constexpr Vec2(float x, float y)
         : x(x), y(y) {}
@@ -19,9 +23,11 @@ public:
     [[nodiscard]] float distance(const Vec2 &other) const;
     [[nodiscard]] float distance_squared(const Vec2 &other) const;
     [[nodiscard]] Vec2 normalized() const;
+    [[nodiscard]] Vec2 limited_length(float length) const;
     [[nodiscard]] Vec2 abs() const;
 
     void normalize();
+    void limit_length(float length);
 
 public:
     /* compound assignments */
