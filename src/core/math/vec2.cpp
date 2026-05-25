@@ -29,14 +29,9 @@ float Vec2::distance_squared(const Vec2 &other) const {
 }
 
 Vec2 Vec2::normalized() const {
-    float len = length();
-    if (len > EPSILON) {
-        return {
-            x / len,
-            y / len,
-        };
-    }
-    return Vec2{};
+    Vec2 v{*this};
+    v.normalize();
+    return v;
 }
 
 Vec2 Vec2::abs() const {

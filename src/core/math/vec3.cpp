@@ -31,15 +31,9 @@ float Vec3::distance_squared(const Vec3 &other) const {
 }
 
 Vec3 Vec3::normalized() const {
-    float len = length();
-    if (len > 0.0001f) {
-        return {
-            x / len,
-            y / len,
-            z / len,
-        };
-    }
-    return Vec3{};
+    Vec3 v{*this};
+    v.normalize();
+    return v;
 }
 
 Vec3 Vec3::abs() const {
