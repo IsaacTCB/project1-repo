@@ -1,0 +1,58 @@
+#include "vec2.h"
+
+#include "base.h"
+
+#include <cmath>
+
+float Vec2::length_squared() const {
+    return (x * x) + (y * y);
+}
+
+float Vec2::length() const {
+    return std::sqrt((x * x) + (y * y));
+}
+
+float Vec2::dot(const Vec2 &other) const {
+    return (x * other.x) + (y * other.y);
+}
+
+float Vec2::cross(const Vec2 &other) const {
+    return (x * other.y) - (y * other.x);
+}
+
+float Vec2::distance(const Vec2 &other) const {
+    return (other - *this).length();
+}
+
+float Vec2::distance_squared(const Vec2 &other) const {
+    return (other - *this).length_squared();
+}
+
+Vec2 Vec2::normalized() const {
+    float len = length();
+    if (len > EPSILON) {
+        return {
+            x / len,
+            y / len,
+        };
+    }
+    return Vec2{};
+}
+
+Vec2 Vec2::abs() const {
+    return {
+        std::fabs(x),
+        std::fabs(y),
+    };
+}
+
+void Vec2::normalize() {
+    float len = length();
+    if (len > EPSILON) {
+        x /= len;
+        y /= len;
+        return;
+    }
+    x = 0.0f;
+    y = 0.0f;
+}
