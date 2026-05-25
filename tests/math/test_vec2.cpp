@@ -1,4 +1,5 @@
 #include "core/math/vec2.h"
+#include "core/math/vec2i.h"
 
 #include <gtest/gtest.h>
 
@@ -21,6 +22,13 @@ TEST(Vec2ConstructorTest, ValueConstructor) {
     Vec2 v{3.0f, 4.0f};
     EXPECT_FLOAT_EQ(v.x, 3.0f);
     EXPECT_FLOAT_EQ(v.y, 4.0f);
+}
+
+TEST(Vec2ConstructorTest, IntConversionConstructor) {
+    Vec2i a{4, 2};
+    Vec2 b{a};
+    EXPECT_FLOAT_EQ(b.x, (float)a.x);
+    EXPECT_FLOAT_EQ(b.y, (float)a.y);
 }
 
 /* Arithmetic Operations */

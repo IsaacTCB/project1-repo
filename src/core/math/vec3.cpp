@@ -1,8 +1,16 @@
 #include "vec3.h"
+#include "vec3i.h"
+#include "vec2.h"
 
 #include "base.h"
 
 #include <cmath>
+
+Vec3::Vec3(const Vec2 &vec, float z)
+    : x(vec.x), y(vec.y), z(z) {}
+
+Vec3::Vec3(const Vec3i &vec)
+    : x((float)vec.x), y((float)vec.y), z((float)vec.z) {}
 
 float Vec3::length_squared() const {
     return (x * x) + (y * y) + (z * z);

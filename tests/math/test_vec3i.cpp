@@ -1,4 +1,5 @@
 #include "core/math/vec3i.h"
+#include "core/math/vec3.h"
 
 #include <gtest/gtest.h>
 
@@ -24,6 +25,14 @@ TEST(Vec3iConstructorTest, ValueConstructor) {
     EXPECT_EQ(v.x, 3);
     EXPECT_EQ(v.y, 4);
     EXPECT_EQ(v.z, 2);
+}
+
+TEST(Vec3ConstructorTest, FloatConversionConstructor) {
+    Vec3 a{4.0f, 2.0f, 4.2f};
+    Vec3i b{a};
+    EXPECT_EQ(b.x, (int)a.x);
+    EXPECT_EQ(b.y, (int)a.y);
+    EXPECT_EQ(b.z, (int)a.z);
 }
 
 /* Arithmetic Operations */

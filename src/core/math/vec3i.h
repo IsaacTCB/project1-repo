@@ -1,5 +1,8 @@
 #pragma once
 
+class Vec2i;
+class Vec3;
+
 class Vec3i {
 public:
     int x;
@@ -9,6 +12,9 @@ public:
 public:
     Vec3i()
         : x(0), y(0), z{0} {}
+
+    explicit Vec3i(const Vec2i &vec, int z);
+    explicit Vec3i(const Vec3 &vec);
 
     constexpr Vec3i(int x, int y, int z)
         : x(x), y(y), z(z) {}

@@ -1,6 +1,10 @@
 #include "vec2i.h"
+#include "vec2.h"
 
 #include <cmath>
+
+Vec2i::Vec2i(const Vec2 &vec)
+    :x((int)vec.x), y((int)vec.y) {}
 
 int Vec2i::length_squared() const {
     return (x * x) + (y * y);
