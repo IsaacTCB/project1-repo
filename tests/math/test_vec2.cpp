@@ -130,6 +130,21 @@ TEST(Vec2LengthTest, SameDistance) {
     EXPECT_FLOAT_EQ(a.distance_squared(a), 0.0f);
 }
 
+TEST(Vec2LengthTest, LimitLengthHasExceeded) {
+    Vec2 v{4.0f, 5.0f};
+    float length = 3.0f;
+
+    Vec2 len = v.limited_length(length);
+    Vec2 expected = v.normalized() * length;
+    vec2_expect_near(len, expected);
+}
+
+TEST(Vec2LengthTest, LimitLengthHasNotExceeded) {
+    Vec2 v{4.0f, 5.0f};
+    Vec2 len = v.limited_length(50.0f);
+    vec2_expect_near(len, v);
+}
+
 /* dot & cross product */
 
 TEST(Vec2ProductTest, DotProduct) {

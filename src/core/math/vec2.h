@@ -19,9 +19,11 @@ public:
     [[nodiscard]] float distance(const Vec2 &other) const;
     [[nodiscard]] float distance_squared(const Vec2 &other) const;
     [[nodiscard]] Vec2 normalized() const;
+    [[nodiscard]] Vec2 limited_length(float length) const;
     [[nodiscard]] Vec2 abs() const;
 
     void normalize();
+    void limit_length(float length);
 
 public:
     /* compound assignments */

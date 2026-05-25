@@ -34,6 +34,12 @@ Vec2 Vec2::normalized() const {
     return v;
 }
 
+Vec2 Vec2::limited_length(float length) const {
+    Vec2 v{*this};
+    v.limit_length(length);
+    return v;
+}
+
 Vec2 Vec2::abs() const {
     return {
         std::fabs(x),
@@ -50,4 +56,13 @@ void Vec2::normalize() {
     }
     x = 0.0f;
     y = 0.0f;
+}
+
+void Vec2::limit_length(float length) {
+    float len = this->length();
+    if (len >= length) {
+        float factor = (length / len);
+        x *= factor;
+        y *= factor;
+    }
 }

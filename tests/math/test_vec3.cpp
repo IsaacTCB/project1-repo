@@ -133,6 +133,21 @@ TEST(Vec3LengthTest, SameDistance) {
     EXPECT_FLOAT_EQ(a.distance_squared(a), 0.0f);
 }
 
+TEST(Vec3LengthTest, LimitLengthHasExceeded) {
+    Vec3 v{4.0f, 1.0f, 3.0f};
+    float length = 3.0f;
+
+    Vec3 len = v.limited_length(length);
+    Vec3 expected = v.normalized() * length;
+    vec3_expect_near(len, expected);
+}
+
+TEST(Vec3LengthTest, LimitLengthHasNotExceeded) {
+    Vec3 v{4.0f, 1.0f, 3.0f};
+    Vec3 len = v.limited_length(50.0f);
+    vec3_expect_near(len, v);
+}
+
 /* dot & cross product */
 
 TEST(Vec3ProductTest, DotProduct) {

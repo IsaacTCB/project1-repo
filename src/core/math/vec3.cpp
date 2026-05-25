@@ -36,6 +36,12 @@ Vec3 Vec3::normalized() const {
     return v;
 }
 
+Vec3 Vec3::limited_length(float length) const {
+    Vec3 v{*this};
+    v.limit_length(length);
+    return v;
+}
+
 Vec3 Vec3::abs() const {
     return {
         std::fabs(x),
@@ -55,4 +61,14 @@ void Vec3::normalize() {
     x = 0.0f;
     y = 0.0f;
     z = 0.0f;
+}
+
+void Vec3::limit_length(float length) {
+    float len = this->length();
+    if (len > length) {
+        float factor = (length / len);
+        x *= factor;
+        y *= factor;
+        z *= factor;
+    }
 }
