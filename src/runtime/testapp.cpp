@@ -118,9 +118,9 @@ public:
                 LOG_TRACE("Pad {0} just released X.", gamepad);
             }
 
+            /* move player with gamepad analog stick */
             auto [axis_x, axis_y] = m_input_service.get_pad_stick(gamepad, false);
-            move.x = axis_x;
-            move.y = axis_y;
+            move += Vec2{axis_x, axis_y};
         });
 
         constexpr float PLAYER_SPEED = 60 * 3.0f;
@@ -136,6 +136,7 @@ public:
             move.y = 1.0f;
         }
 
+        /* clamp stick and add it into player position */
         move.limit_length(1.0f);
         m_entity.pos += move * PLAYER_SPEED * delta;
     }
