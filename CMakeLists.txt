@@ -83,5 +83,6 @@ if(PLATFORM_SDL3)
 endif()
 
 if(BUILD_TESTS)
+    enable_testing()
     add_subdirectory(tests)
 endif()
