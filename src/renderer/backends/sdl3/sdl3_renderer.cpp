@@ -1,11 +1,13 @@
 #include "sdl3_renderer.h"
 
-#include <SDL3/SDL.h>
 #include <cassert>
+
+#include <SDL3/SDL.h>
 
 #include "core/assertion.h"
 #include "core/handles.h"
 #include "core/logger.h"
+#include "core/math/vec2i.h"
 
 struct SDL3Renderer::Impl {
     SDL_Window *window;
@@ -21,9 +23,7 @@ SDL3Renderer::SDL3Renderer(DisplayWindowHandle &window_data)
     SDL_SetRenderDrawBlendMode(m_impl->renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderVSync(m_impl->renderer, 1);
 
-    on_screen_resized(
-        window_data.props.width,
-        window_data.props.height);
+    on_screen_resized(window_data.props.size);
 }
 
 SDL3Renderer::~SDL3Renderer() {
@@ -43,14 +43,14 @@ void SDL3Renderer::swap_buffers() {
     SDL_RenderPresent(m_impl->renderer);
 }
 
-void SDL3Renderer::on_screen_resized(uint32_t width, uint32_t height) {
+void SDL3Renderer::on_screen_resized(const Vec2i &screen_size) {
     m_screen_viewport = {
         .x = 0.0f,
         .y = 0.0f,
-        .width = static_cast<float>(width),
-        .height = static_cast<float>(height),
+        .width = static_cast<float>(screen_size.x),
+        .height = static_cast<float>(screen_size.y),
     };
-    SDL_SetRenderLogicalPresentation(m_impl->renderer, width, height, SDL_LOGICAL_PRESENTATION_STRETCH);
+    SDL_SetRenderLogicalPresentation(m_impl->renderer, screen_size.x, screen_size.y, SDL_LOGICAL_PRESENTATION_STRETCH);
 }
 
 TextureHandle SDL3Renderer::load_texture(ImageData &image) {

@@ -41,8 +41,7 @@ public:
 
         /* create main window/screen */
         DisplayWindowProps props{};
-        props.width = 800;
-        props.height = 600;
+        props.size = {800, 600};
         props.resizable = true;
         props.api = RendererAPI::OpenGL;
 
@@ -68,9 +67,8 @@ public:
         m_texture = m_renderer->load_texture(image);
 
         /* poll window size */
-        auto [width, height] = display.get_size(m_window);
-        LOG_INFO("display size: {0}x{1}", width, height);
-
+        Vec2i display_size = display.get_size(m_window);
+        LOG_INFO("display size: {0}", display_size);
         m_input_service.init();
 
         m_camera.zoom = 0.8f;
@@ -89,8 +87,13 @@ public:
 
         for (const auto &event : m_platform->event().span<EventWindow>()) {
             if (const auto *ptr = std::get_if<EventWindowResized>(&event)) {
-                LOG_TRACE("{0}x{1}", ptr->width, ptr->height);
-                m_renderer->on_screen_resized(ptr->width, ptr->height);
+                LOG_TRACE("resized: {}", ptr->size);
+
+                /* skip invalid window sizes for rendering */
+                if (ptr->size.x <= 0 || ptr->size.y <= 0) {
+                    continue;
+                }
+                m_renderer->on_screen_resized(ptr->size);
             }
             if (std::get_if<EventWindowMaximized>(&event)) {
                 LOG_TRACE("maximized");
@@ -130,8 +133,8 @@ public:
             }
 
             /* move player with gamepad analog stick */
-            auto [axis_x, axis_y] = m_input_service.get_pad_stick(gamepad, false);
-            move += Vec2{axis_x, axis_y};
+            auto stick_vector = m_input_service.get_pad_stick(gamepad, false);
+            move += stick_vector;
         });
 
         constexpr float PLAYER_SPEED = 60 * 3.0f;
@@ -179,13 +182,13 @@ public:
         m_queue.clear();
 
         /* TODO: verify if texture actually exists. */
-        m_queue.draw_color(RGB8(88, 90, 220), 0, 0, 400, 400);
-        m_queue.draw_color(RGBA8(48, 45, 120, 80), 40, 40, 320, 320);
+        m_queue.draw_color(RGB8(88, 90, 220), {0, 0}, {400, 400});
+        m_queue.draw_color(RGBA8(48, 45, 120, 80), {40, 40}, {320, 320});
 
         Vec2i draw_pos{Vec2{std::floor(m_entity.pos.x), std::floor(m_entity.pos.y)}};
-        m_queue.draw_texture(m_texture, draw_pos.x, draw_pos.y, 200, 200);
+        m_queue.draw_texture(m_texture, draw_pos, {200, 200});
 
-        auto [mouse_x, mouse_y] = m_input_service.get_mouse_pos();
+        Vec2 mouse_pos = m_input_service.get_mouse_pos();
 
         constexpr std::array<Viewport, 4> viewports{{
             {.x = 0.0f, .y = 0.0f, .width = 0.5f, .height = 0.5f},
@@ -200,20 +203,23 @@ public:
 
             ViewContext2D ctx = Camera2DUtils::build_view_context(m_camera, abs_viewport);
 
-            auto [world_x, world_y] = ctx.screen_to_world(mouse_x, mouse_y);
-
+            auto [world_x, world_y] = ctx.screen_to_world(mouse_pos.x, mouse_pos.y);
             auto [mx, my] = ctx.world_to_screen(world_x, world_y);
             auto [world2_x, world2_y] = ctx.screen_to_world(mx, my);
-            m_queue.draw_color(0xFF000060, (int)world2_x - 4, (int)world2_y - 4, 16, 16);
-            m_queue.draw_color(0xFF00FFFF, (int)world_x, (int)world_y, 8, 8);
+            m_queue.draw_color(0xFF000060, {(int)world2_x - 4, (int)world2_y - 4}, {16, 16});
+            m_queue.draw_color(0xFF00FFFF, {(int)world_x, (int)world_y}, {8, 8});
 
             auto bounds = ctx.get_bounds_aabb();
             m_queue.draw_color(
                 0xFF00FF20,
-                (int)bounds.left + 8,
-                (int)bounds.top + 8,
-                (int)bounds.width() - 16,
-                (int)bounds.height() - 16);
+                {
+                    (int)bounds.left + 8,
+                    (int)bounds.top + 8,
+                },
+                {
+                    (int)bounds.width() - 16,
+                    (int)bounds.height() - 16,
+                });
 
             m_renderer->render_pass(ctx, m_queue);
         }

@@ -11,6 +11,7 @@
 #include "render_queue.h"
 
 class ViewContext2D;
+class Vec2i;
 
 class Renderer {
 public:
@@ -28,7 +29,7 @@ public:
 public:
     virtual void clear(float r, float g, float b, float a = 255) = 0;
     virtual void swap_buffers() = 0;
-    virtual void on_screen_resized(uint32_t width, uint32_t height) = 0;
+    virtual void on_screen_resized(const Vec2i &screen_size) = 0;
 
     virtual TextureHandle load_texture(ImageData &image) = 0;
     virtual void destroy_texture(TextureHandle texture) = 0;

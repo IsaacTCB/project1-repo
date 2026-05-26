@@ -1,5 +1,7 @@
 #pragma once
 
+#include <format>
+
 class Vec2i;
 
 class Vec2 {
@@ -130,4 +132,12 @@ public:
         lhs /= scalar;
         return lhs;
     };
+};
+
+template <>
+struct std::formatter<Vec2> : std::formatter<std::string_view> {
+    auto format(const Vec2 &vec, format_context &ctx) const {
+        std::string s = std::format("({}, {})", vec.x, vec.y);
+        return formatter<std::string_view>::format(s, ctx);
+    }
 };

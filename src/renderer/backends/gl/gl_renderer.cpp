@@ -109,9 +109,7 @@ GLRenderer::GLRenderer(DisplayWindowHandle &window_data)
     glUseProgram(m_impl->shader->get_program());
     m_impl->shader->set_int("u_texture", 0);
 
-    on_screen_resized(
-        window_data.props.width,
-        window_data.props.height);
+    on_screen_resized(window_data.props.size);
 }
 
 GLRenderer::~GLRenderer() {
@@ -131,15 +129,17 @@ void GLRenderer::swap_buffers() {
     m_impl->context.swap_buffers();
 }
 
-void GLRenderer::on_screen_resized(uint32_t width, uint32_t height) {
-    ASSERT(width != 0 && height != 0, "Width & height must not be 0.");
+void GLRenderer::on_screen_resized(const Vec2i &screen_size) {
+    ASSERT(screen_size.x > 0 && screen_size.y > 0, "Width & height must not be 0.");
     m_screen_viewport = {
         .x = 0.0f,
         .y = 0.0f,
-        .width = static_cast<float>(width),
-        .height = static_cast<float>(height),
+        .width = static_cast<float>(screen_size.x),
+        .height = static_cast<float>(screen_size.y),
     };
-    glViewport(0, 0, (GLsizei)width, (GLsizei)height);
+    glViewport(0, 0, screen_size.x, screen_size.y);
+    m_impl->proj = glm::ortho(0.0f, static_cast<float>(screen_size.x), static_cast<float>(screen_size.y), 0.0f, -1.0f, 1.0f);
+    m_impl->shader->set_mat4("u_view_proj", m_impl->proj);
 }
 
 TextureHandle GLRenderer::load_texture(ImageData &image) {

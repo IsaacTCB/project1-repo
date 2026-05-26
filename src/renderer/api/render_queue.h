@@ -1,10 +1,11 @@
 #pragma once
 
-#include "render_handles.h"
-
 #include <optional>
 #include <variant>
 #include <vector>
+
+#include "core/math/vec2i.h"
+#include "render_handles.h"
 
 struct RenderCommandDraw {
     std::optional<TextureHandle> texture;
@@ -29,26 +30,26 @@ public:
         return m_queue;
     }
 
-    void draw_texture(TextureHandle texture, int x, int y, int width, int height) {
+    void draw_texture(TextureHandle texture, const Vec2i &position, const Vec2i &size) {
         RenderCommandDraw draw{
             .texture = texture,
-            .x = static_cast<float>(x),
-            .y = static_cast<float>(y),
-            .width = static_cast<float>(width),
-            .height = static_cast<float>(height),
+            .x = static_cast<float>(position.x),
+            .y = static_cast<float>(position.y),
+            .width = static_cast<float>(size.x),
+            .height = static_cast<float>(size.y),
             .color = 0xFFFFFFFF,
             // .zsort = 0,
         };
         m_queue.emplace_back(draw);
     }
 
-    void draw_color(uint32_t color, int x, int y, int width, int height) {
+    void draw_color(uint32_t color, const Vec2i &position, const Vec2i &size) {
         RenderCommandDraw draw{
             .texture = std::nullopt,
-            .x = static_cast<float>(x),
-            .y = static_cast<float>(y),
-            .width = static_cast<float>(width),
-            .height = static_cast<float>(height),
+            .x = static_cast<float>(position.x),
+            .y = static_cast<float>(position.y),
+            .width = static_cast<float>(size.x),
+            .height = static_cast<float>(size.y),
             .color = color,
             // .zsort = 0,
         };

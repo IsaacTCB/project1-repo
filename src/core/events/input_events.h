@@ -6,6 +6,7 @@
 #include "core/input/gamepad.h"
 #include "core/input/keyboard.h"
 #include "core/input/mouse.h"
+#include "core/math/vec2.h"
 
 /* Keyboard events */
 
@@ -24,16 +25,13 @@ struct EventInputMouseButton {
 };
 
 struct EventInputMouseWheel {
-    float x;
-    float y;
+    Vec2 wheel_motion;
     bool flipped;
 };
 
 struct EventInputMouseMotion {
-    float screen_x;
-    float screen_y;
-    float rel_x;
-    float rel_y;
+    Vec2 screen_position;
+    Vec2 relative;
 };
 
 /* Gamepad events */

@@ -55,8 +55,8 @@ void InputService::update() {
     }
 
     /* reset mouse wheel */
-    m_mouse_wheel_x = 0.0f;
-    m_mouse_wheel_y = 0.0f;
+    m_mouse_wheel.x = 0.0f;
+    m_mouse_wheel.y = 0.0f;
 }
 
 void InputService::event(const EventInput &event) {
@@ -129,8 +129,7 @@ static size_t get_mouse_button_index(Input::Mouse::Buttons button) {
 
 bool InputService::mouse_event(const EventInput &event) {
     if (const auto *mouse = std::get_if<EventInputMouseMotion>(&event)) {
-        m_mouse_x = mouse->screen_x;
-        m_mouse_y = mouse->screen_y;
+        m_mouse_position = mouse->screen_position;
         return true;
     }
     if (const auto *mbutton = std::get_if<EventInputMouseButton>(&event)) {
@@ -148,8 +147,7 @@ bool InputService::mouse_event(const EventInput &event) {
         return true;
     }
     if (const auto *wheel = std::get_if<EventInputMouseWheel>(&event)) {
-        m_mouse_wheel_x += wheel->x;
-        m_mouse_wheel_y += wheel->y;
+        m_mouse_wheel += wheel->wheel_motion;
         return true;
     }
     return false;
@@ -264,7 +262,7 @@ bool InputService::is_pad_button_just_released(Input::Gamepad::DeviceID device, 
             get_flag_at(m_pad_state_previous[pad].buttons, index));
 }
 
-std::tuple<float, float> InputService::get_pad_stick(Input::Gamepad::DeviceID device, bool right) const {
+Vec2 InputService::get_pad_stick(Input::Gamepad::DeviceID device, bool right) const {
     auto pad = static_cast<size_t>(device);
     ASSERT(pad < Input::Gamepad::GAMEPAD_MAX);
 
