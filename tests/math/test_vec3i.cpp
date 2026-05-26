@@ -1,5 +1,4 @@
 #include "core/math/vec3i.h"
-#include "core/math/vec3.h"
 
 #include "core/math/vec2i.h"
 #include "core/math/vec3.h"

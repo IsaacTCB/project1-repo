@@ -1,6 +1,5 @@
-#include "core/math/vec2.h"
-
 #include "core/math/vec2i.h"
+
 #include "core/math/vec2.h"
 
 #include <gtest/gtest.h>
