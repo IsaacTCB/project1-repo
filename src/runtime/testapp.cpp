@@ -79,6 +79,11 @@ public:
         for (const auto &event : m_platform->event().span<EventWindow>()) {
             if (const auto *ptr = std::get_if<EventWindowResized>(&event)) {
                 LOG_TRACE("{0}x{1}", ptr->width, ptr->height);
+
+                /* skip invalid window sizes for rendering */
+                if (ptr->width == 0 || ptr->height == 0) {
+                    continue;
+                }
                 m_renderer->on_screen_resized(ptr->width, ptr->height);
             }
             if (std::get_if<EventWindowMaximized>(&event)) {
