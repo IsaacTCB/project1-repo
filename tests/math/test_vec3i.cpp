@@ -1,6 +1,9 @@
 #include "core/math/vec3i.h"
 #include "core/math/vec3.h"
 
+#include "core/math/vec2i.h"
+#include "core/math/vec3.h"
+
 #include <gtest/gtest.h>
 
 constexpr float EPSILON = 0.001f;
@@ -9,6 +12,12 @@ static inline void vec3i_eq(const Vec3i &a, const Vec3i &b) {
     EXPECT_EQ(a.x, b.x);
     EXPECT_EQ(a.y, b.y);
     EXPECT_EQ(a.z, b.z);
+}
+
+/* Size tests */
+
+TEST(Vec3iSizeTest, EnsureSize) {
+    EXPECT_EQ(sizeof(Vec3i), sizeof(int) * 3);
 }
 
 /* Constructor tests */
@@ -27,12 +36,18 @@ TEST(Vec3iConstructorTest, ValueConstructor) {
     EXPECT_EQ(v.z, 2);
 }
 
-TEST(Vec3ConstructorTest, FloatConversionConstructor) {
+TEST(Vec3iConstructorTest, FloatConversionConstructor) {
     Vec3 a{4.0f, 2.0f, 4.2f};
     Vec3i b{a};
     EXPECT_EQ(b.x, (int)a.x);
     EXPECT_EQ(b.y, (int)a.y);
     EXPECT_EQ(b.z, (int)a.z);
+}
+
+TEST(Vec3iConstructorTest, Vec2iConversionConstructor) {
+    Vec2i v1{4, 3};
+    Vec3i v2{v1, 6};
+    vec3i_eq(v2, {v1.x, v1.y, 6});
 }
 
 /* Arithmetic Operations */

@@ -1,6 +1,9 @@
 #include "core/math/vec3.h"
 #include "core/math/vec3i.h"
 
+#include "core/math/vec2.h"
+#include "core/math/vec3i.h"
+
 #include <gtest/gtest.h>
 
 constexpr float EPSILON = 0.001f;
@@ -9,6 +12,12 @@ static inline void vec3_expect_near(const Vec3 &a, const Vec3 &b, float epsilon 
     EXPECT_NEAR(a.x, b.x, epsilon);
     EXPECT_NEAR(a.y, b.y, epsilon);
     EXPECT_NEAR(a.z, b.z, epsilon);
+}
+
+/* Size tests */
+
+TEST(Vec3SizeTest, EnsureSize) {
+    EXPECT_EQ(sizeof(Vec3), sizeof(float) * 3);
 }
 
 /* Constructor tests */
@@ -33,6 +42,12 @@ TEST(Vec3ConstructorTest, IntConversionConstructor) {
     EXPECT_EQ(b.x, (float)a.x);
     EXPECT_EQ(b.y, (float)a.y);
     EXPECT_EQ(b.z, (float)a.z);
+}
+
+TEST(Vec3ConstructorTest, Vec2ConversionConstructor) {
+    Vec2 v1{4.0f, 3.0f};
+    Vec3 v2{v1, 6.0f};
+    vec3_expect_near(v2, {v1.x, v1.y, 6.0f});
 }
 
 /* Arithmetic Operations */
