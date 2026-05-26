@@ -24,7 +24,7 @@ DisplayWindowHandle DisplayServer::init_display(const DisplayWindowProps &props)
             break;
     }
 
-    SDL_Window *window = SDL_CreateWindow(props.caption.data(), props.width, props.height, flags);
+    SDL_Window *window = SDL_CreateWindow(props.caption.data(), props.size.x, props.size.y, flags);
     if (!window) {
         LOG_ERROR("SDL3: Failed to create window. Reason: {0}", SDL_GetError());
         return {};
@@ -41,15 +41,12 @@ void DisplayServer::close_display(DisplayWindowHandle handle) {
     handle.raw_window_handle = nullptr;
 }
 
-std::tuple<uint32_t, uint32_t> DisplayServer::get_size(const DisplayWindowHandle &handle) const {
-    auto *window = reinterpret_cast<SDL_Window *>(handle.raw_window_handle);
+Vec2i DisplayServer::get_size(const DisplayWindowHandle &handle) const {
+    auto *window = static_cast<SDL_Window *>(handle.raw_window_handle);
 
-    int width, height;
-    SDL_GetWindowSize(window, &width, &height);
-    return {
-        static_cast<uint32_t>(width),
-        static_cast<uint32_t>(height),
-    };
+    Vec2i size{};
+    SDL_GetWindowSize(window, &size.x, &size.y);
+    return size;
 }
 
 /**

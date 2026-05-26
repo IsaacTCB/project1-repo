@@ -76,14 +76,18 @@ SDL_AppResult PlatformImpl::event(SDL_Event &event) {
         /* Window events */
         case SDL_EVENT_WINDOW_RESIZED:
             m_platform.submit_event<EventWindow>(EventWindowResized{
-                .width = static_cast<uint32_t>(event.window.data1),
-                .height = static_cast<uint32_t>(event.window.data2),
+                .size = {
+                    event.window.data1,
+                    event.window.data2,
+                },
             });
             break;
         case SDL_EVENT_WINDOW_MOVED:
             m_platform.submit_event<EventWindow>(EventWindowMoved{
-                .x = event.window.data1,
-                .y = event.window.data2,
+                .position = {
+                    event.window.data1,
+                    event.window.data2,
+                },
             });
             break;
         case SDL_EVENT_WINDOW_MAXIMIZED:
@@ -105,10 +109,14 @@ SDL_AppResult PlatformImpl::event(SDL_Event &event) {
             break;
         case SDL_EVENT_MOUSE_MOTION:
             m_platform.submit_event<EventInput>(EventInputMouseMotion{
-                .screen_x = event.motion.x,
-                .screen_y = event.motion.y,
-                .rel_x = event.motion.xrel,
-                .rel_y = event.motion.yrel,
+                .screen_position = {
+                    event.motion.x,
+                    event.motion.y,
+                },
+                .relative = {
+                    event.motion.xrel,
+                    event.motion.yrel,
+                },
             });
             break;
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
@@ -120,8 +128,10 @@ SDL_AppResult PlatformImpl::event(SDL_Event &event) {
             break;
         case SDL_EVENT_MOUSE_WHEEL:
             m_platform.submit_event<EventInput>(EventInputMouseWheel{
-                .x = event.wheel.x,
-                .y = event.wheel.y,
+                .wheel_motion = {
+                    event.wheel.x,
+                    event.wheel.y,
+                },
                 .flipped = (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED),
             });
             break;

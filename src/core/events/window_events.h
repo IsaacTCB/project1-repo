@@ -1,14 +1,17 @@
 #pragma once
 
-#include <cstdint>
 #include <variant>
 
+#include "core/math/vec2i.h"
+
+/* TODO: add window index to all events */
+
 struct EventWindowResized {
-    uint32_t width, height;
+    Vec2i size;
 };
 
 struct EventWindowMoved {
-    int x, y;
+    Vec2i position;
 };
 
 struct EventWindowMaximized {};

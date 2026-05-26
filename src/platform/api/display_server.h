@@ -1,19 +1,18 @@
 #pragma once
 
-#include "server_macros.inl"
+#include <string>
 
+#include "core/math/vec2i.h"
 #include "renderer/api/renderer_apis.h"
 
-#include <cstdint>
-#include <string>
+#include "server_macros.inl"
 
 /**
  * @brief Window creation properties
  */
 struct DisplayWindowProps {
     std::string caption = "Window";
-    uint32_t width = 800;
-    uint32_t height = 600;
+    Vec2i size{800, 600};
     RendererAPI api = get_default_api();
     bool resizable = false;
 };
@@ -54,7 +53,7 @@ public:
      * @return A tuple containing the window's width and height respectively.
      */
     [[nodiscard]]
-    std::tuple<uint32_t, uint32_t> get_size(const DisplayWindowHandle &handle) const;
+    Vec2i get_size(const DisplayWindowHandle &handle) const;
 };
 
 #undef DECLARE_SERVER

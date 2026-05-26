@@ -1,11 +1,13 @@
 #include "sdl3_renderer.h"
 
-#include <SDL3/SDL.h>
 #include <cassert>
+
+#include <SDL3/SDL.h>
 
 #include "core/assertion.h"
 #include "core/handles.h"
 #include "core/logger.h"
+#include "core/math/vec2i.h"
 
 struct SDL3Renderer::Impl {
     SDL_Window *window;
@@ -39,8 +41,8 @@ void SDL3Renderer::swap_buffers() {
     SDL_RenderPresent(m_impl->renderer);
 }
 
-void SDL3Renderer::on_screen_resized(uint32_t width, uint32_t height) {
-    SDL_SetRenderLogicalPresentation(m_impl->renderer, width, height, SDL_LOGICAL_PRESENTATION_STRETCH);
+void SDL3Renderer::on_screen_resized(const Vec2i &screen_size) {
+    SDL_SetRenderLogicalPresentation(m_impl->renderer, screen_size.x, screen_size.y, SDL_LOGICAL_PRESENTATION_STRETCH);
 }
 
 TextureHandle SDL3Renderer::load_texture(ImageData &image) {
