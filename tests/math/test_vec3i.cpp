@@ -35,12 +35,18 @@ TEST(Vec3iConstructorTest, ValueConstructor) {
     EXPECT_EQ(v.z, 2);
 }
 
-TEST(Vec3ConstructorTest, FloatConversionConstructor) {
+TEST(Vec3iConstructorTest, FloatConversionConstructor) {
     Vec3 a{4.0f, 2.0f, 4.2f};
     Vec3i b{a};
     EXPECT_EQ(b.x, (int)a.x);
     EXPECT_EQ(b.y, (int)a.y);
     EXPECT_EQ(b.z, (int)a.z);
+}
+
+TEST(Vec3iConstructorTest, Vec2iConversionConstructor) {
+    Vec2i v1{4, 3};
+    Vec3i v2{v1, 6};
+    vec3i_eq(v2, {v1.x, v1.y, 6});
 }
 
 /* Arithmetic Operations */
@@ -93,12 +99,6 @@ TEST(Vec3iComparisonTest, IsNotEqual) {
     Vec3i b{120, 10, 12};
     EXPECT_EQ(a != a, false);
     EXPECT_EQ(a != b, true);
-}
-
-TEST(Vec3iConstructorTest, Vec2iConversionConstructor) {
-    Vec2i v1{4, 3};
-    Vec3i v2{v1, 6};
-    vec3i_eq(v2, {v1.x, v1.y, 6});
 }
 
 /* Length + Normalization */

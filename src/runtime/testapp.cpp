@@ -34,8 +34,7 @@ public:
 
         /* create main window/screen */
         DisplayWindowProps props{};
-        props.width = 800;
-        props.height = 600;
+        props.size = {800, 600};
         props.api = RendererAPI::OpenGL;
 
         m_window = display.init_display(props);
@@ -60,9 +59,8 @@ public:
         m_texture = m_renderer->load_texture(image);
 
         /* poll window size */
-        auto [width, height] = display.get_size(m_window);
-        LOG_INFO("display size: {0}x{1}", width, height);
-
+        Vec2i display_size = display.get_size(m_window);
+        LOG_INFO("display size: {0}", display_size);
         m_input_service.init();
     }
 
@@ -78,8 +76,13 @@ public:
 
         for (const auto &event : m_platform->event().span<EventWindow>()) {
             if (const auto *ptr = std::get_if<EventWindowResized>(&event)) {
-                LOG_TRACE("{0}x{1}", ptr->width, ptr->height);
-                m_renderer->on_screen_resized(ptr->width, ptr->height);
+                LOG_TRACE("resized: {}", ptr->size);
+
+                /* skip invalid window sizes for rendering */
+                if (ptr->size.x <= 0 || ptr->size.y <= 0) {
+                    continue;
+                }
+                m_renderer->on_screen_resized(ptr->size);
             }
             if (std::get_if<EventWindowMaximized>(&event)) {
                 LOG_TRACE("maximized");
@@ -119,8 +122,8 @@ public:
             }
 
             /* move player with gamepad analog stick */
-            auto [axis_x, axis_y] = m_input_service.get_pad_stick(gamepad, false);
-            move += Vec2{axis_x, axis_y};
+            auto stick_vector = m_input_service.get_pad_stick(gamepad, false);
+            move += stick_vector;
         });
 
         constexpr float PLAYER_SPEED = 60 * 3.0f;
@@ -145,14 +148,14 @@ public:
         m_queue.clear();
 
         /* TODO: verify if texture actually exists. */
-        m_queue.draw_color(RGB8(88, 90, 220), 0, 0, 400, 400);
-        m_queue.draw_color(RGBA8(48, 45, 120, 80), 40, 40, 320, 320);
+        m_queue.draw_color(RGB8(88, 90, 220), {0, 0}, {400, 400});
+        m_queue.draw_color(RGBA8(48, 45, 120, 80), {40, 40}, {320, 320});
 
         Vec2i draw_pos{m_entity.pos};
-        m_queue.draw_texture(m_texture, draw_pos.x, draw_pos.y, 200, 200);
+        m_queue.draw_texture(m_texture, draw_pos, {200, 200});
 
-        auto [mouse_x, mouse_y] = m_input_service.get_mouse_pos();
-        m_queue.draw_color(0xFF00FFFF, (int)mouse_x, (int)mouse_y, 8, 8);
+        Vec2i mouse_pos{m_input_service.get_mouse_pos()};
+        m_queue.draw_color(0xFF00FFFF, mouse_pos, {8, 8});
 
         m_renderer->clear(0.1f, 0.1f, 0.1f, 0.0f);
         m_renderer->render_pass(m_queue);

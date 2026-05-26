@@ -1,6 +1,5 @@
-enable_testing()
-
 include(GoogleTest)
+
 set(GTEST_VERSION 1.17)
 set(GTEST_FETCH_VERSION 1.17.0)
 

@@ -53,7 +53,7 @@ GLRenderer::GLRenderer(DisplayWindowHandle &window_data)
     }
 
     /* This allows gl to load images whose
-    * data size are not a multiple of 4. */
+     * data size are not a multiple of 4. */
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     glEnable(GL_BLEND);
@@ -106,9 +106,7 @@ GLRenderer::GLRenderer(DisplayWindowHandle &window_data)
     glUseProgram(m_impl->shader->get_program());
     m_impl->shader->set_int("u_texture", 0);
 
-    on_screen_resized(
-        window_data.props.width,
-        window_data.props.height);
+    on_screen_resized(window_data.props.size);
 }
 
 GLRenderer::~GLRenderer() {
@@ -128,10 +126,10 @@ void GLRenderer::swap_buffers() {
     m_impl->context.swap_buffers();
 }
 
-void GLRenderer::on_screen_resized(uint32_t width, uint32_t height) {
-    ASSERT(width != 0 && height != 0, "Width & height must not be 0.");
-    glViewport(0, 0, (GLsizei)width, (GLsizei)height);
-    m_impl->proj = glm::ortho(0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, -1.0f, 1.0f);
+void GLRenderer::on_screen_resized(const Vec2i &screen_size) {
+    ASSERT(screen_size.x > 0 && screen_size.y > 0, "Width & height must not be 0.");
+    glViewport(0, 0, screen_size.x, screen_size.y);
+    m_impl->proj = glm::ortho(0.0f, static_cast<float>(screen_size.x), static_cast<float>(screen_size.y), 0.0f, -1.0f, 1.0f);
     m_impl->shader->set_mat4("u_view_proj", m_impl->proj);
 }
 

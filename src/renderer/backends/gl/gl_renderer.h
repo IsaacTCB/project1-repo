@@ -13,7 +13,7 @@ public:
 
     void clear(float r, float g, float b, float a = 255) override;
     void swap_buffers() override;
-    void on_screen_resized(uint32_t width, uint32_t height) override;
+    void on_screen_resized(const Vec2i &screen_size) override;
 
     TextureHandle load_texture(ImageData &image) override;
     void destroy_texture(TextureHandle handle) override;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/events/input_events.h"
+#include "core/math/vec2.h"
 
 #include "core/input/gamepad.h"
 #include "core/input/keyboard.h"
@@ -8,7 +9,6 @@
 
 #include <array>
 #include <functional>
-#include <tuple>
 #include <type_traits>
 #include <vector>
 
@@ -39,15 +39,13 @@ public:
     bool is_mouse_button_just_released(Input::Mouse::Buttons button) const;
 
     [[nodiscard]]
-    std::tuple<float, float> get_mouse_pos() const {
-        return {m_mouse_x, m_mouse_y};
-    }
+    Vec2 get_mouse_pos() const { return m_mouse_position; }
 
     [[nodiscard]]
-    float get_mouse_wheel_x() const { return m_mouse_wheel_x; }
+    float get_mouse_wheel_x() const { return m_mouse_wheel.x; }
 
     [[nodiscard]]
-    float get_mouse_wheel_y() const { return m_mouse_wheel_y; }
+    float get_mouse_wheel_y() const { return m_mouse_wheel.y; }
 
     [[nodiscard]]
     bool is_pad_button_pressed(Input::Gamepad::DeviceID device, Input::Gamepad::Buttons button) const;
@@ -59,7 +57,7 @@ public:
     bool is_pad_button_just_released(Input::Gamepad::DeviceID device, Input::Gamepad::Buttons button) const;
 
     [[nodiscard]]
-    std::tuple<float, float> get_pad_stick(Input::Gamepad::DeviceID device, bool right) const;
+    Vec2 get_pad_stick(Input::Gamepad::DeviceID device, bool right) const;
 
     [[nodiscard]]
     bool is_pad_connected(Input::Gamepad::DeviceID device) const {
@@ -94,8 +92,8 @@ private:
 private:
     uint8_t m_mouse_state, m_mouse_state_previous;
     std::vector<bool> m_key_state;
-    float m_mouse_x = 0.0f, m_mouse_y = 0.0f;
-    float m_mouse_wheel_x{}, m_mouse_wheel_y{};
+    Vec2 m_mouse_position;
+    Vec2 m_mouse_wheel;
 
     struct PadState {
         uint32_t buttons = 0;
