@@ -15,20 +15,28 @@ class ViewContext2D {
 public:
     class BoundRect {
     public:
-        float left;
-        float right;
-        float top;
-        float bottom;
+        Vec2 tl; // top-left coord
+        Vec2 br; // bottom-right coord
 
     public:
         [[nodiscard]]
+        Vec2 size() const {
+            return br - tl;
+        }
+
+        [[nodiscard]]
         float width() const {
-            return right - left;
+            return br.x - tl.x;
         }
 
         [[nodiscard]]
         float height() const {
-            return bottom - top;
+            return br.y - tl.y;
+        }
+
+        [[nodiscard]]
+        float diagonal() const {
+            return tl.distance(br);
         }
     };
 

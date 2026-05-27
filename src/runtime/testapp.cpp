@@ -216,14 +216,8 @@ public:
             auto bounds = ctx.get_bounds_aabb();
             m_queue.draw_color(
                 0xFF00FF20,
-                {
-                    (int)bounds.left + 8,
-                    (int)bounds.top + 8,
-                },
-                {
-                    (int)bounds.width() - 16,
-                    (int)bounds.height() - 16,
-                });
+                Vec2i{bounds.tl} + Vec2i{8, 8},
+                Vec2i{bounds.size()} - Vec2i{16, 16});
 
             m_renderer->render_pass(ctx, m_queue);
         }

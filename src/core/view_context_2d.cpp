@@ -114,74 +114,56 @@ Vec2 ViewContext2D::world_to_view(const Vec2 &world_coord) const {
 /* =================== */
 
 ViewContext2D::BoundRect ViewContext2D::get_bounds_aabb() const {
-    /* TODO: use vector2 here too! */
+    /* get projection bounds */
+    Vec2 tl = -camera_get_anchor_offset(*this); // top-left coords
+    Vec2 br = tl + view_size;                   // bottom-right coords
 
-    float zoom_factor = 1.0f / std::max(view_camera->zoom, EPSILON);
-    float width = view_size.x * zoom_factor;
-    float height = view_size.y * zoom_factor;
+    /* apply zoom */
+    float zoom_factor = std::max(view_camera->zoom, EPSILON);
+    tl /= zoom_factor;
+    br /= zoom_factor;
 
-    /* get actual position */
-    float left;
-    float right;
-    float top;
-    float bottom;
-    if (view_camera->anchor == Camera2D::AnchorMode::CENTER) {
-        /* apply center offset */
-        float width_half = width * 0.5f;
-        float height_half = height * 0.5f;
-        left = -width_half;
-        right = width_half;
-        top = -height_half;
-        bottom = height_half;
-    } else {
-        /* get top right bounds */
-        left = 0.0f;
-        right = width;
-        top = 0.0f;
-        bottom = height;
-    }
+    /* apply offset */
+    tl += view_camera->offset;
+    br += view_camera->offset;
 
-    left += view_camera->offset.x;
-    right += view_camera->offset.x;
-    top += view_camera->offset.y;
-    bottom += view_camera->offset.y;
-
-    BoundRect bound{};
+    /* rotate bounds, if needed */
     if (angle_is_rotated(view_camera->rotation)) {
-        float sin = std::sinf(view_camera->rotation);
-        float cos = std::cosf(view_camera->rotation);
-
-        std::array<std::array<float, 2>, 4> points{{
-            {{left, top}},
-            {{right, top}},
-            {{right, bottom}},
-            {{left, bottom}},
+        std::array<Vec2, 4> points{{
+            {tl.x, tl.y},
+            {br.x, tl.y},
+            {br.x, br.y},
+            {tl.x, br.y},
         }};
 
-        for (auto &vec2 : points) {
-            float x = vec2[0];
-            float y = vec2[1];
+        /* we'll recalculate these */
+        tl.clear();
+        br.clear();
 
-            float rx = (x * cos) - (y * sin);
-            float ry = (x * sin) + (y * cos);
+        /* rotate min/max vectors */
+        float sin = std::sinf(view_camera->rotation);
+        float cos = std::cosf(view_camera->rotation);
+        for (const auto &point : points) {
+            /* TODO: add vector2 min/max function
+             * to simplify this block of code */
+            float rx = (point.x * cos) - (point.y * sin);
+            float ry = (point.x * sin) + (point.y * cos);
 
-            bound.left = std::min(bound.left, rx);
-            bound.top = std::min(bound.top, ry);
-            bound.right = std::max(bound.right, rx);
-            bound.bottom = std::max(bound.bottom, ry);
+            tl.x = std::min(tl.x, rx);
+            tl.y = std::min(tl.y, ry);
+            br.x = std::max(br.x, rx);
+            br.y = std::max(br.y, ry);
         }
-    } else {
-        bound.left = left;
-        bound.right = right;
-        bound.top = top;
-        bound.bottom = bottom;
     }
 
-    bound.left += view_camera->position.x;
-    bound.right += view_camera->position.x;
-    bound.top += view_camera->position.y;
-    bound.bottom += view_camera->position.y;
-    return bound;
+    /* apply camera translation */
+    tl += view_camera->position;
+    br += view_camera->position;
+
+    return {
+        .tl = tl,
+        .br = br,
+    };
 }
 
 inline static bool angle_is_rotated(float angle, float eps) {
