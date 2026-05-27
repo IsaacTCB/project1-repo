@@ -126,3 +126,9 @@ TEST(Vec2iUnaryTest, Plus) {
     Vec2i v{-3, 2};
     vec2i_eq(+v, {-3, 2});
 }
+
+TEST(Vec2iIdentityTest, ClearIsZero) {
+    Vec2i vec{4, 3};
+    vec.clear();
+    vec2i_eq(vec, {});
+}

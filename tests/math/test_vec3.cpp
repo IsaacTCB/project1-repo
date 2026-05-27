@@ -220,3 +220,12 @@ TEST(Vec3IdentityTest, NormalizedIsUnitLength) {
     v.normalize();
     EXPECT_FLOAT_EQ(v.length(), 1.0f);
 }
+
+TEST(Vec3IdentityTest, ClearIsZero) {
+    Vec3 vec{4.0f, 3.0f, 2.0f};
+    vec.clear();
+
+    EXPECT_FLOAT_EQ(vec.x, 0.0f);
+    EXPECT_FLOAT_EQ(vec.y, 0.0f);
+    EXPECT_FLOAT_EQ(vec.z, 0.0f);
+}

@@ -28,6 +28,7 @@ public:
     [[nodiscard]] Vec2 limited_length(float length) const;
     [[nodiscard]] Vec2 abs() const;
 
+    void clear() { x = y = 0.0f; }
     void normalize();
     void limit_length(float length);
 
