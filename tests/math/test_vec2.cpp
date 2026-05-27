@@ -209,3 +209,11 @@ TEST(Vec2IdentityTest, NormalizedIsUnitLength) {
     v.normalize();
     EXPECT_FLOAT_EQ(v.length(), 1.0f);
 }
+
+TEST(Vec2IdentityTest, ClearIsZero) {
+    Vec2 vec{4.0f, 3.0f};
+    vec.clear();
+
+    EXPECT_FLOAT_EQ(vec.x, 0.0f);
+    EXPECT_FLOAT_EQ(vec.y, 0.0f);
+}

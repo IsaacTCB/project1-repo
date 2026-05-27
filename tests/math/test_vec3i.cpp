@@ -137,3 +137,11 @@ TEST(Vec3iUnaryTest, Plus) {
     Vec3i v{-3, 2, -2};
     vec3i_eq(+v, {-3, 2, -2});
 }
+
+/* identity tests */
+
+TEST(Vec3iIdentityTest, ClearIsZero) {
+    Vec3i vec{4, 3, 2};
+    vec.clear();
+    vec3i_eq(vec, {});
+}
