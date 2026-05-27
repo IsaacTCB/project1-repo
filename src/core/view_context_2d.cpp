@@ -130,10 +130,10 @@ ViewContext2D::BoundRect ViewContext2D::get_bounds_aabb() const {
     /* rotate bounds, if needed */
     if (angle_is_rotated(view_camera->rotation)) {
         std::array<Vec2, 4> points{{
-            {tl.x, tl.y},
-            {br.x, tl.y},
-            {br.x, br.y},
-            {tl.x, br.y},
+            {tl.x, tl.y}, // top-left
+            {br.x, tl.y}, // top-right
+            {br.x, br.y}, // bottom-right
+            {tl.x, br.y}, // bottom-left
         }};
 
         /* we'll recalculate these */
