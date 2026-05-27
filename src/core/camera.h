@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/math/vec2.h"
+
 #include <cstdint>
 
 class ICamera {};
@@ -12,11 +14,8 @@ public:
     };
 
 public:
-    /* TODO: make vec2 structs and then replace these */
-    float x = 0.0f;
-    float y = 0.0f;
-    float offset_x = 0.0f;
-    float offset_y = 0.0f;
+    Vec2 position;
+    Vec2 offset;
 
     float rotation = 0.0f; /* in radians */
     float zoom = 1.0f;

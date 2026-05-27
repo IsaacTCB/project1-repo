@@ -175,8 +175,8 @@ public:
         m_entity.pos.x += ((move.x * cam_cos) - (cam_sin * move.y)) * (PLAYER_SPEED * delta);
         m_entity.pos.y += ((move.x * cam_sin) + (cam_cos * move.y)) * (PLAYER_SPEED * delta);
 
-        m_camera.x = std::floor(m_entity.pos.x + 100.0f);
-        m_camera.y = std::floor(m_entity.pos.y + 100.0f);
+        m_camera.position.x = std::floor(m_entity.pos.x + 100.0f);
+        m_camera.position.y = std::floor(m_entity.pos.y + 100.0f);
     }
 
     void on_render() override {

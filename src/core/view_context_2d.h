@@ -51,10 +51,10 @@ public:
     Vec2 view_to_screen(const Vec2 &view_coord) const;
 
     [[nodiscard]]
-    Vec2 world_to_view(const Vec2 &world_coord) const;
+    Vec2 view_to_world(const Vec2 &view_coord) const;
 
     [[nodiscard]]
-    Vec2 view_to_world(const Vec2 &view_coord) const;
+    Vec2 world_to_view(const Vec2 &world_coord) const;
 
     [[nodiscard]]
     BoundRect get_bounds_aabb() const;

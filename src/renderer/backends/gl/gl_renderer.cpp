@@ -186,9 +186,9 @@ static glm::mat4 get_camera_projection(Camera2D *camera, const glm::vec2 &size) 
 static glm::mat4 get_camera_view_matrix(Camera2D *camera) {
     auto i = glm::identity<glm::mat4>();
 
-    return glm::translate(i, {camera->x, camera->y, 0.0f}) *
+    return glm::translate(i, {camera->position.x, camera->position.y, 0.0f}) *
            glm::rotate(i, camera->rotation, {0.0f, 0.0f, 1.0f}) *
-           glm::translate(i, {camera->offset_x, camera->offset_y, 0.0f});
+           glm::translate(i, {camera->offset.x, camera->offset.y, 0.0f});
 }
 
 void GLRenderer::render_pass(const ViewContext2D &view, const RenderQueue &queue) {
