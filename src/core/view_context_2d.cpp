@@ -185,8 +185,9 @@ ViewContext2D::BoundRect ViewContext2D::get_bounds_aabb() const {
 }
 
 inline static bool angle_is_rotated(float angle, float eps) {
-    return (angle < -eps ||
-            angle > eps);
+    /* HACK: checking if non-zero is not ideal bc it won't detect
+     * angles near 360deg such as (2 * PI - 0.00001) */
+    return (std::fabs(angle) > eps);
 }
 
 inline static Vec2 camera_get_anchor_offset(const ViewContext2D &ctx) {
