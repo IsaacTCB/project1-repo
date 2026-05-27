@@ -114,6 +114,8 @@ Vec2 ViewContext2D::world_to_view(const Vec2 &world_coord) const {
 /* =================== */
 
 ViewContext2D::BoundRect ViewContext2D::get_bounds_aabb() const {
+    /* TODO: use vector2 here too! */
+
     float zoom_factor = 1.0f / std::max(view_camera->zoom, EPSILON);
     float width = view_size.x * zoom_factor;
     float height = view_size.y * zoom_factor;
