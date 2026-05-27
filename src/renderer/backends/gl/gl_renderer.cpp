@@ -132,10 +132,11 @@ void GLRenderer::swap_buffers() {
 void GLRenderer::on_screen_resized(const Vec2i &screen_size) {
     ASSERT(screen_size.x > 0 && screen_size.y > 0, "Width & height must not be 0.");
     m_screen_viewport = {
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = static_cast<float>(screen_size.x),
-        .height = static_cast<float>(screen_size.y),
+        .position = {0.0f, 0.0f},
+        .size = {
+            static_cast<float>(screen_size.x),
+            static_cast<float>(screen_size.y),
+        },
     };
     glViewport(0, 0, screen_size.x, screen_size.y);
     m_impl->proj = glm::ortho(0.0f, static_cast<float>(screen_size.x), static_cast<float>(screen_size.y), 0.0f, -1.0f, 1.0f);
@@ -194,7 +195,7 @@ void GLRenderer::render_pass(const ViewContext2D &view, const RenderQueue &queue
     m_impl->context.bind();
     apply_viewport(view.window_viewport);
 
-    glm::vec2 view_size{view.view_width, view.view_height};
+    glm::vec2 view_size{view.view_size.x, view.view_size.y};
     glm::mat4 proj_matrix = get_camera_projection(view.view_camera, view_size);
     glm::mat4 view_matrix = get_camera_view_matrix(view.view_camera);
     m_impl->proj = proj_matrix * glm::inverse(view_matrix);
@@ -288,10 +289,10 @@ void GLRenderer::command(const RenderCommandDraw &command) {
 
 void GLRenderer::apply_viewport(const Viewport &viewport) {
     glViewport(
-        static_cast<GLint>(viewport.x),
+        static_cast<GLint>(viewport.position.x),
         static_cast<GLint>(
             /* flips the Y axis cuz gl... */
-            m_screen_viewport.height - (viewport.y + viewport.height)),
-        static_cast<GLint>(viewport.width),
-        static_cast<GLint>(viewport.height));
+            m_screen_viewport.size.y - (viewport.position.y + viewport.size.y)),
+        static_cast<GLint>(viewport.size.x),
+        static_cast<GLint>(viewport.size.y));
 }

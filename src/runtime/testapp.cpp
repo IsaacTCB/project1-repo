@@ -120,6 +120,7 @@ public:
         if (m_input_service.is_mouse_button_just_pressed(Input::Mouse::Buttons::LEFT)) {
             LOG_TRACE("Walk");
         }
+
         if (m_input_service.is_mouse_button_just_released(Input::Mouse::Buttons::RIGHT)) {
             LOG_TRACE("Walked");
         }
@@ -191,10 +192,10 @@ public:
         Vec2 mouse_pos = m_input_service.get_mouse_pos();
 
         constexpr std::array<Viewport, 4> viewports{{
-            {.x = 0.0f, .y = 0.0f, .width = 0.5f, .height = 0.5f},
-            {.x = 0.5f, .y = 0.0f, .width = 0.5f, .height = 0.5f},
-            {.x = 0.0f, .y = 0.5f, .width = 0.5f, .height = 0.5f},
-            {.x = 0.5f, .y = 0.5f, .width = 0.5f, .height = 0.5f},
+            {.position = {0.0f, 0.0f}, .size = {0.5f, 0.5f}},
+            {.position = {0.5f, 0.0f}, .size = {0.5f, 0.5f}},
+            {.position = {0.0f, 0.5f}, .size = {0.5f, 0.5f}},
+            {.position = {0.5f, 0.5f}, .size = {0.5f, 0.5f}},
         }};
 
         m_renderer->clear(0.1f, 0.1f, 0.1f, 0.0f);
@@ -203,11 +204,14 @@ public:
 
             ViewContext2D ctx = Camera2DUtils::build_view_context(m_camera, abs_viewport);
 
-            auto [world_x, world_y] = ctx.screen_to_world(mouse_pos.x, mouse_pos.y);
-            auto [mx, my] = ctx.world_to_screen(world_x, world_y);
-            auto [world2_x, world2_y] = ctx.screen_to_world(mx, my);
-            m_queue.draw_color(0xFF000060, {(int)world2_x - 4, (int)world2_y - 4}, {16, 16});
-            m_queue.draw_color(0xFF00FFFF, {(int)world_x, (int)world_y}, {8, 8});
+            auto world_1 = ctx.screen_to_world(mouse_pos);
+            auto mouse_alt = ctx.world_to_screen(world_1);
+            auto world_2 = ctx.screen_to_world(mouse_alt);
+
+            world_2.x -= 4;
+            world_2.y -= 4;
+            m_queue.draw_color(0xFF000060, Vec2i{world_2}, {16, 16});
+            m_queue.draw_color(0xFF00FFFF, Vec2i{world_1}, {8, 8});
 
             auto bounds = ctx.get_bounds_aabb();
             m_queue.draw_color(

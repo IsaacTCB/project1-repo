@@ -19,9 +19,7 @@ std::unique_ptr<Renderer> Renderer::create(DisplayWindowHandle &window_data) {
 
 Viewport Renderer::get_absolute_viewport(const Viewport &viewport) {
     return {
-        .x = m_screen_viewport.width * viewport.x,
-        .y = m_screen_viewport.height * viewport.y,
-        .width = m_screen_viewport.width * viewport.width,
-        .height = m_screen_viewport.height * viewport.height,
+        .position = m_screen_viewport.size * viewport.position,
+        .size = m_screen_viewport.size * viewport.size,
     };
 }

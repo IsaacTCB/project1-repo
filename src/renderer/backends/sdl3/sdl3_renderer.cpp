@@ -45,10 +45,11 @@ void SDL3Renderer::swap_buffers() {
 
 void SDL3Renderer::on_screen_resized(const Vec2i &screen_size) {
     m_screen_viewport = {
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = static_cast<float>(screen_size.x),
-        .height = static_cast<float>(screen_size.y),
+        .position = {0.0f, 0.0f},
+        .size = {
+            static_cast<float>(screen_size.x),
+            static_cast<float>(screen_size.y),
+        },
     };
     SDL_SetRenderLogicalPresentation(m_impl->renderer, screen_size.x, screen_size.y, SDL_LOGICAL_PRESENTATION_STRETCH);
 }

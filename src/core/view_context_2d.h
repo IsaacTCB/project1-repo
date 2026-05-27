@@ -1,8 +1,7 @@
 #pragma once
 
-#include <tuple>
-
 #include "core/camera.h"
+#include "core/math/vec2.h"
 #include "core/viewport.h"
 
 /**
@@ -35,28 +34,27 @@ public:
 
 public:
     Camera2D *view_camera;
-    float view_width;
-    float view_height;
+    Vec2 view_size;
     Viewport window_viewport;
 
 public:
     [[nodiscard]]
-    std::tuple<float, float> screen_to_world(float x, float y) const;
+    Vec2 screen_to_world(const Vec2 &screen_coord) const;
 
     [[nodiscard]]
-    std::tuple<float, float> world_to_screen(float x, float y) const;
+    Vec2 world_to_screen(const Vec2 &world_coord) const;
 
     [[nodiscard]]
-    std::tuple<float, float> screen_to_view(float x, float y) const;
+    Vec2 screen_to_view(const Vec2 &screen_coord) const;
 
     [[nodiscard]]
-    std::tuple<float, float> view_to_screen(float x, float y) const;
+    Vec2 view_to_screen(const Vec2 &view_coord) const;
 
     [[nodiscard]]
-    std::tuple<float, float> world_to_view(float x, float y) const;
+    Vec2 world_to_view(const Vec2 &world_coord) const;
 
     [[nodiscard]]
-    std::tuple<float, float> view_to_world(float x, float y) const;
+    Vec2 view_to_world(const Vec2 &view_coord) const;
 
     [[nodiscard]]
     BoundRect get_bounds_aabb() const;

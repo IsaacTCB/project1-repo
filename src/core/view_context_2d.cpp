@@ -1,121 +1,122 @@
 #include "view_context_2d.h"
+
 #include "core/camera.h"
+#include "core/math/base.h"
+#include "core/math/vec2.h"
 
 #include <algorithm>
 #include <array>
 #include <cmath>
 
-constexpr float EPSILON_APPROX = 0.001f;
+inline static bool angle_is_rotated(float angle, float eps = EPSILON);
+inline static Vec2 camera_get_anchor_offset(const ViewContext2D &ctx);
 
-inline static bool angle_is_rotated(float angle) {
-    return (angle < -EPSILON_APPROX ||
-            angle > EPSILON_APPROX);
+/* ================================ */
+/*  Screen <--> World conversions   */
+/* ================================ */
+
+Vec2 ViewContext2D::screen_to_world(const Vec2 &screen_coord) const {
+    auto view_coord = screen_to_view(screen_coord);
+    return view_to_world(view_coord);
 }
 
-std::tuple<float, float> ViewContext2D::screen_to_world(float x, float y) const {
-    auto [local_x, local_y] = screen_to_view(x, y);
-    return view_to_world(local_x, local_y);
+Vec2 ViewContext2D::world_to_screen(const Vec2 &world_coord) const {
+    auto view_coord = world_to_view(world_coord);
+    return view_to_screen(view_coord);
 }
 
-std::tuple<float, float> ViewContext2D::world_to_screen(float x, float y) const {
-    auto [local_x, local_y] = world_to_view(x, y);
-    return view_to_screen(local_x, local_y);
+/* ================================ */
+/*   Screen <--> View conversions   */
+/* ================================ */
+
+Vec2 ViewContext2D::screen_to_view(const Vec2 &screen_coord) const {
+    Vec2 view{screen_coord};
+
+    view -= window_viewport.position;
+    view *= view_size / window_viewport.size;
+    view -= camera_get_anchor_offset(*this);
+
+    return {view.x, view.y};
 }
 
-std::tuple<float, float> ViewContext2D::screen_to_view(float x, float y) const {
-    float local_x = x - window_viewport.x;
-    float local_y = y - window_viewport.y;
+Vec2 ViewContext2D::view_to_screen(const Vec2 &view_coord) const {
+    Vec2 screen{view_coord};
 
-    /* convert screen coords into view coords */
-    local_x *= view_width / window_viewport.width;
-    local_y *= view_height / window_viewport.height;
+    screen += camera_get_anchor_offset(*this);
+    screen *= window_viewport.size / view_size;
+    screen += window_viewport.position;
 
-    /* apply center offset */
-    if (view_camera->anchor == Camera2D::AnchorMode::CENTER) {
-        local_x -= view_width * 0.5f;
-        local_y -= view_height * 0.5f;
-    }
-
-    return {local_x, local_y};
+    return screen;
 }
 
-std::tuple<float, float> ViewContext2D::view_to_screen(float x, float y) const {
-    /* apply center offset */
-    if (view_camera->anchor == Camera2D::AnchorMode::CENTER) {
-        x += view_width * 0.5f;
-        y += view_height * 0.5f;
-    }
+/* ================================ */
+/*    World <--> View conversions   */
+/* ================================ */
 
-    /* convert view coords into screen coords */
-    float screen_x = x * (window_viewport.width / view_width);
-    float screen_y = y * (window_viewport.height / view_height);
-    screen_x += window_viewport.x;
-    screen_y += window_viewport.y;
+Vec2 ViewContext2D::world_to_view(const Vec2 &world_coord) const {
+    Vec2 view{world_coord};
 
-    return {screen_x, screen_y};
-}
-
-std::tuple<float, float> ViewContext2D::world_to_view(float x, float y) const {
     /* apply camera translate */
-    x -= view_camera->x;
-    y -= view_camera->y;
+    view -= {view_camera->x, view_camera->y};
 
-    /* transform around rotation */
+    /* transform around rotation clockwise */
     if (angle_is_rotated(view_camera->rotation)) {
         /* TODO: cache sine and cosine directly within the camera object.
          * This should happen only if rotation has changed and is dirty. */
         float sin = std::sinf(view_camera->rotation);
         float cos = std::cosf(view_camera->rotation);
 
-        float temp_x = x;
-        float temp_y = y;
-        x = (temp_x * cos) + (temp_y * sin);
-        y = (-temp_x * sin) + (temp_y * cos);
+        Vec2 temp{view};
+        view.x = (temp.x * cos) + (temp.y * sin);
+        view.y = (-temp.x * sin) + (temp.y * cos);
     }
 
-    x -= view_camera->offset_x;
-    y -= view_camera->offset_y;
+    /* apply offset */
+    view -= {view_camera->offset_x, view_camera->offset_y};
 
-    /* offset and zoom (scale) */
-    float zoom_factor = std::max(view_camera->zoom, EPSILON_APPROX);
-    x *= zoom_factor;
-    y *= zoom_factor;
+    /* apply zoom (scale) */
+    float zoom_factor = std::max(view_camera->zoom, EPSILON);
+    view *= zoom_factor;
 
-    return {x, y};
+    return view;
 }
 
-std::tuple<float, float> ViewContext2D::view_to_world(float x, float y) const {
-    /* offset and zoom (scale) */
-    float zoom_factor = 1.0f / std::max(view_camera->zoom, EPSILON_APPROX);
-    x *= zoom_factor;
-    y *= zoom_factor;
+Vec2 ViewContext2D::view_to_world(const Vec2 &view_coord) const {
+    Vec2 world{view_coord};
 
-    float world_x = view_camera->offset_x + x;
-    float world_y = view_camera->offset_y + y;
+    /* revert zoom (scale) */
+    float zoom_factor = std::max(view_camera->zoom, EPSILON);
+    world /= zoom_factor;
 
-    /* transform around rotation */
+    /* revert offset */
+    world += {view_camera->offset_x, view_camera->offset_y};
+
+    /* transform around rotation counter-clockwise */
     if (angle_is_rotated(view_camera->rotation)) {
         /* TODO: cache sine and cosine directly within the camera object.
          * This should happen only if rotation has changed and is dirty. */
         float sin = std::sinf(view_camera->rotation);
         float cos = std::cosf(view_camera->rotation);
 
-        float temp_x = world_x;
-        float temp_y = world_y;
-        world_x = (temp_x * cos) - (temp_y * sin);
-        world_y = (temp_x * sin) + (temp_y * cos);
+        auto temp{world};
+        world.x = (temp.x * cos) - (temp.y * sin);
+        world.y = (temp.x * sin) + (temp.y * cos);
     }
 
-    /* apply camera translate */
-    world_x += view_camera->x;
-    world_y += view_camera->y;
-    return {world_x, world_y};
+    /* revert camera translate */
+    world += {view_camera->x, view_camera->y};
+
+    return world;
 }
+
+/* =================== */
+/*    Camera bounds    */
+/* =================== */
 
 ViewContext2D::BoundRect ViewContext2D::get_bounds_aabb() const {
-    float zoom_factor = 1.0f / std::max(view_camera->zoom, EPSILON_APPROX);
-    float width = view_width * zoom_factor;
-    float height = view_height * zoom_factor;
+    float zoom_factor = 1.0f / std::max(view_camera->zoom, EPSILON);
+    float width = view_size.x * zoom_factor;
+    float height = view_size.y * zoom_factor;
 
     /* get actual position */
     float left;
@@ -179,4 +180,16 @@ ViewContext2D::BoundRect ViewContext2D::get_bounds_aabb() const {
     bound.top += view_camera->y;
     bound.bottom += view_camera->y;
     return bound;
+}
+
+inline static bool angle_is_rotated(float angle, float eps) {
+    return (angle < -eps ||
+            angle > eps);
+}
+
+inline static Vec2 camera_get_anchor_offset(const ViewContext2D &ctx) {
+    if (ctx.view_camera->anchor == Camera2D::AnchorMode::CENTER) {
+        return ctx.view_size * 0.5f;
+    }
+    return Vec2{};
 }
