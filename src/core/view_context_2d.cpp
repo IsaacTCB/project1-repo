@@ -140,7 +140,7 @@ ViewContext2D::BoundRect ViewContext2D::get_bounds_aabb() const {
         tl.clear();
         br.clear();
 
-        /* rotate min/max vectors */
+        /* rotate corners */
         float sin = std::sinf(view_camera->rotation);
         float cos = std::cosf(view_camera->rotation);
         for (const auto &corner : corners) {
