@@ -31,6 +31,7 @@ public:
     [[nodiscard]] Vec3 limited_length(float length) const;
     [[nodiscard]] Vec3 abs() const;
 
+    void clear() { x = y = z = 0.0f; }
     void normalize();
     void limit_length(float length);
 

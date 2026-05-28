@@ -22,6 +22,8 @@ public:
     [[nodiscard]] float length() const;
     [[nodiscard]] Vec2i abs() const;
 
+    void clear() { x = y = 0; }
+
 public:
     /* compound assignments */
 

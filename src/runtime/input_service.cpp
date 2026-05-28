@@ -55,8 +55,7 @@ void InputService::update() {
     }
 
     /* reset mouse wheel */
-    m_mouse_wheel.x = 0.0f;
-    m_mouse_wheel.y = 0.0f;
+    m_mouse_wheel.clear();
 }
 
 void InputService::event(const EventInput &event) {

@@ -64,7 +64,7 @@ void Vec2::normalize() {
 
 void Vec2::limit_length(float length) {
     if (length <= EPSILON) {
-        *this = {};
+        clear();
         return;
     }
 

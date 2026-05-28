@@ -18,8 +18,8 @@
 #include "image/decoder.h"
 #include "input_service.h"
 
-class TestApplication : public IApplication {
-    DECLARE_APP(TestApplication);
+class SandboxApplication : public IApplication {
+    DECLARE_APP(SandboxApplication);
 
 public:
     void on_init() override {
@@ -186,4 +186,4 @@ private:
     InputService m_input_service;
 };
 
-SET_APP(TestApplication)
+SET_APP(SandboxApplication)

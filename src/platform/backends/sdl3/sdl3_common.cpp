@@ -75,9 +75,7 @@ static void log_callback(LogSeverity severity, std::string_view message) {
         *s_file_sink << "This file was auto-generated at runtime.\n\n";
         s_file_sink->flush();
     }
-#endif
 
-#if !defined(EMSCRIPTEN)
     SDL_Log("%s\n", str.c_str());
 #else
     std::cout << str << '\n';

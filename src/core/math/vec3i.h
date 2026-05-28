@@ -26,6 +26,8 @@ public:
     [[nodiscard]] Vec3i cross(const Vec3i &other) const;
     [[nodiscard]] Vec3i abs() const;
 
+    void clear() { x = y = z = 0; }
+
 public:
     /* compound assignments */
 
