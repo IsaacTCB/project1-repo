@@ -55,7 +55,7 @@ endfunction()
 
 # Common stuff included here too.
 add_library(engine STATIC
-    src/runtime/testapp.cpp
+    src/runtime/sandbox_app.cpp
     src/runtime/input_service.cpp
     src/runtime/image/decoder.cpp
     src/core/logger.cpp
