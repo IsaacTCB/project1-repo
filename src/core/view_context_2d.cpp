@@ -129,7 +129,7 @@ ViewContext2D::BoundRect ViewContext2D::get_bounds_aabb() const {
 
     /* rotate bounds, if needed */
     if (angle_is_rotated(view_camera->rotation)) {
-        std::array<Vec2, 4> points{{
+        std::array<Vec2, 4> corners{{
             {tl.x, tl.y}, // top-left
             {br.x, tl.y}, // top-right
             {br.x, br.y}, // bottom-right
@@ -143,16 +143,14 @@ ViewContext2D::BoundRect ViewContext2D::get_bounds_aabb() const {
         /* rotate min/max vectors */
         float sin = std::sinf(view_camera->rotation);
         float cos = std::cosf(view_camera->rotation);
-        for (const auto &point : points) {
-            /* TODO: add vector2 min/max function
-             * to simplify this block of code */
-            float rx = (point.x * cos) - (point.y * sin);
-            float ry = (point.x * sin) + (point.y * cos);
+        for (const auto &corner : corners) {
+            Vec2 rotated{
+                (corner.x * cos) - (corner.y * sin),
+                (corner.x * sin) + (corner.y * cos),
+            };
 
-            tl.x = std::min(tl.x, rx);
-            tl.y = std::min(tl.y, ry);
-            br.x = std::max(br.x, rx);
-            br.y = std::max(br.y, ry);
+            tl = tl.min(rotated);
+            br = br.max(rotated);
         }
     }
 
