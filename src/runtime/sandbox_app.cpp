@@ -25,8 +25,8 @@
 #include "image/decoder.h"
 #include "input_service.h"
 
-class TestApplication : public IApplication {
-    DECLARE_APP(TestApplication);
+class SandboxApplication : public IApplication {
+    DECLARE_APP(SandboxApplication);
 
 public:
     void on_init() override {
@@ -249,4 +249,4 @@ private:
     Camera2D m_camera;
 };
 
-SET_APP(TestApplication)
+SET_APP(SandboxApplication)
