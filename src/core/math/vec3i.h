@@ -25,6 +25,8 @@ public:
     [[nodiscard]] float length() const;
     [[nodiscard]] Vec3i cross(const Vec3i &other) const;
     [[nodiscard]] Vec3i abs() const;
+    [[nodiscard]] Vec3i min(const Vec3i &rhs) const;
+    [[nodiscard]] Vec3i max(const Vec3i &rhs) const;
 
     void clear() { x = y = z = 0; }
 

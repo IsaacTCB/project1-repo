@@ -199,6 +199,18 @@ TEST(Vec3ProductTest, Absolute) {
     vec3_expect_near(v.abs(), {3.0f, 2.0f, 2.0f});
 }
 
+TEST(Vec2ProductTest, Min) {
+    Vec3 a{-3.0f, 2.0f, 5.0f};
+    Vec3 b{2.0f, 1.0f, 4.0f};
+    vec3_expect_near(a.min(b), {-3.0f, 1.0f, 4.0f});
+}
+
+TEST(Vec2ProductTest, Max) {
+    Vec3 a{-3.0f, 2.0f, 5.0f};
+    Vec3 b{2.0f, 1.0f, 4.0f};
+    vec3_expect_near(a.max(b), {2.0f, 2.0f, 5.0f});
+}
+
 /* unary operators */
 
 TEST(Vec3UnaryTest, Minus) {
