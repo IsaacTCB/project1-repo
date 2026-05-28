@@ -58,6 +58,22 @@ Vec3 Vec3::abs() const {
     };
 }
 
+Vec3 Vec3::min(const Vec3 &rhs) const {
+    return {
+        std::min(x, rhs.x),
+        std::min(y, rhs.y),
+        std::min(z, rhs.z),
+    };
+}
+
+Vec3 Vec3::max(const Vec3 &rhs) const {
+    return {
+        std::max(x, rhs.x),
+        std::max(y, rhs.y),
+        std::max(z, rhs.z),
+    };
+}
+
 void Vec3::normalize() {
     float len = length();
     if (len > EPSILON) {

@@ -188,6 +188,18 @@ TEST(Vec2ProductTest, Absolute) {
     vec2_expect_near(v.abs(), {3.0f, 2.0f});
 }
 
+TEST(Vec2ProductTest, Min) {
+    Vec2 a{-3.0f, 2.0f};
+    Vec2 b{2.0f, 1.0f};
+    vec2_expect_near(a.min(b), {-3.0f, 1.0f});
+}
+
+TEST(Vec2ProductTest, Max) {
+    Vec2 a{-3.0f, 2.0f};
+    Vec2 b{2.0f, 1.0f};
+    vec2_expect_near(a.max(b), {2.0f, 2.0f});
+}
+
 /* unary operators */
 
 TEST(Vec2UnaryTest, Minus) {

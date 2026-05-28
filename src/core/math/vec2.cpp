@@ -51,6 +51,20 @@ Vec2 Vec2::abs() const {
     };
 }
 
+Vec2 Vec2::min(const Vec2 &rhs) const {
+    return {
+        std::min(x, rhs.x),
+        std::min(y, rhs.y),
+    };
+}
+
+Vec2 Vec2::max(const Vec2 &rhs) const {
+    return {
+        std::max(x, rhs.x),
+        std::max(y, rhs.y),
+    };
+}
+
 void Vec2::normalize() {
     float len = length();
     if (len > EPSILON) {

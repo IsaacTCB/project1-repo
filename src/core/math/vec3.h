@@ -30,6 +30,8 @@ public:
     [[nodiscard]] Vec3 normalized() const;
     [[nodiscard]] Vec3 limited_length(float length) const;
     [[nodiscard]] Vec3 abs() const;
+    [[nodiscard]] Vec3 min(const Vec3 &rhs) const;
+    [[nodiscard]] Vec3 max(const Vec3 &rhs) const;
 
     void clear() { x = y = z = 0.0f; }
     void normalize();

@@ -21,6 +21,8 @@ public:
     [[nodiscard]] int length_squared() const;
     [[nodiscard]] float length() const;
     [[nodiscard]] Vec2i abs() const;
+    [[nodiscard]] Vec2i min(const Vec2i &rhs) const;
+    [[nodiscard]] Vec2i max(const Vec2i &rhs) const;
 
     void clear() { x = y = 0; }
 
