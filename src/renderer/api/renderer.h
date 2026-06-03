@@ -27,7 +27,7 @@ public:
     Viewport get_absolute_viewport(const Viewport &viewport);
 
 public:
-    virtual void clear(float r, float g, float b, float a = 255) = 0;
+    virtual void clear(Color color) = 0;
     virtual void swap_buffers() = 0;
     virtual void on_screen_resized(const Vec2i &screen_size) = 0;
 

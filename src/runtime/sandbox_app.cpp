@@ -10,6 +10,7 @@
 #include "core/events/window_events.h"
 #include "core/input/gamepad.h"
 #include "core/logger.h"
+#include "core/math/color.h"
 #include "core/math/vec2.h"
 #include "core/math/vec2i.h"
 #include "core/view_context_2d.h"
@@ -183,8 +184,8 @@ public:
         m_queue.clear();
 
         /* TODO: verify if texture actually exists. */
-        m_queue.draw_color(RGB8(88, 90, 220), {0, 0}, {400, 400});
-        m_queue.draw_color(RGBA8(48, 45, 120, 80), {40, 40}, {320, 320});
+        m_queue.draw_color(Color{88, 90, 220}, {0, 0}, {400, 400});
+        m_queue.draw_color(Color{48, 45, 120, 80}, {40, 40}, {320, 320});
 
         Vec2i draw_pos{Vec2{std::floor(m_entity.pos.x), std::floor(m_entity.pos.y)}};
         m_queue.draw_texture(m_texture, draw_pos, {200, 200});
@@ -198,7 +199,7 @@ public:
             {.position = {0.5f, 0.5f}, .size = {0.5f, 0.5f}},
         }};
 
-        m_renderer->clear(0.1f, 0.1f, 0.1f, 0.0f);
+        m_renderer->clear(Color{25, 25, 25, 0});
         for (const auto &viewport : viewports) {
             Viewport abs_viewport = m_renderer->get_absolute_viewport(viewport);
 
@@ -210,12 +211,12 @@ public:
 
             world_2.x -= 4;
             world_2.y -= 4;
-            m_queue.draw_color(0xFF000060, Vec2i{world_2}, {16, 16});
-            m_queue.draw_color(0xFF00FFFF, Vec2i{world_1}, {8, 8});
+            m_queue.draw_color(Color{0xFF, 0x00, 0x00, 0x60}, Vec2i{world_2}, {16, 16});
+            m_queue.draw_color(Color{0xFF, 0x00, 0xFF, 0xFF}, Vec2i{world_1}, {8, 8});
 
             auto bounds = ctx.get_bounds_aabb();
             m_queue.draw_color(
-                0xFF00FF20,
+                Color{0xFF, 0x00, 0xFF, 0x10},
                 Vec2i{bounds.tl} + Vec2i{8, 8},
                 Vec2i{bounds.size()} - Vec2i{16, 16});
 

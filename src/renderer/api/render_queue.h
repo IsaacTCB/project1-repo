@@ -4,13 +4,14 @@
 #include <variant>
 #include <vector>
 
+#include "core/math/color.h"
 #include "core/math/vec2i.h"
 #include "render_handles.h"
 
 struct RenderCommandDraw {
     std::optional<TextureHandle> texture;
     float x, y, width, height;
-    uint32_t color;
+    Color color;
     // int zsort;
 };
 using RenderCommand = std::variant<RenderCommandDraw>;
@@ -37,13 +38,13 @@ public:
             .y = static_cast<float>(position.y),
             .width = static_cast<float>(size.x),
             .height = static_cast<float>(size.y),
-            .color = 0xFFFFFFFF,
+            .color = Color::WHITE,
             // .zsort = 0,
         };
         m_queue.emplace_back(draw);
     }
 
-    void draw_color(uint32_t color, const Vec2i &position, const Vec2i &size) {
+    void draw_color(Color color, const Vec2i &position, const Vec2i &size) {
         RenderCommandDraw draw{
             .texture = std::nullopt,
             .x = static_cast<float>(position.x),

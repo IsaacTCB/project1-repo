@@ -1,4 +1,5 @@
 set(TESTS
+    test_color
     test_vec2
     test_vec2i
     test_vec3

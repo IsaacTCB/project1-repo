@@ -30,12 +30,8 @@ SDL3Renderer::~SDL3Renderer() {
     SDL_DestroyRenderer(m_impl->renderer);
 }
 
-void SDL3Renderer::clear(float r, float g, float b, float a) {
-    SDL_SetRenderDrawColor(m_impl->renderer,
-        static_cast<uint8_t>(r * 255.0f),
-        static_cast<uint8_t>(g * 255.0f),
-        static_cast<uint8_t>(b * 255.0f),
-        static_cast<uint8_t>(a * 255.0f));
+void SDL3Renderer::clear(Color color) {
+    SDL_SetRenderDrawColor(m_impl->renderer, color.r, color.g, color.b, color.a);
     SDL_RenderClear(m_impl->renderer);
 }
 
@@ -108,10 +104,10 @@ void SDL3Renderer::command(const RenderCommandDraw &command) {
         .h = static_cast<float>(command.height),
     };
 
-    auto r = static_cast<Uint8>((command.color & 0xFF000000) >> 24);
-    auto g = static_cast<Uint8>((command.color & 0x00FF0000) >> 16);
-    auto b = static_cast<Uint8>((command.color & 0x0000FF00) >> 8);
-    auto a = static_cast<Uint8>((command.color & 0x000000FF) >> 0);
+    auto r = command.color.r;
+    auto g = command.color.g;
+    auto b = command.color.b;
+    auto a = command.color.a;
 
     if (command.texture.has_value()) {
         Handle handle = command.texture.value();
