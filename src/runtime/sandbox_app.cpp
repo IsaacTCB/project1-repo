@@ -148,16 +148,16 @@ public:
         m_queue.clear();
 
         /* TODO: verify if texture actually exists. */
-        m_queue.draw_color(RGB8(88, 90, 220), {0, 0}, {400, 400});
-        m_queue.draw_color(RGBA8(48, 45, 120, 80), {40, 40}, {320, 320});
+        m_queue.draw_color(Color{88, 90, 220}, {0, 0}, {400, 400});
+        m_queue.draw_color(Color{48, 45, 120, 80}, {40, 40}, {320, 320});
 
         Vec2i draw_pos{m_entity.pos};
         m_queue.draw_texture(m_texture, draw_pos, {200, 200});
 
         Vec2i mouse_pos{m_input_service.get_mouse_pos()};
-        m_queue.draw_color(0xFF00FFFF, mouse_pos, {8, 8});
+        m_queue.draw_color(Color{0xFF, 0x0, 0xFF}, mouse_pos, {8, 8});
 
-        m_renderer->clear(0.1f, 0.1f, 0.1f, 0.0f);
+        m_renderer->clear(Color{25, 25, 25, 0});
         m_renderer->render_pass(m_queue);
         m_renderer->swap_buffers();
     }
