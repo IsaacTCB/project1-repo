@@ -36,3 +36,19 @@ Vec3i Vec3i::abs() const {
         (z > 0) ? z : -z,
     };
 }
+
+Vec3i Vec3i::min(const Vec3i &rhs) const {
+    return {
+        std::min(x, rhs.x),
+        std::min(y, rhs.y),
+        std::min(z, rhs.z),
+    };
+}
+
+Vec3i Vec3i::max(const Vec3i &rhs) const {
+    return {
+        std::max(x, rhs.x),
+        std::max(y, rhs.y),
+        std::max(z, rhs.z),
+    };
+}

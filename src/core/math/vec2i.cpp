@@ -22,3 +22,17 @@ Vec2i Vec2i::abs() const {
         (y > 0) ? y : -y,
     };
 }
+
+Vec2i Vec2i::min(const Vec2i &rhs) const {
+    return {
+        std::min(x, rhs.x),
+        std::min(y, rhs.y),
+    };
+}
+
+Vec2i Vec2i::max(const Vec2i &rhs) const {
+    return {
+        std::max(x, rhs.x),
+        std::max(y, rhs.y),
+    };
+}

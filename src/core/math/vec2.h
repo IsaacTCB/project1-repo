@@ -27,6 +27,8 @@ public:
     [[nodiscard]] Vec2 normalized() const;
     [[nodiscard]] Vec2 limited_length(float length) const;
     [[nodiscard]] Vec2 abs() const;
+    [[nodiscard]] Vec2 min(const Vec2 &rhs) const;
+    [[nodiscard]] Vec2 max(const Vec2 &rhs) const;
 
     void clear() { x = y = 0.0f; }
     void normalize();

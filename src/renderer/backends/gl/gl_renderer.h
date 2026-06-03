@@ -11,7 +11,7 @@ public:
     // because we are pimpl-ing with an opaque struct.
     ~GLRenderer() override;
 
-    void clear(float r, float g, float b, float a = 255) override;
+    void clear(Color color) override;
     void swap_buffers() override;
     void on_screen_resized(const Vec2i &screen_size) override;
 

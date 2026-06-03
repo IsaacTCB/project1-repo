@@ -108,11 +108,23 @@ TEST(Vec2iLengthTest, LengthZero) {
     EXPECT_FLOAT_EQ(a.length(), 0);
 }
 
-/* absolute product */
+/* product tests */
 
 TEST(Vec2iProductTest, Absolute) {
     Vec2i v{-3, 2};
     vec2i_eq(v.abs(), {3, 2});
+}
+
+TEST(Vec2iProductTest, Min) {
+    Vec2i a{-3, 2};
+    Vec2i b{2, 1};
+    vec2i_eq(a.min(b), {-3, 1});
+}
+
+TEST(Vec2iProductTest, Max) {
+    Vec2i a{-3, 2};
+    Vec2i b{2, 1};
+    vec2i_eq(a.max(b), {2, 2});
 }
 
 /* unary operators */

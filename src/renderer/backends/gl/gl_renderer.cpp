@@ -115,8 +115,10 @@ GLRenderer::~GLRenderer() {
     glDeleteVertexArrays(1, &m_impl->vao);
 }
 
-void GLRenderer::clear(float r, float g, float b, float a) {
+void GLRenderer::clear(Color color) {
     m_impl->context.bind();
+
+    auto [r, g, b, a] = color.normalized();
     glClearColor(r, g, b, a);
     glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -215,11 +217,12 @@ void GLRenderer::command(const RenderCommandDraw &command) {
     glBindVertexArray(m_impl->vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_impl->ibo);
 
-    glm::vec4 color;
-    color.r = static_cast<float>((command.color & 0xFF000000) >> 24) / static_cast<float>(0xFF);
-    color.g = static_cast<float>((command.color & 0x00FF0000) >> 16) / static_cast<float>(0xFF);
-    color.b = static_cast<float>((command.color & 0x0000FF00) >> 8) / static_cast<float>(0xFF);
-    color.a = static_cast<float>((command.color & 0x000000FF) >> 0) / static_cast<float>(0xFF);
+    glm::vec4 color{};
+    auto [col_r, col_g, col_b, col_a] = command.color.normalized();
+    color.r = col_r;
+    color.g = col_g;
+    color.b = col_b;
+    color.a = col_a;
 
     glm::mat4 model{1.0f};
     model = glm::translate(model, {command.x, command.y, 0.0f});

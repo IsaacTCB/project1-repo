@@ -126,6 +126,18 @@ TEST(Vec3iProductTest, Absolute) {
     vec3i_eq(v.abs(), {3, 2, 2});
 }
 
+TEST(Vec2ProductTest, Min) {
+    Vec3i a{-3, 2, 5};
+    Vec3i b{2, 1, 4};
+    vec3i_eq(a.min(b), {-3, 1, 4});
+}
+
+TEST(Vec2ProductTest, Max) {
+    Vec3i a{-3, 2, 5};
+    Vec3i b{2, 1, 4};
+    vec3i_eq(a.max(b), {2, 2, 5});
+}
+
 /* unary operators */
 
 TEST(Vec3iUnaryTest, Minus) {
