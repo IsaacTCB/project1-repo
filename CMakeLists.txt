@@ -57,6 +57,7 @@ endfunction()
 add_library(engine STATIC
     src/runtime/sandbox_app.cpp
     src/runtime/input_service.cpp
+    src/runtime/asset_service.cpp
     src/runtime/image/decoder.cpp
     src/core/logger.cpp
     src/core/math/vec2.cpp
