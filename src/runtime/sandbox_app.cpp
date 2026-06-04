@@ -4,7 +4,6 @@
 #include "core/events/input_events.h"
 #include "core/events/platform_events.h"
 #include "core/events/window_events.h"
-#include "core/handles.h"
 #include "core/input/gamepad.h"
 #include "core/logger.h"
 #include "core/math/vec2.h"

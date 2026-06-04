@@ -1,8 +1,8 @@
 #pragma once
 
+#include <memory>
 #include <string_view>
 
-#include "core/logger.h"
 #include "renderer/api/render_handles.h"
 
 class ImageData;
@@ -66,19 +66,8 @@ public:
 private:
     struct Impl;
     std::unique_ptr<Impl> m_impl;
-
     const Provider m_provider;
 
 private:
     friend TextureRef;
 };
-
-// AssetService::Provider m_asset_provider{
-//    .renderer = m_renderer->get_provider(),
-//    .audio = m_renderer->get_provider(),
-// }
-//
-// AssetService m_asset_service{provider};
-// TextureRef texture = m_asset_service.get_texture("hello.png");
-// m_asset_service.get_audio("audio.sfx");
-//
