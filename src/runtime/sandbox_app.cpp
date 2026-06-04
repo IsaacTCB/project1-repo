@@ -165,7 +165,7 @@ public:
         m_queue.draw_color(Color{48, 45, 120, 80}, {40, 40}, {320, 320});
 
         Vec2i draw_pos{m_entity.pos};
-        m_queue.draw_texture(m_texture.handle, draw_pos, {200, 200});
+        m_queue.draw_texture(m_texture.get(), draw_pos, {200, 200});
 
         Vec2i mouse_pos{m_input_service.get_mouse_pos()};
         m_queue.draw_color(Color{0xFF, 0x0, 0xFF}, mouse_pos, {8, 8});
@@ -178,7 +178,7 @@ public:
     void on_close() override {
         m_input_service.close();
 
-        m_texture = {};
+        m_texture.reset();
         m_asset_service.reset();
 
         m_renderer.reset();

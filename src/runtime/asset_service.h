@@ -10,7 +10,8 @@ class AssetService;
 
 class TextureRef {
 public:
-    TextureRef() = default;
+    TextureRef()
+        : m_ptr(nullptr) {}
     ~TextureRef();
 
     TextureRef(const TextureRef &other);
@@ -18,16 +19,21 @@ public:
     TextureRef &operator=(const TextureRef &rhs);
     TextureRef &operator=(TextureRef &&rhs) noexcept;
 
-private:
-    friend AssetService;
-    AssetService *m_asset_service;
+    void reset();
+    void acquire();
+    void release();
 
-public:
-    TextureHandle handle;
+    [[nodiscard]] TextureHandle get() const;
+    [[nodiscard]] operator TextureHandle() const { return get(); }
+    [[nodiscard]] operator bool() const { return m_ptr != nullptr; }
 
 protected:
-    explicit TextureRef(AssetService *service, Handle handle)
-        : m_asset_service(service), handle(handle) {}
+    explicit TextureRef(void *ptr)
+        : m_ptr(ptr) {}
+
+private:
+    friend AssetService;
+    void *m_ptr;
 };
 
 class AssetService {
@@ -55,6 +61,7 @@ public:
 public:
     [[nodiscard]] TextureHandle load_texture(std::string_view path) const;
     void unload_texture(TextureHandle handle) const;
+    void remove_texture(void *slot);
 
 private:
     struct Impl;
@@ -63,52 +70,8 @@ private:
     const Provider m_provider;
 
 private:
-    void inc_ref(TextureRef *texture) {
-        LOG_TRACE("inc ref {}", texture->handle);
-    };
-    void dec_ref(TextureRef *texture) {
-        LOG_TRACE("dec ref {}", texture->handle);
-    };
-
     friend TextureRef;
 };
-
-inline TextureRef::~TextureRef() {
-    if (m_asset_service) {
-        m_asset_service->dec_ref(this);
-    }
-}
-
-inline TextureRef::TextureRef(const TextureRef &other)
-    : m_asset_service(other.m_asset_service), handle(other.handle) {
-    if (m_asset_service) {
-        m_asset_service->inc_ref(this);
-    }
-}
-
-inline TextureRef::TextureRef(TextureRef &&other) noexcept
-    : m_asset_service(other.m_asset_service), handle(other.handle) {
-    other.m_asset_service = nullptr;
-}
-
-inline TextureRef &TextureRef::operator=(const TextureRef &rhs) {
-    this->m_asset_service = rhs.m_asset_service;
-    this->handle = rhs.handle;
-
-    if (m_asset_service) {
-        m_asset_service->inc_ref(this);
-    }
-    return *this;
-}
-
-inline TextureRef &TextureRef::operator=(TextureRef &&rhs) noexcept {
-    this->m_asset_service = rhs.m_asset_service;
-    this->handle = rhs.handle;
-
-    rhs.m_asset_service = nullptr;
-
-    return *this;
-}
 
 // AssetService::Provider m_asset_provider{
 //    .renderer = m_renderer->get_provider(),
