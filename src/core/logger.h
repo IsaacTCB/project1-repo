@@ -84,6 +84,24 @@ public:
         log(severity, formatted);
     }
 
+    /**
+     * @brief Prints object onto the callback sink
+     *
+     * This is a helper function for printing without having
+     * to specify a format string earlier.
+     * Uses std::format internally.
+     *
+     * @param severity The severity of this message
+     * (LOG_SEVERITY_TRACE, LOG_SEVERITY_INFO,
+     * LOG_SEVERITY_ERROR, etc...)
+     * @param fmt The format string
+     * @param args... The parameters for the format string
+     */
+    template <typename T>
+    void print(LogSeverity severity, T &&value) {
+        print(severity, "{}", std::forward<T>(value));
+    }
+
 private:
     Logger();
 
