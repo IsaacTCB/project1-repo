@@ -33,7 +33,7 @@ public:
     void clear();
     TextureRef get_texture(std::string_view path);
 
-public:
+private:
     [[nodiscard]] TextureHandle load_texture(std::string_view path) const;
     void unload_texture(TextureHandle handle) const;
 
