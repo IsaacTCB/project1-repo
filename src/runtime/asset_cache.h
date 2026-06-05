@@ -58,7 +58,7 @@ public:
 template <typename T>
 class AssetRef {
 public:
-    explicit AssetRef() : m_slot(nullptr) {}
+    explicit AssetRef() : m_slot(nullptr), m_handle{} {}
 
     ~AssetRef() {
         release();
@@ -83,17 +83,19 @@ public:
     }
 
     T get() const {
-        return static_cast<AssetSlot<T> *>(m_slot)->handle;
+        ASSERT(m_slot, "Attempted to use get() on an invalid asset ref.");
+        return m_handle;
     }
 
     AssetRef(const AssetRef &other)
-        : m_slot(other.m_slot) {
+        : m_slot(other.m_slot), m_handle(other.m_handle) {
         acquire();
     }
 
     AssetRef(AssetRef &&other) noexcept
-        : m_slot(other.m_slot) {
+        : m_slot(other.m_slot), m_handle(other.m_handle) {
         other.m_slot = nullptr;
+        other.m_handle = {};
     }
 
     AssetRef &operator=(const AssetRef<T> &rhs) {
@@ -103,6 +105,7 @@ public:
 
         release();
         m_slot = rhs.m_slot;
+        m_handle = rhs.m_handle;
         acquire();
         return *this;
     }
@@ -114,16 +117,19 @@ public:
 
         release();
         m_slot = rhs.m_slot;
+        m_handle = rhs.m_handle;
         rhs.m_slot = nullptr;
+        rhs.m_handle = T{};
         return *this;
     }
 
 private:
     AssetSlotBase *m_slot;
+    T m_handle;
 
 private:
-    explicit AssetRef<T>(AssetSlotBase *slot)
-        : m_slot(slot) {}
+    explicit AssetRef(AssetSlotBase *slot, Handle handle)
+        : m_slot(slot), m_handle(handle) {}
 
     friend class AssetCache<T>;
 };
@@ -158,7 +164,7 @@ public:
 
         slot->ref_count++;
         slot->destroy_callback = AssetCache<T>::destroy;
-        return AssetRef<T>{slot};
+        return AssetRef<T>{slot, slot->handle};
     }
 
     static size_t get_hash(std::string_view path) {
