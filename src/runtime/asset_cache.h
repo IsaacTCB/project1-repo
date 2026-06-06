@@ -71,8 +71,7 @@ public:
     }
 
     T get() const {
-        ASSERT(m_slot, "Attempted to use get() on an invalid asset ref.");
-        return m_slot->get_handle();
+        return m_handle;
     }
 
     AssetRef(const AssetRef &other)
@@ -83,7 +82,7 @@ public:
     AssetRef(AssetRef &&other) noexcept
         : m_slot(other.m_slot), m_handle(other.m_handle) {
         other.m_slot = nullptr;
-        other.m_handle = {};
+        other.m_handle = T{};
     }
 
     AssetRef &operator=(const AssetRef<T> &rhs) {
@@ -112,8 +111,8 @@ public:
     }
 
 private:
-    explicit AssetRef<T>(AssetSlot<T> *slot)
-        : m_slot(slot), m_handle(slot->get_handle()) {}
+    explicit AssetRef<T>(AssetSlot<T> &slot)
+        : m_slot(&slot), m_handle(slot.get_handle()) {}
 
 private:
     AssetSlot<T> *m_slot;
@@ -145,11 +144,18 @@ public:
             auto [emplaced, success] = m_cache.try_emplace(hash, this, hash, handle);
 
             ASSERT(success, "Failed to emplace asset slot");
-            slot = &emplaced->second;
+            slot = success ? &emplaced->second
+                           : nullptr;
+        }
+
+        if (!slot) {
+            /* in case that we weren't
+             * able to fetch it */
+            return AssetRef<T>{};
         }
 
         slot->ref_count++;
-        return AssetRef<T>{slot};
+        return AssetRef<T>{*slot};
     }
 
     static size_t get_hash(std::string_view path) {
