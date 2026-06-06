@@ -14,10 +14,10 @@ AssetService::AssetService(const Provider &provider)
     : m_provider{provider} {
     m_impl = std::make_unique<Impl>();
 
-    m_impl->textures.load = [this](std::string_view path) {
+    m_impl->textures.load_fn = [this](std::string_view path) {
         return this->load_texture(path);
     };
-    m_impl->textures.unload = [this](auto handle) {
+    m_impl->textures.unload_fn = [this](auto handle) {
         this->unload_texture(handle);
     };
 }

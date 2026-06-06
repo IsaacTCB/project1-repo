@@ -8,12 +8,17 @@
 #include "core/assertion.h"
 #include "core/handles.h"
 
-// ===========
+/* forward declaration */
+template <typename T>
+class AssetCache;
 
-class AssetSlotBase {
+template <typename Handle>
+class AssetSlot {
 public:
-    explicit AssetSlotBase()
-        : ref_count{0} {}
+    explicit AssetSlot() = default;
+
+    explicit AssetSlot(AssetCache<Handle> *cache, size_t hash, Handle handle)
+        : ref_count(0), cache(cache), hash(hash), handle(handle) {}
 
     void inc_ref() {
         ref_count++;
@@ -21,33 +26,16 @@ public:
 
     void dec_ref() {
         if (ref_count == 0 || --ref_count == 0) {
-            if (destroy_callback) {
-                destroy_callback(this);
-            }
+            cache->destroy(this);
         }
     }
 
-public:
-    std::atomic_size_t ref_count;
-    void (*destroy_callback)(AssetSlotBase *slot){};
-};
-
-// ===========
-
-/* forward declaration */
-template <typename T>
-class AssetCache;
-
-template <typename Handle>
-class AssetSlot : public AssetSlotBase {
-public:
-    explicit AssetSlot()
-        : AssetSlotBase() {}
-
-    explicit AssetSlot(AssetCache<Handle> *cache, size_t hash, Handle handle)
-        : AssetSlotBase(), cache(cache), hash(hash), handle(handle) {}
+    Handle get_handle() {
+        return handle;
+    }
 
 public:
+    std::atomic<size_t> ref_count;
     AssetCache<Handle> *cache;
     size_t hash;
     Handle handle;
@@ -84,7 +72,7 @@ public:
 
     T get() const {
         ASSERT(m_slot, "Attempted to use get() on an invalid asset ref.");
-        return m_handle;
+        return m_slot->get_handle();
     }
 
     AssetRef(const AssetRef &other)
@@ -124,12 +112,12 @@ public:
     }
 
 private:
-    AssetSlotBase *m_slot;
-    T m_handle;
+    explicit AssetRef<T>(AssetSlot<T> *slot)
+        : m_slot(slot), m_handle(slot->get_handle()) {}
 
 private:
-    explicit AssetRef(AssetSlotBase *slot, Handle handle)
-        : m_slot(slot), m_handle(handle) {}
+    AssetSlot<T> *m_slot;
+    T m_handle;
 
     friend class AssetCache<T>;
 };
@@ -138,14 +126,12 @@ private:
 
 template <typename T>
 class AssetCache {
-private:
-    static void destroy(AssetSlotBase *slot) {
-        auto *asset_slot = static_cast<AssetSlot<T> *>(slot);
-        auto *asset_cache = asset_slot->cache;
-        if (asset_cache->unload) {
-            asset_cache->unload(asset_slot->handle);
+public:
+    void destroy(AssetSlot<T> *slot) {
+        if (this->unload_fn) {
+            this->unload_fn(slot->handle);
         }
-        asset_cache->m_cache.erase(asset_slot->hash);
+        this->m_cache.erase(slot->hash);
     }
 
 public:
@@ -155,7 +141,7 @@ public:
         if (auto it = m_cache.find(hash); it != m_cache.end()) {
             slot = &it->second;
         } else {
-            T handle = load(path);
+            T handle = load_fn(path);
             auto [emplaced, success] = m_cache.try_emplace(hash, this, hash, handle);
 
             ASSERT(success, "Failed to emplace asset slot");
@@ -163,8 +149,7 @@ public:
         }
 
         slot->ref_count++;
-        slot->destroy_callback = AssetCache<T>::destroy;
-        return AssetRef<T>{slot, slot->handle};
+        return AssetRef<T>{slot};
     }
 
     static size_t get_hash(std::string_view path) {
@@ -173,10 +158,10 @@ public:
     }
 
     using LoadFn = std::function<Handle(std::string_view)>;
-    LoadFn load;
+    LoadFn load_fn;
 
     using UnloadFn = std::function<void(Handle)>;
-    UnloadFn unload;
+    UnloadFn unload_fn;
 
 private:
     std::unordered_map<size_t, AssetSlot<T>> m_cache;
