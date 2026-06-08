@@ -111,7 +111,7 @@ public:
     }
 
 private:
-    explicit AssetRef<T>(AssetSlot<T> &slot)
+    explicit AssetRef(AssetSlot<T> &slot)
         : m_slot(&slot), m_handle(slot.get_handle()) {}
 
 private:
