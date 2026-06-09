@@ -6,22 +6,23 @@
 
 #include "asset_ref.h"
 #include "core/assertion.h"
-#include "core/handles.h"
 
-template <typename T>
+template <typename Handle>
 class AssetCache {
 private:
-    class CacheSlot : public IAssetControlBlock<T> {
+    class CacheSlot : public IAssetControlBlock<Handle> {
     public:
         explicit CacheSlot(AssetCache<Handle> *cache, size_t hash, Handle handle)
-            : IAssetControlBlock<Handle>(handle), cache(cache), hash(hash) {}
+            : IAssetControlBlock<Handle>(CacheSlot::destroy_callback, handle),
+              cache(cache), hash(hash) {}
 
-        void destroy() override {
-            cache->destroy(this);
-        };
+        static void destroy_callback(IAssetControlBlock<Handle> *block) {
+            auto slot = static_cast<CacheSlot *>(block);
+            slot->cache->destroy(slot);
+        }
 
     public:
-        AssetCache<T> *cache;
+        AssetCache<Handle> *cache;
         size_t hash;
     };
 
@@ -34,28 +35,26 @@ private:
     }
 
 public:
-    AssetRef<T> get(std::string_view path) {
+    AssetRef<Handle> get(std::string_view path) {
         size_t hash = get_hash(path);
         CacheSlot *slot;
         if (auto it = m_cache.find(hash); it != m_cache.end()) {
             slot = &it->second;
         } else {
-            T handle = load_fn(path);
-            auto [emplaced, success] = m_cache.try_emplace(hash, this, hash, handle);
-
-            ASSERT(success, "Failed to emplace asset slot");
-            slot = success ? &emplaced->second
-                           : nullptr;
+            Handle handle = load_fn(path);
+            /* TODO: somehow verify if handle was valid */
+            slot = emplace_slot(hash, handle);
+            ASSERT(slot, "Failed to emplace asset slot");
         }
 
         if (!slot) {
             /* in case that we weren't
              * able to fetch it */
-            return AssetRef<T>{};
+            return AssetRef<Handle>{};
         }
 
         slot->ref_count++;
-        return AssetRef<T>{*slot};
+        return AssetRef<Handle>{*slot};
     }
 
     static size_t get_hash(std::string_view path) {
@@ -68,6 +67,20 @@ public:
 
     using UnloadFn = std::function<void(Handle)>;
     UnloadFn unload_fn;
+
+private:
+    CacheSlot *emplace_slot(size_t hash, Handle handle) {
+        auto [emplaced, success] = m_cache.try_emplace(
+            hash, /* hash key */
+            /* args used in constructor */
+            this,
+            hash, /* hash stored in object for lookup */
+            handle);
+
+        /* should always return success, but just in case... */
+        return success ? &emplaced->second
+                       : nullptr;
+    }
 
 private:
     std::unordered_map<size_t, CacheSlot> m_cache;
