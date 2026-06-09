@@ -3,14 +3,13 @@
 #include <memory>
 #include <string_view>
 
-#include "asset_cache.h"
 #include "renderer/api/render_handles.h"
 
-class ImageData;
-class AssetService;
+#include "asset_ref.h"
 
 using TextureRef = AssetRef<TextureHandle>;
 
+class ImageData;
 class AssetService {
 public:
     class Provider {
@@ -30,7 +29,9 @@ public:
     explicit AssetService(const ::AssetService::Provider &provider);
     ~AssetService();
 
+    /* TODO: implement functionality for this. */
     void clear();
+
     TextureRef get_texture(std::string_view path);
 
 private:

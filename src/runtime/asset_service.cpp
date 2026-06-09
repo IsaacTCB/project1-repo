@@ -1,10 +1,12 @@
 #include "asset_service.h"
-#include "renderer/api/render_handles.h"
+
+#include <string_view>
 
 #include "core/image/image.h"
 #include "core/logger.h"
+#include "renderer/api/render_handles.h"
+#include "runtime/asset_cache.h"
 #include "runtime/image/decoder.h"
-#include <string_view>
 
 struct AssetService::Impl {
     AssetCache<TextureHandle> textures;
