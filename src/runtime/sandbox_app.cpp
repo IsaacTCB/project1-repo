@@ -19,11 +19,12 @@
 #include "platform/api/application.h"
 #include "platform/api/platform.h"
 
+#include "renderer/api/render_handles.h"
 #include "renderer/api/render_queue.h"
 #include "renderer/api/renderer.h"
 
+#include "asset_service.h"
 #include "camera_2d_utils.h"
-#include "image/decoder.h"
 #include "input_service.h"
 
 class SandboxApplication : public IApplication {
@@ -59,13 +60,24 @@ public:
             exit(-1);
         }
 
-        ImageData image = Image::decode("test.png");
-        if (!image) {
-            LOG_CRITICAL("No 'test.png' image file found in the current working directory.");
-            exit(-1);
-        }
+        m_asset_service.emplace(::AssetService::Provider{
+            .renderer{
+                .load_texture = [](ImageData &image, void *userdata) -> TextureHandle {
+                    ASSERT(userdata);
+                    auto &renderer = *static_cast<std::unique_ptr<Renderer> *>(userdata);
+                    return renderer->load_texture(image);
+                },
+                .unload_texture = [](TextureHandle texture, void *userdata) {
+                    ASSERT(userdata);
+                    auto &renderer = *static_cast<std::unique_ptr<Renderer> *>(userdata);
+                    renderer->destroy_texture(texture);
+                    // this comment fixes clang-format. do not remove it
+                },
+                .userdata = &m_renderer,
+            },
+        });
 
-        m_texture = m_renderer->load_texture(image);
+        m_texture = m_asset_service->get_texture("test.png");
 
         /* poll window size */
         Vec2i display_size = display.get_size(m_window);
@@ -188,7 +200,7 @@ public:
         m_queue.draw_color(Color{48, 45, 120, 80}, {40, 40}, {320, 320});
 
         Vec2i draw_pos{Vec2{std::floor(m_entity.pos.x), std::floor(m_entity.pos.y)}};
-        m_queue.draw_texture(m_texture, draw_pos, {200, 200});
+        m_queue.draw_texture(m_texture.get(), draw_pos, {200, 200});
 
         Vec2 mouse_pos = m_input_service.get_mouse_pos();
 
@@ -228,7 +240,9 @@ public:
     void on_close() override {
         m_input_service.close();
 
-        m_renderer->destroy_texture(m_texture);
+        m_texture.reset();
+        m_asset_service.reset();
+
         m_renderer.reset();
 
         m_platform->display().close_display(m_window);
@@ -243,10 +257,12 @@ private:
     DisplayWindowHandle m_window;
     std::unique_ptr<Renderer> m_renderer;
 
-    TextureHandle m_texture;
+    TextureRef m_texture;
     RenderQueue m_queue;
 
     InputService m_input_service;
+    std::optional<AssetService> m_asset_service;
+
     Camera2D m_camera;
 };
 
