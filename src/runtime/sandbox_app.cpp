@@ -16,8 +16,8 @@
 #include "renderer/api/render_queue.h"
 #include "renderer/api/renderer.h"
 
+#include "asset_service.h"
 #include "input_service.h"
-#include "runtime/asset_service.h"
 
 class SandboxApplication : public IApplication {
     DECLARE_APP(SandboxApplication);
