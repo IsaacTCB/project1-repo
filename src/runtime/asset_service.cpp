@@ -30,11 +30,11 @@ AssetService::~AssetService() {
     clear();
 }
 
-/* Getters  */
-
 void AssetService::clear() {
     /* TODO: invalidate every asset */
 }
+
+/* Getters  */
 
 TextureRef AssetService::get_texture(std::string_view path) {
     return m_impl->textures.get(path);
