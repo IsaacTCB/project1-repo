@@ -14,12 +14,14 @@ AssetService::AssetService(const Provider &provider)
     : m_provider{provider} {
     m_impl = std::make_unique<Impl>();
 
-    m_impl->textures.load_fn = [this](std::string_view path) {
+    /* config texture callbacks */
+    auto texture_load_fn = [this](std::string_view path) {
         return this->load_texture(path);
     };
-    m_impl->textures.unload_fn = [this](auto handle) {
+    auto texture_unload_fn = [this](auto handle) {
         this->unload_texture(handle);
     };
+    m_impl->textures.set_load_callbacks(texture_load_fn, texture_unload_fn);
 }
 
 AssetService::~AssetService() {
