@@ -44,7 +44,7 @@ public:
 // ===========
 
 /* forward declaration */
-template <typename T>
+template <typename Handle>
 class AssetCache;
 
 /**
@@ -61,11 +61,11 @@ class AssetCache;
  *
  * @tparam T Handle type
  */
-template <typename T>
+template <typename Handle>
 class AssetRef {
 private:
-    friend class AssetCache<T>;
-    explicit AssetRef(IAssetControlBlock<T> &slot)
+    friend class AssetCache<Handle>;
+    explicit AssetRef(IAssetControlBlock<Handle> &slot)
         : m_ctrl_block(&slot), m_handle(slot.get_handle()) {}
 
 public:
@@ -83,10 +83,10 @@ public:
     AssetRef(AssetRef &&other) noexcept
         : m_ctrl_block(other.m_ctrl_block), m_handle(other.m_handle) {
         other.m_ctrl_block = nullptr;
-        other.m_handle = T{};
+        other.m_handle = Handle{};
     }
 
-    AssetRef &operator=(const AssetRef<T> &rhs) {
+    AssetRef &operator=(const AssetRef<Handle> &rhs) {
         if (this == &rhs) {
             return *this;
         }
@@ -98,7 +98,7 @@ public:
         return *this;
     }
 
-    AssetRef &operator=(AssetRef<T> &&rhs) noexcept {
+    AssetRef &operator=(AssetRef<Handle> &&rhs) noexcept {
         if (this == &rhs) {
             return *this;
         }
@@ -107,13 +107,13 @@ public:
         m_ctrl_block = rhs.m_ctrl_block;
         m_handle = rhs.m_handle;
         rhs.m_ctrl_block = nullptr;
-        rhs.m_handle = T{};
+        rhs.m_handle = Handle{};
         return *this;
     }
 
 public:
     void reset() {
-        *this = AssetRef<T>{};
+        *this = AssetRef<Handle>{};
     }
 
     void acquire() {
@@ -130,11 +130,11 @@ public:
         }
     }
 
-    T get() const {
+    Handle get() const {
         return m_handle;
     }
 
 private:
-    IAssetControlBlock<T> *m_ctrl_block;
-    T m_handle;
+    IAssetControlBlock<Handle> *m_ctrl_block;
+    Handle m_handle;
 };
