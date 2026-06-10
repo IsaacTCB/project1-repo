@@ -8,6 +8,7 @@
 #include "core/input/mouse.h"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 
@@ -59,12 +60,20 @@ void InputService::update() {
 }
 
 void InputService::event(const EventInput &event) {
-    if (keyboard_event(event)) {
-    } else if (mouse_event(event)) {
-    } else if (pad_event(event)) {
-    } else {
-        ASSERT(false, "Unsupported event!");
+    static constexpr std::array event_handlers{
+        &InputService::keyboard_event,
+        &InputService::mouse_event,
+        &InputService::pad_event,
+    };
+
+    for (const auto ev : event_handlers) {
+        bool handled = (this->*ev)(event);
+        if (handled) {
+            return;
+        }
     }
+
+    ASSERT(false, "Unsupported event!");
 }
 
 template <typename T>
