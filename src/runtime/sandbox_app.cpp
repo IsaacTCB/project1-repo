@@ -60,6 +60,7 @@ public:
             exit(-1);
         }
 
+        /* initialize asset service */
         m_asset_service.emplace(::AssetService::Provider{
             .renderer{
                 .load_texture = [](ImageData &image, void *userdata) -> TextureHandle {
@@ -76,7 +77,6 @@ public:
                 .userdata = &m_renderer,
             },
         });
-
         m_texture = m_asset_service->get_texture("test.png");
 
         /* poll window size */
