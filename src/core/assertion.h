@@ -15,7 +15,8 @@
 #endif
 
 /* This function is not meant to be used outside of this file! */
-inline void impl_assert__(const char *expr, const char *file, int line, const char *message) {
+namespace AssertImpl__ {
+inline void fail_assert__(const char *expr, const char *file, int line, const char *message) {
     message = message ? message
                       : "No message specified";
 
@@ -27,19 +28,20 @@ inline void impl_assert__(const char *expr, const char *file, int line, const ch
 
     IMPL_DEBUG_BREAK();
 }
+} // namespace AssertImpl__
 
-#define IMPL_ASSERT_MSG(expr, msg)                         \
-    do {                                                   \
-        if (!(expr)) {                                     \
-            impl_assert__(#expr, __FILE__, __LINE__, msg); \
-        }                                                  \
+#define IMPL_ASSERT_MSG(expr, msg)                                       \
+    do {                                                                 \
+        if (!(expr)) {                                                   \
+            AssertImpl__::fail_assert__(#expr, __FILE__, __LINE__, msg); \
+        }                                                                \
     } while (0);
 
-#define IMPL_ASSERT_NO_MSG(expr)                               \
-    do {                                                       \
-        if (!(expr)) {                                         \
-            impl_assert__(#expr, __FILE__, __LINE__, nullptr); \
-        }                                                      \
+#define IMPL_ASSERT_NO_MSG(expr)                                             \
+    do {                                                                     \
+        if (!(expr)) {                                                       \
+            AssertImpl__::fail_assert__(#expr, __FILE__, __LINE__, nullptr); \
+        }                                                                    \
     } while (0);
 
 #define IMPL_ASSERT_GET(var1, var2, impl, ...) impl

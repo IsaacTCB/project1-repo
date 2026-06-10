@@ -64,25 +64,17 @@ public:
         return m_pad_connected[device];
     }
 
+    /**
+     * @brief Executes a callback for every active gamepad.
+     *
+     * @tparam Func A callable type accepting Input::Gamepad::DeviceID.
+     * @param func Callback function. If it returns true, then iteration ends early.
+     *             Can return void for unconditional iteration.
+     */
     template <typename Func>
-    void pad_foreach(Func &&func) {
-        for (size_t i = 0; i < m_pad_connected.size(); i++) {
-            if (!m_pad_connected[i]) {
-                continue;
-            }
-
-            using ReturnType = std::invoke_result_t<Func, Input::Gamepad::DeviceID>;
-            if constexpr (std::is_void_v<ReturnType>) {
-                auto device = static_cast<Input::Gamepad::DeviceID>(i);
-                std::invoke(func, device);
-            } else {
-                auto device = static_cast<Input::Gamepad::DeviceID>(i);
-                if (std::invoke(func, device)) {
-                    return;
-                }
-            }
-        }
-    }
+        requires std::is_invocable_r_v<bool, Func, Input::Gamepad::DeviceID> ||
+                 std::is_invocable_r_v<void, Func, Input::Gamepad::DeviceID>
+    void pad_foreach(Func &&func);
 
 private:
     bool keyboard_event(const EventInput &event);
@@ -104,3 +96,25 @@ private:
     std::array<PadState, Input::Gamepad::GAMEPAD_MAX> m_pad_state{};
     std::array<PadState, Input::Gamepad::GAMEPAD_MAX> m_pad_state_previous{};
 };
+
+template <typename Func>
+    requires std::is_invocable_r_v<bool, Func, Input::Gamepad::DeviceID> ||
+             std::is_invocable_r_v<void, Func, Input::Gamepad::DeviceID>
+void InputService::pad_foreach(Func &&func) {
+    for (size_t i = 0; i < m_pad_connected.size(); i++) {
+        if (!m_pad_connected[i]) {
+            continue;
+        }
+
+        using ReturnType = std::invoke_result_t<Func, Input::Gamepad::DeviceID>;
+        if constexpr (std::is_void_v<ReturnType>) {
+            auto device = static_cast<Input::Gamepad::DeviceID>(i);
+            std::invoke(func, device);
+        } else {
+            auto device = static_cast<Input::Gamepad::DeviceID>(i);
+            if (std::invoke(func, device)) {
+                return;
+            }
+        }
+    }
+}
