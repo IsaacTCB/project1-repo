@@ -67,7 +67,7 @@ public:
     void reset();
     void acquire();
     void release();
-    Handle get() const;
+    [[nodiscard]] Handle get() const;
 
 private:
     IAssetControlBlock<Handle> *m_ctrl_block;
