@@ -3,7 +3,9 @@
 #include <glad/gl.h>
 #include <glm/fwd.hpp>
 
+#include <string>
 #include <string_view>
+#include <unordered_map>
 
 enum class ShaderType : uint8_t {
     Vertex,
@@ -16,7 +18,7 @@ public:
     ~GLShader();
 
     [[nodiscard]]
-    GLuint get_uniform(std::string_view uniform_name);
+    GLint get_uniform(std::string_view uniform_name);
 
     [[nodiscard]]
     GLuint get_program() const { return m_program; }
@@ -31,4 +33,5 @@ public:
 
 private:
     GLuint m_program;
+    std::unordered_map<std::string, GLint> m_uniform_map;
 };

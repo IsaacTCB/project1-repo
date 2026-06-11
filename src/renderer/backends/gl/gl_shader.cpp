@@ -48,41 +48,53 @@ GLShader::~GLShader() {
     glDeleteProgram(m_program);
 }
 
-GLuint GLShader::get_uniform(std::string_view uniform_name) {
+GLint GLShader::get_uniform(std::string_view uniform_name) {
     std::string temp(uniform_name);
 
-    /* TODO: cache uniform location using a hash map */
-    glUseProgram(m_program);
-    return glGetUniformLocation(m_program, temp.c_str());
+    GLint uniform{};
+    if (auto it = m_uniform_map.find(temp); it != m_uniform_map.end()) {
+        /* found it, total cache victory */
+        uniform = it->second;
+    } else {
+        /* cache miss, find location */
+        glUseProgram(m_program);
+        uniform = glGetUniformLocation(m_program, temp.c_str());
+
+        /* add it to cache */
+        auto [_, success] = m_uniform_map.try_emplace(temp, uniform);
+        ASSERT(success, "Failed to insert uniform location in shader cache");
+    }
+
+    return uniform;
 }
 
 void GLShader::set_int(std::string_view uniform_name, int value) {
-    GLuint uniform = get_uniform(uniform_name);
+    GLint uniform = get_uniform(uniform_name);
     glUniform1i(uniform, value);
 }
 
 void GLShader::set_float(std::string_view uniform_name, float value) {
-    GLuint uniform = get_uniform(uniform_name);
+    GLint uniform = get_uniform(uniform_name);
     glUniform1f(uniform, value);
 }
 
 void GLShader::set_float2(std::string_view uniform_name, const glm::vec2 &vec) {
-    GLuint uniform = get_uniform(uniform_name);
+    GLint uniform = get_uniform(uniform_name);
     glUniform2fv(uniform, 1, glm::value_ptr(vec));
 }
 
 void GLShader::set_float3(std::string_view uniform_name, const glm::vec3 &vec) {
-    GLuint uniform = get_uniform(uniform_name);
+    GLint uniform = get_uniform(uniform_name);
     glUniform3fv(uniform, 1, glm::value_ptr(vec));
 }
 
 void GLShader::set_float4(std::string_view uniform_name, const glm::vec4 &vec) {
-    GLuint uniform = get_uniform(uniform_name);
+    GLint uniform = get_uniform(uniform_name);
     glUniform4fv(uniform, 1, glm::value_ptr(vec));
 }
 
 void GLShader::set_mat4(std::string_view uniform_name, const glm::mat4 &mat4) {
-    GLuint uniform = get_uniform(uniform_name);
+    GLint uniform = get_uniform(uniform_name);
     glUniformMatrix4fv(uniform, 1, GL_FALSE, glm::value_ptr(mat4));
 }
 
