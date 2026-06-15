@@ -5,6 +5,7 @@
 enum class RendererAPI : uint8_t {
     SDL3Renderer,
     OpenGL,
+    PSPGu,
 };
 
 /**

@@ -12,6 +12,8 @@ option(BUILD_TESTS "Build test suite" ${PROJECT_IS_TOP_LEVEL})
 
 if(TARGET_PLATFORM STREQUAL "sdl3")
     set(PLATFORM_SDL3 true)
+elseif(TARGET_PLATFORM STREQUAL "psp")
+    set(PLATFORM_PSP true)
 else()
     message(FATAL_ERROR "Unknown platform \'${TARGET_PLATFORM}\'.")
 endif()
@@ -86,6 +88,11 @@ if(PLATFORM_SDL3)
     add_subdirectory(
         src/platform/backends/sdl3
         ${CMAKE_CURRENT_BINARY_DIR}/sdl3
+    )
+elseif(PLATFORM_PSP)
+    add_subdirectory(
+        src/platform/backends/psp
+        ${CMAKE_CURRENT_BINARY_DIR}/psp
     )
 endif()
 
