@@ -15,20 +15,17 @@ set(PSP_SOURCES
     psp_main.cpp
 )
 
-add_executable(${TARGET_NAME} ${PSP_SOURCES})
-target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
-
-target_compile_definitions(${TARGET_NAME} PRIVATE
-    $<$<BOOL:${PSP_ENABLE_CONTROLLER_EXTENSION}>:PSP_ENABLE_CONTROLLER_EXTENSION>
-)
-
-# some PSPSDK header files (like pspctrl.h) uses nested anonymous structs for
-# certain structures. This practice, while valid in C, is forbidden by modern
+# FIXME: some PSPSDK header files (like pspctrl.h) uses nested anonymous structs
+# for certain structures. This practice, while valid in C, is forbidden by modern
 # C++ ISO standards and thus results in compiler warnings that get picked up by
 # -Wpedantic. The cleanest way of "solving" the issue is to suppress them by
 # disabling pedantic warnings platform-implementatation wide.
-target_compile_options(${TARGET_NAME} PRIVATE -Wno-pedantic)
+add_executable(${TARGET_NAME} ${PSP_SOURCES})
 
+target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_compile_definitions(${TARGET_NAME} PRIVATE
+    $<$<BOOL:${PSP_ENABLE_CONTROLLER_EXTENSION}>:PSP_ENABLE_CONTROLLER_EXTENSION>
+)
 target_link_libraries(${TARGET_NAME}
     PRIVATE
     engine
@@ -37,7 +34,6 @@ target_link_libraries(${TARGET_NAME}
     pspdebug
     pspdisplay
 )
-
 target_add_renderer(${TARGET_NAME} pspgu)
 
 # TODO: add a way for games/apps to specify their
