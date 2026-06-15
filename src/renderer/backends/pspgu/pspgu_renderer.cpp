@@ -12,6 +12,7 @@
 #include "renderer/api/render_handles.h"
 
 #include "pspgu_consts.h"
+#include "renderer/backends/pspgu/pspgu_vertex.h"
 
 struct PSPGuRenderer::Impl {
     inline static std::array<vram_ptr, 2> s_framebuffers;
@@ -43,6 +44,9 @@ PSPGuRenderer::PSPGuRenderer([[maybe_unused]] DisplayWindowHandle &window_data) 
     sceGuEnable(GU_SCISSOR_TEST);
     sceGuViewport(2048, 2048, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT);
     sceGuScissor(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT);
+
+    sceGuEnable(GU_BLEND);
+    sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
 
     apply_viewport({
         .position = {0.0f, 0.0f},
@@ -137,7 +141,12 @@ static void apply_camera_view(Camera2D *camera) {
     sceGumTranslate(&vec);
 
     /* rotate view */
-    sceGumRotateZ(camera->rotation);
+    ScePspFVector3 rot{
+        .x = 0.0f,
+        .y = 0.0f,
+        .z = camera->rotation,
+    };
+    sceGumRotateXYZ(&rot);
 
     /* apply offset */
     ScePspFVector3 offset{
@@ -166,6 +175,12 @@ void PSPGuRenderer::render_pass(const ViewContext2D &view, const RenderQueue &qu
     sceGumLoadIdentity();
 
     /* draw something here */
+    for (const auto &command : queue.get()) {
+        std::visit([this](const auto &cmd) {
+            this->command(cmd);
+        },
+            command);
+    }
 
     /* finish frame */
     sceGuFinish();
@@ -174,4 +189,67 @@ void PSPGuRenderer::render_pass(const ViewContext2D &view, const RenderQueue &qu
 
 void PSPGuRenderer::apply_viewport(const Viewport &viewport) {
     m_screen_viewport = viewport;
+}
+
+void PSPGuRenderer::command(const RenderCommandDraw &command) {
+    uint32_t color = GU_RGBA(
+        command.color.r,
+        command.color.g,
+        command.color.b,
+        command.color.a);
+
+    auto *vertices = static_cast<PSPGuVertex *>(
+        sceGuGetMemory(6 * sizeof(PSPGuVertex)));
+
+    vertices[0] = {
+        .color = color,
+        .position{
+            .x = command.x,
+            .y = command.y,
+            .z = 0.0f,
+        },
+    };
+    vertices[1] = {
+        .color = color,
+        .position{
+            .x = command.x + command.width,
+            .y = command.y,
+            .z = 0.0f,
+        },
+    };
+    vertices[2] = {
+        .color = color,
+        .position{
+            .x = command.x + command.width,
+            .y = command.y + command.height,
+            .z = 0.0f,
+        },
+    };
+
+    vertices[3] = {
+        .color = color,
+        .position{
+            .x = command.x + command.width,
+            .y = command.y + command.height,
+            .z = 0.0f,
+        },
+    };
+    vertices[4] = {
+        .color = color,
+        .position{
+            .x = command.x,
+            .y = command.y + command.height,
+            .z = 0.0f,
+        },
+    };
+    vertices[5] = {
+        .color = color,
+        .position{
+            .x = command.x,
+            .y = command.y,
+            .z = 0.0f,
+        },
+    };
+
+    sceGumDrawArray(GU_TRIANGLES, GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, 6, nullptr, vertices);
 }

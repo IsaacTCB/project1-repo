@@ -22,6 +22,10 @@ public:
     void render_pass(const ViewContext2D &view, const RenderQueue &queue) override;
 
 private:
+    template <typename T>
+    void command(T &) = delete;
+    void command(const RenderCommandDraw &command);
+
     void apply_viewport(const Viewport &viewport);
 
 private:
