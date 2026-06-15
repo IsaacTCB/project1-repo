@@ -83,6 +83,11 @@ static void log_callback(LogSeverity severity, std::string_view message) {
 
     if (s_file_sink) {
         *s_file_sink << str << '\n';
+        if (severity == LogSeverity::LOG_SEVERITY_CRITICAL) {
+            /* ensures that assertion/crash messages gets
+             * displayed on files */
+            s_file_sink->flush();
+        }
     }
 }
 
