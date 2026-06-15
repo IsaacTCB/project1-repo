@@ -36,6 +36,23 @@
             }
         },
         {
+            "name": "platform-psp",
+            "hidden": true,
+            "inherits": [
+                "default"
+            ],
+            "condition": {
+                "type": "notEquals",
+                "lhs": "$penv{PSPDEV}",
+                "rhs": ""
+            },
+            "toolchainFile": "$penv{PSPDEV}/psp/share/pspdev.cmake",
+            "cacheVariables": {
+                "TARGET_PLATFORM": "psp",
+                "BUILD_TESTS": false
+            }
+        },
+        {
             "name": "sdl3-debug",
             "inherits": [
                 "platform-sdl3",
@@ -48,6 +65,20 @@
                 "platform-sdl3",
                 "release"
             ]
+        },
+        {
+            "name": "psp-debug",
+            "inherits": [
+                "platform-psp",
+                "debug"
+            ]
+        },
+        {
+            "name": "psp-release",
+            "inherits": [
+                "platform-psp",
+                "release"
+            ]
         }
     ],
     "buildPresets": [
@@ -58,6 +89,14 @@
         {
             "name": "sdl3-release",
             "configurePreset": "sdl3-release"
+        },
+        {
+            "name": "psp-debug",
+            "configurePreset": "psp-debug"
+        },
+        {
+            "name": "psp-release",
+            "configurePreset": "psp-release"
         }
     ]
 }
