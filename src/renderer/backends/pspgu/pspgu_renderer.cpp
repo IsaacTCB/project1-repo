@@ -11,30 +11,27 @@
 #include "core/viewport.h"
 #include "renderer/api/render_handles.h"
 
-constexpr int PSP_SCREEN_WIDTH = 480;
-constexpr int PSP_SCREEN_HEIGHT = 272;
-constexpr int PSP_FRAMEBUFFER_WIDTH = 512;
-constexpr int PSP_FRAMEBUFFER_HEIGHT = 272;
+#include "pspgu_consts.h"
 
 struct PSPGuRenderer::Impl {
-    inline static std::array<void *, 2> s_framebuffers;
-    alignas(64) inline static char s_list[0x20000];
+    inline static std::array<vram_ptr, 2> s_framebuffers;
+    alignas(64) inline static char s_display_list[PSP_DISPLAYLIST_SIZE];
 };
 
 PSPGuRenderer::PSPGuRenderer([[maybe_unused]] DisplayWindowHandle &window_data) {
     sceGuInit();
 
+    /* init framebuffers */
     for (auto &fb : Impl::s_framebuffers) {
         /* TODO: replace this with pspsdk's vram library */
         fb = guGetStaticVramBuffer(
             PSP_FRAMEBUFFER_WIDTH,
             PSP_FRAMEBUFFER_HEIGHT,
-            GU_PSM_8888);
+            PSP_FRAMEBUFFER_PSM);
     }
 
-    // init framebuffers
-    sceGuStart(GU_DIRECT, Impl::s_list);
-    sceGuDrawBuffer(GU_PSM_8888, Impl::s_framebuffers[0], PSP_FRAMEBUFFER_WIDTH);
+    sceGuStart(GU_DIRECT, Impl::s_display_list);
+    sceGuDrawBuffer(PSP_FRAMEBUFFER_PSM, Impl::s_framebuffers[0], PSP_FRAMEBUFFER_WIDTH);
     sceGuDispBuffer(PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, Impl::s_framebuffers[1], PSP_FRAMEBUFFER_WIDTH);
 
     /* disable depth buffer */
@@ -46,9 +43,13 @@ PSPGuRenderer::PSPGuRenderer([[maybe_unused]] DisplayWindowHandle &window_data) 
     sceGuEnable(GU_SCISSOR_TEST);
     sceGuViewport(2048, 2048, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT);
     sceGuScissor(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT);
+
     apply_viewport({
         .position = {0.0f, 0.0f},
-        .size = {480.0f, 272.0f},
+        .size = {
+            static_cast<float>(PSP_SCREEN_WIDTH),
+            static_cast<float>(PSP_SCREEN_HEIGHT),
+        },
     });
 
     /* init matrices */
@@ -62,8 +63,9 @@ PSPGuRenderer::PSPGuRenderer([[maybe_unused]] DisplayWindowHandle &window_data) 
         sceGumLoadIdentity();
     }
 
-    // Start a new frame and enable the display
+    /* start a new frame and enable the display */
     sceGuFinish();
+    sceGuSync(GU_SYNC_FINISH, GU_SYNC_WHAT_DONE);
     sceGuDisplay(GU_TRUE);
 }
 
@@ -73,7 +75,7 @@ PSPGuRenderer::~PSPGuRenderer() {
 }
 
 void PSPGuRenderer::clear(Color color) {
-    sceGuStart(GU_DIRECT, Impl::s_list);
+    sceGuStart(GU_DIRECT, Impl::s_display_list);
 
     sceGuClearColor(GU_RGBA(color.r, color.g, color.b, color.a));
     sceGuClear(GU_COLOR_BUFFER_BIT);
@@ -151,7 +153,7 @@ static void apply_camera_view(Camera2D *camera) {
 
 void PSPGuRenderer::render_pass(const ViewContext2D &view, const RenderQueue &queue) {
     /* start frame */
-    sceGuStart(GU_DIRECT, Impl::s_list);
+    sceGuStart(GU_DIRECT, Impl::s_display_list);
 
     /* apply view matrices */
     sceGumMatrixMode(GU_PROJECTION);
