@@ -61,7 +61,7 @@ PlatformAppState PlatformImpl::iterate() {
         s_exited_from_callback = false;
     }
 
-    m_platform.update(60.0f / 1.0f);
+    m_platform.update(1.0f / 60.0f);
     m_platform.render();
 
     if (!m_state.running) {
