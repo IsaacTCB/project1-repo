@@ -125,6 +125,7 @@ void PlatformImpl::poll_inputs() {
             .value = static_cast<float>((int)(pad.Ly) - 128) / 128.0f,
         });
     }
+
 #if defined(PSP_ENABLE_CONTROLLER_EXTENSION)
     /* enables the right analog stick from the PSVita & Dualshock 3 */
     if (pad.Rx != last_pad.Rx) {
@@ -139,6 +140,21 @@ void PlatformImpl::poll_inputs() {
             .pad = DEFAULT_PAD,
             .axis = Input::Gamepad::Axis::RIGHT_VERTICAL,
             .value = static_cast<float>((int)(pad.Ry) - 128) / 128.0f,
+        });
+    }
+    /* simulate analog triggers */
+    if (diff & PSP_CTRL_L2) {
+        m_platform.event().submit<EventInput>(EventInputGamepadAxisMotion{
+            .pad = DEFAULT_PAD,
+            .axis = Input::Gamepad::Axis::TRIGGER_LEFT,
+            .value = (pad.Buttons & PSP_CTRL_L2) ? 1.0f : 0.0f,
+        });
+    }
+    if (diff & PSP_CTRL_R2) {
+        m_platform.event().submit<EventInput>(EventInputGamepadAxisMotion{
+            .pad = DEFAULT_PAD,
+            .axis = Input::Gamepad::Axis::TRIGGER_RIGHT,
+            .value = (pad.Buttons & PSP_CTRL_R2) ? 1.0f : 0.0f,
         });
     }
 #endif /* PSP_ENABLE_CONTROLLER_EXTENSION */
