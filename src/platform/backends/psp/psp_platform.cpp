@@ -95,8 +95,8 @@ void PlatformImpl::poll_inputs() {
     update_pad_btn(Input::Gamepad::Buttons::WEST, PSP_CTRL_SQUARE, diff, pad.Buttons);
 
     /* shoulder buttons */
-    update_pad_btn(Input::Gamepad::Buttons::LEFT_SHOULDER, PSP_CTRL_L1, diff, pad.Buttons);
-    update_pad_btn(Input::Gamepad::Buttons::RIGHT_SHOULDER, PSP_CTRL_R1, diff, pad.Buttons);
+    update_pad_btn(Input::Gamepad::Buttons::LEFT_SHOULDER, PSP_CTRL_LTRIGGER, diff, pad.Buttons);
+    update_pad_btn(Input::Gamepad::Buttons::RIGHT_SHOULDER, PSP_CTRL_RTRIGGER, diff, pad.Buttons);
 
     /* row buttons */
     update_pad_btn(Input::Gamepad::Buttons::MISC1, PSP_CTRL_NOTE, diff, pad.Buttons);
