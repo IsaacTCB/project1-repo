@@ -5,16 +5,13 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 #include <pspctrl.h>
-#pragma GCC diagnostic pop
-
 #include <pspuser.h>
+#pragma GCC diagnostic pop
 
 #include "core/events/input_events.h"
 #include "core/events/platform_events.h"
-#include "core/events/window_events.h"
-#include "core/input/gamepad.h"
-
 #include "platform/backends/psp/psp_common.h"
+#include "platform/backends/psp/psp_gamepad_maps.h"
 
 /* Define PSP modules */
 PSP_MODULE_INFO("engine", 0, 1, 0);
@@ -77,38 +74,21 @@ void PlatformImpl::poll_inputs() {
     SceCtrlData pad{};
     sceCtrlPeekBufferPositive(&pad, 1);
 
-    std::uint32_t diff = pad.Buttons ^ last_pad.Buttons;
+    uint32_t diff = pad.Buttons ^ last_pad.Buttons;
 
-    /* TODO: refactor this whole system. X-macros would be great
-     * (view sdl3_gamepad_maps.h to see what I mean) */
-
-    /* dpad buttons */
-    update_pad_btn(Input::Gamepad::Buttons::DPAD_UP, PSP_CTRL_UP, diff, pad.Buttons);
-    update_pad_btn(Input::Gamepad::Buttons::DPAD_RIGHT, PSP_CTRL_RIGHT, diff, pad.Buttons);
-    update_pad_btn(Input::Gamepad::Buttons::DPAD_DOWN, PSP_CTRL_DOWN, diff, pad.Buttons);
-    update_pad_btn(Input::Gamepad::Buttons::DPAD_LEFT, PSP_CTRL_LEFT, diff, pad.Buttons);
-
-    /* face buttons */
-    update_pad_btn(Input::Gamepad::Buttons::NORTH, PSP_CTRL_TRIANGLE, diff, pad.Buttons);
-    update_pad_btn(Input::Gamepad::Buttons::EAST, PSP_CTRL_CIRCLE, diff, pad.Buttons);
-    update_pad_btn(Input::Gamepad::Buttons::SOUTH, PSP_CTRL_CROSS, diff, pad.Buttons);
-    update_pad_btn(Input::Gamepad::Buttons::WEST, PSP_CTRL_SQUARE, diff, pad.Buttons);
-
-    /* shoulder buttons */
-    update_pad_btn(Input::Gamepad::Buttons::LEFT_SHOULDER, PSP_CTRL_LTRIGGER, diff, pad.Buttons);
-    update_pad_btn(Input::Gamepad::Buttons::RIGHT_SHOULDER, PSP_CTRL_RTRIGGER, diff, pad.Buttons);
-
-    /* row buttons */
-    update_pad_btn(Input::Gamepad::Buttons::MISC1, PSP_CTRL_NOTE, diff, pad.Buttons);
-    update_pad_btn(Input::Gamepad::Buttons::MISC2, PSP_CTRL_SCREEN, diff, pad.Buttons);
-    update_pad_btn(Input::Gamepad::Buttons::MISC5, PSP_CTRL_VOLDOWN, diff, pad.Buttons);
-    update_pad_btn(Input::Gamepad::Buttons::MISC6, PSP_CTRL_VOLUP, diff, pad.Buttons);
-
+#define MAP(mask, btn)                                                 \
+    if (diff & mask) {                                                 \
+        m_platform.event().submit<EventInput>(EventInputGamepadButton{ \
+            .pad = DEFAULT_PAD,                                        \
+            .button = btn,                                             \
+            .pressed = (pad.Buttons & mask) != 0,                      \
+        });                                                            \
+    }
+    GAMEPAD_BUTTON_MAP(MAP)
 #if defined(PSP_ENABLE_CONTROLLER_EXTENSION)
-    /* enables extra buttons from the Dualshock 3 */
-    update_pad_btn(Input::Gamepad::Buttons::LEFT_STICK, PSP_CTRL_L3, diff, pad.Buttons);
-    update_pad_btn(Input::Gamepad::Buttons::RIGHT_STICK, PSP_CTRL_R3, diff, pad.Buttons);
+    GAMEPAD_EXTENDED_BUTTON_MAP(MAP)
 #endif
+#undef MAP
 
     /* update gamepad analog stick */
     if (pad.Lx != last_pad.Lx) {
@@ -160,16 +140,6 @@ void PlatformImpl::poll_inputs() {
 #endif /* PSP_ENABLE_CONTROLLER_EXTENSION */
 
     last_pad = pad;
-}
-
-void PlatformImpl::update_pad_btn(Input::Gamepad::Buttons button, uint32_t mask, uint32_t diff, uint32_t current) {
-    if (diff & mask) {
-        m_platform.event().submit<EventInput>(EventInputGamepadButton{
-            .pad = DEFAULT_PAD,
-            .button = button,
-            .pressed = (current & mask) != 0,
-        });
-    }
 }
 
 void PlatformImpl::close([[maybe_unused]] PlatformAppState app_state) {

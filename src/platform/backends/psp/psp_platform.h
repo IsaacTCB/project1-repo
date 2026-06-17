@@ -2,9 +2,7 @@
 
 #include <cstdint>
 
-#include "core/input/gamepad.h"
 #include "platform/api/platform.h"
-
 #include "psp_common.h"
 
 enum class PlatformAppState : uint8_t {
@@ -26,7 +24,6 @@ public:
 
 private:
     void poll_inputs();
-    void update_pad_btn(Input::Gamepad::Buttons button, uint32_t mask, uint32_t diff, uint32_t current);
 
 private:
     PlatformImplState m_state;
