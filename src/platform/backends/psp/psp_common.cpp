@@ -1,5 +1,6 @@
 #include "psp_common.h"
 
+#include <cstdio>
 #include <pspiofilemgr.h>
 #include <pspiofilemgr_fcntl.h>
 
@@ -10,6 +11,8 @@
 static bool s_logfile_ok = false;
 
 static void log_callback([[maybe_unused]] LogSeverity severity, [[maybe_unused]] std::string_view message) {
+    printf("%s\n", message.data());
+
     /* HACK: we are opening and then closing the log file per-message. That's bad. */
     if (!s_logfile_ok) {
         return;
