@@ -1,5 +1,6 @@
 add_library(renderer_pspgu STATIC
     pspgu_renderer.cpp
+    pspgu_texture.cpp
 )
 
 target_link_libraries(renderer_pspgu PRIVATE

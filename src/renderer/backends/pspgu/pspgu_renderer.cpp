@@ -1,25 +1,34 @@
 #include "pspgu_renderer.h"
 
 #include <array>
+#include <cstdint>
 #include <pspdisplay.h>
 #include <pspgu.h>
 #include <pspgum.h>
 #include <psptypes.h>
 
 #include "core/camera.h"
+#include "core/handles.h"
 #include "core/view_context_2d.h"
 #include "core/viewport.h"
+#include "psputils.h"
 #include "renderer/api/render_handles.h"
 
 #include "pspgu_consts.h"
-#include "renderer/backends/pspgu/pspgu_vertex.h"
+#include "pspgu_texture.h"
+#include "pspgu_vertex.h"
 
 struct PSPGuRenderer::Impl {
     inline static std::array<vram_ptr, 2> s_framebuffers;
     alignas(64) inline static char s_display_list[PSP_DISPLAYLIST_SIZE];
+
+    /* handles */
+    HandlePool<PSPGuTexture> textures;
 };
 
 PSPGuRenderer::PSPGuRenderer([[maybe_unused]] DisplayWindowHandle &window_data) {
+    m_impl.reset(new Impl());
+
     sceGuInit();
 
     /* init framebuffers */
@@ -42,7 +51,7 @@ PSPGuRenderer::PSPGuRenderer([[maybe_unused]] DisplayWindowHandle &window_data) 
     /* setup viewport */
     sceGuOffset(2048 - (PSP_SCREEN_WIDTH / 2), 2048 - (PSP_SCREEN_HEIGHT / 2));
     sceGuEnable(GU_SCISSOR_TEST);
-    sceGuViewport(2048, 2048, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT);
+    sceGuViewport(2048, 2048, PSP_SCREEN_WIDTH, -PSP_SCREEN_HEIGHT);
     sceGuScissor(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT);
 
     sceGuEnable(GU_BLEND);
@@ -93,13 +102,24 @@ void PSPGuRenderer::swap_buffers() {
     sceGuSwapBuffers();
 };
 
-void PSPGuRenderer::on_screen_resized(const Vec2i &screen_size) {};
+void PSPGuRenderer::on_screen_resized([[maybe_unused]] const Vec2i &screen_size) {};
 
 TextureHandle PSPGuRenderer::load_texture(ImageData &image) {
-    return TextureHandle{};
+    /* TODO: once handle error handling gets added, then
+     * make this fail if image is larger than 512x512 */
+    PSPGuImageBuffer converted = convert_image(image);
+    sceKernelDcacheWritebackInvalidateAll();
+
+    return m_impl->textures.emplace(PSPGuTexture{
+        .buffer = std::move(converted),
+        .logical_width = (uint16_t)image.height,
+        .logical_height = (uint16_t)image.width,
+    });
 };
 
-void PSPGuRenderer::destroy_texture(TextureHandle handle) {}
+void PSPGuRenderer::destroy_texture(TextureHandle handle) {
+    m_impl->textures.remove(handle);
+}
 
 static void apply_camera_projection(Camera2D *camera, const Vec2 &size) {
     sceGumLoadIdentity();
@@ -111,13 +131,13 @@ static void apply_camera_projection(Camera2D *camera, const Vec2 &size) {
 
         left = -width_half;
         right = width_half;
-        bottom = height_half; /* flip it cuz opengl... */
-        top = -height_half;
+        bottom = -height_half;
+        top = height_half;
     } else {
         left = 0.0f;
         right = size.x;
-        bottom = size.y; /* same as above */
-        top = 0.0f;
+        bottom = 0.0f;
+        top = size.y;
     }
 
     float zoom = 1.0f / std::max(camera->zoom, 0.0001f);
@@ -191,6 +211,19 @@ void PSPGuRenderer::apply_viewport(const Viewport &viewport) {
     m_screen_viewport = viewport;
 }
 
+static void psp_texture_bind(const PSPGuImageBuffer &texture) {
+    sceGuEnable(GU_TEXTURE_2D);
+    sceGuTexMode(texture.format, 0, 0, GU_FALSE);
+    sceGuTexFunc(GU_TFX_MODULATE, GU_TCC_RGBA);
+    sceGuTexFilter(GU_NEAREST, GU_NEAREST);
+    sceGuTexWrap(GU_REPEAT, GU_REPEAT);
+    sceGuTexImage(0, texture.width, texture.height, texture.width, texture.data());
+}
+
+static void psp_texture_unbind() {
+    sceGuDisable(GU_TEXTURE_2D);
+}
+
 void PSPGuRenderer::command(const RenderCommandDraw &command) {
     uint32_t color = GU_RGBA(
         command.color.r,
@@ -201,7 +234,25 @@ void PSPGuRenderer::command(const RenderCommandDraw &command) {
     auto *vertices = static_cast<PSPGuVertex *>(
         sceGuGetMemory(6 * sizeof(PSPGuVertex)));
 
+    Vec2 uv_max = Vec2{1.0f, 1.0f};
+    if (command.texture.has_value()) {
+        TextureHandle handle = command.texture.value();
+        auto *texture = m_impl->textures.get(handle);
+        psp_texture_bind(texture->buffer);
+
+        if (texture->logical_width != texture->buffer.width &&
+            texture->logical_height != texture->buffer.height) {
+            Vec2 size{(float)texture->logical_width, (float)texture->logical_height};
+            size /= Vec2{(float)texture->buffer.width, (float)texture->buffer.height};
+            uv_max = size;
+        }
+    } else {
+        psp_texture_unbind();
+    }
+
     vertices[0] = {
+        .u = 0.0f,
+        .v = 0.0f,
         .color = color,
         .position{
             .x = command.x,
@@ -210,6 +261,8 @@ void PSPGuRenderer::command(const RenderCommandDraw &command) {
         },
     };
     vertices[1] = {
+        .u = uv_max.x,
+        .v = 0.0f,
         .color = color,
         .position{
             .x = command.x + command.width,
@@ -218,6 +271,8 @@ void PSPGuRenderer::command(const RenderCommandDraw &command) {
         },
     };
     vertices[2] = {
+        .u = uv_max.x,
+        .v = uv_max.y,
         .color = color,
         .position{
             .x = command.x + command.width,
@@ -227,6 +282,8 @@ void PSPGuRenderer::command(const RenderCommandDraw &command) {
     };
 
     vertices[3] = {
+        .u = uv_max.x,
+        .v = uv_max.y,
         .color = color,
         .position{
             .x = command.x + command.width,
@@ -235,6 +292,8 @@ void PSPGuRenderer::command(const RenderCommandDraw &command) {
         },
     };
     vertices[4] = {
+        .u = 0.0f,
+        .v = uv_max.y,
         .color = color,
         .position{
             .x = command.x,
@@ -243,6 +302,8 @@ void PSPGuRenderer::command(const RenderCommandDraw &command) {
         },
     };
     vertices[5] = {
+        .u = 0.0f,
+        .v = 0.0f,
         .color = color,
         .position{
             .x = command.x,
@@ -251,5 +312,5 @@ void PSPGuRenderer::command(const RenderCommandDraw &command) {
         },
     };
 
-    sceGumDrawArray(GU_TRIANGLES, GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, 6, nullptr, vertices);
+    sceGumDrawArray(GU_TRIANGLES, GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, 6, nullptr, vertices);
 }
