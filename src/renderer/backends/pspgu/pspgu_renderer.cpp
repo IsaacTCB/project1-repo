@@ -290,40 +290,12 @@ void PSPGuRenderer::command(const RenderCommandDraw &command) {
 /* matrix functions */
 
 static void matrix_load_projection(const ViewContext2D &view) {
-    Camera2D *camera = view.view_camera;
-    const Vec2 &size = view.view_size;
-
-    sceGumLoadIdentity();
-
-    float left, right, top, bottom;
-    if (camera->anchor == Camera2D::AnchorMode::CENTER) {
-        float width_half = size.x * 0.5f;
-        float height_half = size.y * 0.5f;
-
-        left = -width_half;
-        right = width_half;
-        bottom = -height_half;
-        top = height_half;
-    } else {
-        left = 0.0f;
-        right = size.x;
-        bottom = 0.0f;
-        top = size.y;
-    }
-
-    float zoom = 1.0f / std::max(camera->zoom, 0.0001f);
-    left *= zoom;
-    right *= zoom;
-    top *= zoom;
-    bottom *= zoom;
-
-    sceGumOrtho(left, right, bottom, top, -1.0f, 1.0f);
+    auto ortho = view.get_ortho();
+    sceGumOrtho(ortho.tl.x, ortho.br.x, ortho.br.y, ortho.tl.y, -1.0f, 1.0f);
 }
 
 static void matrix_load_view(const ViewContext2D &view) {
     const Camera2D *camera = view.view_camera;
-
-    sceGumLoadIdentity();
 
     /* translate to view */
     ScePspFVector3 vec{
@@ -369,13 +341,11 @@ void PSPGuRenderer::load_matrices(const ViewContext2D &view) {
     constexpr auto pipeline = get_matrix_pipeline();
     for (const auto &[matrix_mode, matrix_func] : pipeline) {
         sceGumMatrixMode(matrix_mode);
+        sceGumLoadIdentity();
 
         /* load the view matrix */
         if (matrix_func) {
             matrix_func(view);
-            continue;
         }
-
-        sceGumLoadIdentity();
     }
 }
