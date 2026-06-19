@@ -28,7 +28,7 @@ struct PSPGuRenderer::Impl {
     inline static const uint8_t *s_active_texture{};
 
     /* handles */
-    HandlePool<PSPGuTexture> textures;
+    HandlePool<PSPGuTexture> texture_pool;
 };
 
 PSPGuRenderer::PSPGuRenderer([[maybe_unused]] DisplayWindowHandle &window_data) {
@@ -121,7 +121,7 @@ TextureHandle PSPGuRenderer::load_texture(ImageData &image) {
     Vec2 logical{Vec2i{(int)image.width, (int)image.height}};
     logical /= Vec2{Vec2i{(int)converted.width, (int)converted.height}};
 
-    return m_impl->textures.emplace(PSPGuTexture{
+    return m_impl->texture_pool.emplace(PSPGuTexture{
         .buffer = std::move(converted),
         .logical_ratio = logical,
         .logical_width = (uint16_t)image.height,
@@ -131,7 +131,7 @@ TextureHandle PSPGuRenderer::load_texture(ImageData &image) {
 };
 
 void PSPGuRenderer::destroy_texture(TextureHandle handle) {
-    auto texture = m_impl->textures.get_and_destroy(handle);
+    auto texture = m_impl->texture_pool.get_and_destroy(handle);
 
     /* realistically, this won't be necessary */
     if (texture->buffer.data() == Impl::s_active_texture) {
@@ -210,7 +210,7 @@ void PSPGuRenderer::command(const RenderCommandDraw &command) {
     if (command.texture.has_value()) {
         /* fetch texture */
         TextureHandle handle = command.texture.value();
-        auto *texture = m_impl->textures.get(handle);
+        auto *texture = m_impl->texture_pool.get(handle);
         ASSERT(texture, "PSPGuRenderer::Command(RenderCommandDraw): failed to locate texture");
 
         if ((texture->logical_width != texture->buffer.width) ||
