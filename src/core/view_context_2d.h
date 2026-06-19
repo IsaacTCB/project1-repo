@@ -66,4 +66,7 @@ public:
 
     [[nodiscard]]
     BoundRect get_bounds_aabb() const;
+
+    [[nodiscard]]
+    BoundRect get_ortho() const;
 };

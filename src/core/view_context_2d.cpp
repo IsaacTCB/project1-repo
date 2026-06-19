@@ -176,3 +176,30 @@ inline static Vec2 camera_get_anchor_offset(const ViewContext2D &ctx) {
     }
     return Vec2{};
 }
+
+ViewContext2D::BoundRect ViewContext2D::get_ortho() const {
+    /* init values */
+    float left = 0.0f;
+    float right = view_size.x;
+    float bottom = 0.0f;
+    float top = view_size.y;
+
+    /* apply anchor offset */
+    auto anchor = camera_get_anchor_offset(*this);
+    left -= anchor.x;
+    right -= anchor.x;
+    bottom -= anchor.y;
+    top -= anchor.y;
+
+    /* zoom in */
+    float zoom = 1.0f / std::max(view_camera->zoom, 0.0001f);
+    left *= zoom;
+    right *= zoom;
+    top *= zoom;
+    bottom *= zoom;
+
+    return {
+        .tl = Vec2{left, top},
+        .br = Vec2{right, bottom},
+    };
+}
