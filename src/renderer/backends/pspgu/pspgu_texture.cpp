@@ -2,9 +2,9 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <pspgu.h>
 
 #include "core/assertion.h"
-#include "pspgu.h"
 
 static size_t get_format_bpp(int format) {
     switch (format) {

@@ -1,10 +1,11 @@
 #pragma once
 
+#include <memory>
+
 #include "renderer/api/render_queue.h"
 #include "renderer/api/renderer.h"
 
-#include "core/viewport.h"
-#include <memory>
+class PSPGuTexture;
 
 class PSPGuRenderer : public Renderer {
 public:
@@ -26,7 +27,9 @@ private:
     void command(T &) = delete;
     void command(const RenderCommandDraw &command);
 
-    void apply_viewport(const Viewport &viewport);
+private:
+    void bind_texture(const PSPGuTexture &texture);
+    void unbind_texture();
 
 private:
     struct Impl;

@@ -7,10 +7,10 @@
 #include <pspgum.h>
 #include <psptypes.h>
 
+#include "core/assertion.h"
 #include "core/camera.h"
 #include "core/handles.h"
 #include "core/view_context_2d.h"
-#include "core/viewport.h"
 #include "psputils.h"
 #include "renderer/api/render_handles.h"
 
@@ -21,6 +21,10 @@
 struct PSPGuRenderer::Impl {
     inline static std::array<vram_ptr, 2> s_framebuffers;
     alignas(64) inline static char s_display_list[PSP_DISPLAYLIST_SIZE];
+
+    /* used to know if a texture is already active or not.
+     * null for solid color, anything else for texture buffer */
+    inline static const uint8_t *s_active_texture{};
 
     /* handles */
     HandlePool<PSPGuTexture> textures;
@@ -57,13 +61,13 @@ PSPGuRenderer::PSPGuRenderer([[maybe_unused]] DisplayWindowHandle &window_data) 
     sceGuEnable(GU_BLEND);
     sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
 
-    apply_viewport({
+    m_screen_viewport = {
         .position = {0.0f, 0.0f},
         .size = {
             static_cast<float>(PSP_SCREEN_WIDTH),
             static_cast<float>(PSP_SCREEN_HEIGHT),
         },
-    });
+    };
 
     /* init matrices */
     constexpr std::array MATRIX_MODES{
@@ -110,15 +114,27 @@ TextureHandle PSPGuRenderer::load_texture(ImageData &image) {
     PSPGuImageBuffer converted = convert_image(image);
     sceKernelDcacheWritebackInvalidateAll();
 
+    /* calculate logical ratio (aka the ratio between
+     * the texture logical size and its "power of 2" size) */
+    Vec2 logical{Vec2i{(int)image.width, (int)image.height}};
+    logical /= Vec2{Vec2i{(int)converted.width, (int)converted.height}};
+
     return m_impl->textures.emplace(PSPGuTexture{
         .buffer = std::move(converted),
+        .logical_ratio = logical,
         .logical_width = (uint16_t)image.height,
         .logical_height = (uint16_t)image.width,
+        .filter = false,
     });
 };
 
 void PSPGuRenderer::destroy_texture(TextureHandle handle) {
-    m_impl->textures.remove(handle);
+    auto texture = m_impl->textures.get_and_destroy(handle);
+
+    /* realistically, this won't going to be necessary */
+    if (texture->buffer.data() == Impl::s_active_texture) {
+        unbind_texture();
+    }
 }
 
 static void apply_camera_projection(Camera2D *camera, const Vec2 &size) {
@@ -207,52 +223,82 @@ void PSPGuRenderer::render_pass(const ViewContext2D &view, const RenderQueue &qu
     sceGuSync(GU_SYNC_FINISH, GU_SYNC_WHAT_DONE);
 };
 
-void PSPGuRenderer::apply_viewport(const Viewport &viewport) {
-    m_screen_viewport = viewport;
-}
+void PSPGuRenderer::bind_texture(const PSPGuTexture &texture) {
+    const PSPGuImageBuffer &image_buffer = texture.buffer;
 
-static void psp_texture_bind(const PSPGuImageBuffer &texture) {
-    sceGuEnable(GU_TEXTURE_2D);
-    sceGuTexMode(texture.format, 0, 0, GU_FALSE);
+    if (image_buffer.data() == Impl::s_active_texture) {
+        /* this texture is already active */
+        return;
+    }
+
+    /* re-enable texture 2d if texture was unbound */
+    if (!Impl::s_active_texture) {
+        sceGuEnable(GU_TEXTURE_2D);
+    }
+
+    /* apply texture props */
     sceGuTexFunc(GU_TFX_MODULATE, GU_TCC_RGBA);
-    sceGuTexFilter(GU_NEAREST, GU_NEAREST);
     sceGuTexWrap(GU_REPEAT, GU_REPEAT);
-    sceGuTexImage(0, texture.width, texture.height, texture.width, texture.data());
+
+    int filter = texture.filter ? GU_LINEAR : GU_NEAREST;
+    sceGuTexFilter(filter, filter);
+
+    ASSERT(((uintptr_t)image_buffer.data()) % 16 == 0, "PSPGuRenderer::bind_texture: texture data is not 16-byte aligned!");
+    sceGuTexMode(image_buffer.format, 0, 0, GU_FALSE);
+    sceGuTexImage(0, image_buffer.width, image_buffer.height, image_buffer.width, image_buffer.data());
+
+    Impl::s_active_texture = image_buffer.data();
 }
 
-static void psp_texture_unbind() {
-    sceGuDisable(GU_TEXTURE_2D);
+void PSPGuRenderer::unbind_texture() {
+    /* disables textures, forcing GU
+     * to draw solid colors */
+    if (Impl::s_active_texture) {
+        sceGuDisable(GU_TEXTURE_2D);
+        Impl::s_active_texture = nullptr;
+    }
 }
 
 void PSPGuRenderer::command(const RenderCommandDraw &command) {
+    constexpr size_t QUAD_VERTEX_COUNT = 4;
+    constexpr size_t QUAD_INDEX_COUNT = sizeof(g_quad_indices) / sizeof(g_quad_indices[0]);
+
+    /* convert RGBA to ABGR */
     uint32_t color = GU_RGBA(
         command.color.r,
         command.color.g,
         command.color.b,
         command.color.a);
 
-    auto *vertices = static_cast<PSPGuVertex *>(
-        sceGuGetMemory(6 * sizeof(PSPGuVertex)));
-
+    Vec2 uv_min = Vec2{0.0f, 0.0f};
     Vec2 uv_max = Vec2{1.0f, 1.0f};
+
     if (command.texture.has_value()) {
+        /* fetch texture */
         TextureHandle handle = command.texture.value();
         auto *texture = m_impl->textures.get(handle);
-        psp_texture_bind(texture->buffer);
+        ASSERT(texture, "PSPGuRenderer::Command(RenderCommandDraw): failed to locate texture");
 
-        if (texture->logical_width != texture->buffer.width &&
-            texture->logical_height != texture->buffer.height) {
-            Vec2 size{(float)texture->logical_width, (float)texture->logical_height};
-            size /= Vec2{(float)texture->buffer.width, (float)texture->buffer.height};
-            uv_max = size;
+        if ((texture->logical_width != texture->buffer.width) ||
+            (texture->logical_height != texture->buffer.height)) {
+            /* update uv coords */
+            uv_min *= texture->logical_ratio;
+            uv_max *= texture->logical_ratio;
         }
+
+        bind_texture(*texture);
     } else {
-        psp_texture_unbind();
+        /* this is a solid color */
+        unbind_texture();
     }
 
+    auto *vertices = static_cast<PSPGuVertex *>(
+        sceGuGetMemory(sizeof(PSPGuVertex) * QUAD_VERTEX_COUNT));
+
+    /* create quad mesh */
     vertices[0] = {
-        .u = 0.0f,
-        .v = 0.0f,
+        .u = uv_min.x,
+        .v = uv_min.y,
         .color = color,
         .position{
             .x = command.x,
@@ -262,7 +308,7 @@ void PSPGuRenderer::command(const RenderCommandDraw &command) {
     };
     vertices[1] = {
         .u = uv_max.x,
-        .v = 0.0f,
+        .v = uv_min.y,
         .color = color,
         .position{
             .x = command.x + command.width,
@@ -280,37 +326,30 @@ void PSPGuRenderer::command(const RenderCommandDraw &command) {
             .z = 0.0f,
         },
     };
-
     vertices[3] = {
-        .u = uv_max.x,
-        .v = uv_max.y,
-        .color = color,
-        .position{
-            .x = command.x + command.width,
-            .y = command.y + command.height,
-            .z = 0.0f,
-        },
-    };
-    vertices[4] = {
-        .u = 0.0f,
+        .u = uv_min.x,
         .v = uv_max.y,
         .color = color,
         .position{
             .x = command.x,
             .y = command.y + command.height,
-            .z = 0.0f,
-        },
-    };
-    vertices[5] = {
-        .u = 0.0f,
-        .v = 0.0f,
-        .color = color,
-        .position{
-            .x = command.x,
-            .y = command.y,
             .z = 0.0f,
         },
     };
 
-    sceGumDrawArray(GU_TRIANGLES, GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, 6, nullptr, vertices);
+    /* build flag list */
+    int quad_flags{};
+    quad_flags |= GU_INDEX_8BIT;
+    quad_flags |= GU_TEXTURE_32BITF;
+    quad_flags |= GU_COLOR_8888;
+    quad_flags |= GU_VERTEX_32BITF;
+    quad_flags |= GU_TRANSFORM_3D;
+
+    /* draw our quad */
+    sceGumDrawArray(
+        GU_TRIANGLES,
+        quad_flags,
+        QUAD_INDEX_COUNT,
+        g_quad_indices,
+        vertices);
 }

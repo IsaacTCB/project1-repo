@@ -2,10 +2,10 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <optional>
 #include <pspgu.h>
 
 #include "core/image/image.h"
+#include "core/math/vec2.h"
 
 class PSPGuImageBuffer {
 public:
@@ -83,8 +83,12 @@ private:
 
 struct PSPGuTexture {
     PSPGuImageBuffer buffer;
+    Vec2 logical_ratio;
     uint16_t logical_width;
     uint16_t logical_height;
+    bool filter;
 };
 
 PSPGuImageBuffer convert_image(const ImageData &image);
+void pspgu_texture_bind(PSPGuImageBuffer &buffer);
+void pspgu_texture_unbind();
