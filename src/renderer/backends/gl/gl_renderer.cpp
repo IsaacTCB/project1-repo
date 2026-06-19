@@ -159,30 +159,11 @@ void GLRenderer::destroy_texture(TextureHandle handle) {
     glDeleteTextures(1, &texture->id);
 }
 
-static glm::mat4 get_camera_projection(Camera2D *camera, const glm::vec2 &size) {
-    float left, right, top, bottom;
-    if (camera->anchor == Camera2D::AnchorMode::CENTER) {
-        float width_half = size.x * 0.5f;
-        float height_half = size.y * 0.5f;
+static glm::mat4 get_camera_projection(const ViewContext2D &view) {
+    auto ortho = view.get_ortho();
 
-        left = -width_half;
-        right = width_half;
-        bottom = height_half; /* flip it cuz opengl... */
-        top = -height_half;
-    } else {
-        left = 0.0f;
-        right = size.x;
-        bottom = size.y; /* same as above */
-        top = 0.0f;
-    }
-
-    float zoom = 1.0f / std::max(camera->zoom, 0.0001f);
-    left *= zoom;
-    right *= zoom;
-    top *= zoom;
-    bottom *= zoom;
-
-    return glm::ortho(left, right, bottom, top, -1.0f, 1.0f);
+    /* flip it vertically cuz opengl */
+    return glm::ortho(ortho.tl.x, ortho.br.x, ortho.tl.y, ortho.br.y, -1.0f, 1.0f);
 }
 
 static glm::mat4 get_camera_view_matrix(Camera2D *camera) {
@@ -198,7 +179,7 @@ void GLRenderer::render_pass(const ViewContext2D &view, const RenderQueue &queue
     apply_viewport(view.window_viewport);
 
     glm::vec2 view_size{view.view_size.x, view.view_size.y};
-    glm::mat4 proj_matrix = get_camera_projection(view.view_camera, view_size);
+    glm::mat4 proj_matrix = get_camera_projection(view);
     glm::mat4 view_matrix = get_camera_view_matrix(view.view_camera);
     m_impl->proj = proj_matrix * glm::inverse(view_matrix);
 
