@@ -6,13 +6,13 @@
 #include <pspgu.h>
 #include <pspgum.h>
 #include <psptypes.h>
+#include <psputils.h>
 #include <utility>
 
 #include "core/assertion.h"
 #include "core/camera.h"
 #include "core/handles.h"
 #include "core/view_context_2d.h"
-#include "psputils.h"
 #include "renderer/api/render_handles.h"
 
 #include "pspgu_consts.h"
@@ -111,8 +111,8 @@ void PSPGuRenderer::swap_buffers() {
 void PSPGuRenderer::on_screen_resized([[maybe_unused]] const Vec2i &screen_size) {};
 
 TextureHandle PSPGuRenderer::load_texture(ImageData &image) {
-    /* TODO: once handle error handling gets added, then
-     * make this fail if image is larger than 512x512 */
+    /* TODO: once proper handle error handling gets added, then
+     * this should fail safely if image is larger than 512x512 */
     PSPGuImageBuffer converted = convert_image(image);
     sceKernelDcacheWritebackInvalidateAll();
 
@@ -133,7 +133,7 @@ TextureHandle PSPGuRenderer::load_texture(ImageData &image) {
 void PSPGuRenderer::destroy_texture(TextureHandle handle) {
     auto texture = m_impl->textures.get_and_destroy(handle);
 
-    /* realistically, this won't going to be necessary */
+    /* realistically, this won't be necessary */
     if (texture->buffer.data() == Impl::s_active_texture) {
         unbind_texture();
     }
