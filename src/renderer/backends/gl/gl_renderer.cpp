@@ -160,10 +160,11 @@ void GLRenderer::destroy_texture(TextureHandle handle) {
 }
 
 static glm::mat4 get_camera_projection(const ViewContext2D &view) {
+    /* This ortho is top-left origin, but OpenGL uses
+     * bottom-left origin. As a result, that unflips
+     * everything so that Y+ means down again. */
     auto ortho = view.get_ortho();
-
-    /* flip it vertically cuz opengl */
-    return glm::ortho(ortho.tl.x, ortho.br.x, ortho.tl.y, ortho.br.y, -1.0f, 1.0f);
+    return glm::ortho(ortho.tl.x, ortho.br.x, ortho.br.y, ortho.tl.y, -1.0f, 1.0f);
 }
 
 static glm::mat4 get_camera_view_matrix(Camera2D *camera) {

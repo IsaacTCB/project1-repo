@@ -181,15 +181,15 @@ ViewContext2D::BoundRect ViewContext2D::get_ortho() const {
     /* init values */
     float left = 0.0f;
     float right = view_size.x;
-    float bottom = 0.0f;
-    float top = view_size.y;
+    float top = 0.0f;
+    float bottom = view_size.y;
 
     /* apply anchor offset */
     auto anchor = camera_get_anchor_offset(*this);
     left -= anchor.x;
     right -= anchor.x;
-    bottom -= anchor.y;
     top -= anchor.y;
+    bottom -= anchor.y;
 
     /* zoom in */
     float zoom = 1.0f / std::max(view_camera->zoom, 0.0001f);
