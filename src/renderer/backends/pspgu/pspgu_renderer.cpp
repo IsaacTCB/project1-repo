@@ -292,7 +292,7 @@ void PSPGuRenderer::command(const RenderCommandDraw &command) {
 
 static void matrix_load_projection(const ViewContext2D &view) {
     auto ortho = view.get_ortho();
-    sceGumOrtho(ortho.tl.x, ortho.br.x, ortho.br.y, ortho.tl.y, -1.0f, 1.0f);
+    sceGumOrtho(ortho.tl.x, ortho.br.x, ortho.tl.y, ortho.br.y, -1.0f, 1.0f);
 }
 
 static void matrix_load_view(const ViewContext2D &view) {
