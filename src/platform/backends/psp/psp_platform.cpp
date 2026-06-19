@@ -76,7 +76,9 @@ void PlatformImpl::poll_inputs() {
 
     uint32_t diff = pad.Buttons ^ last_pad.Buttons;
 
-#define MAP(mask, btn)                                                 \
+    /* declare the macro function that will be
+     * used for the gamepad X-macro mappings */
+#define CHECK_BUTTONS(mask, btn)                                       \
     if (diff & mask) {                                                 \
         m_platform.event().submit<EventInput>(EventInputGamepadButton{ \
             .pad = DEFAULT_PAD,                                        \
@@ -84,11 +86,31 @@ void PlatformImpl::poll_inputs() {
             .pressed = (pad.Buttons & mask) != 0,                      \
         });                                                            \
     }
-    GAMEPAD_BUTTON_MAP(MAP)
+
+    /* if a button was just pressed/released */
+    if (diff != 0) {
+        GAMEPAD_BUTTON_MAP(CHECK_BUTTONS)
 #if defined(PSP_ENABLE_CONTROLLER_EXTENSION)
-    GAMEPAD_EXTENDED_BUTTON_MAP(MAP)
-#endif
-#undef MAP
+        GAMEPAD_EXTENDED_BUTTON_MAP(CHECK_BUTTONS)
+
+        /* simulate analog triggers */
+        if (diff & PSP_CTRL_L2) {
+            m_platform.event().submit<EventInput>(EventInputGamepadAxisMotion{
+                .pad = DEFAULT_PAD,
+                .axis = Input::Gamepad::Axis::TRIGGER_LEFT,
+                .value = (pad.Buttons & PSP_CTRL_L2) ? 1.0f : 0.0f,
+            });
+        }
+        if (diff & PSP_CTRL_R2) {
+            m_platform.event().submit<EventInput>(EventInputGamepadAxisMotion{
+                .pad = DEFAULT_PAD,
+                .axis = Input::Gamepad::Axis::TRIGGER_RIGHT,
+                .value = (pad.Buttons & PSP_CTRL_R2) ? 1.0f : 0.0f,
+            });
+        }
+#endif /* PSP_ENABLE_CONTROLLER_EXTENSION */
+    }
+#undef CHECK_BUTTONS
 
     /* update gamepad analog stick */
     if (pad.Lx != last_pad.Lx) {
@@ -120,21 +142,6 @@ void PlatformImpl::poll_inputs() {
             .pad = DEFAULT_PAD,
             .axis = Input::Gamepad::Axis::RIGHT_VERTICAL,
             .value = static_cast<float>((int)(pad.Ry) - 128) / 128.0f,
-        });
-    }
-    /* simulate analog triggers */
-    if (diff & PSP_CTRL_L2) {
-        m_platform.event().submit<EventInput>(EventInputGamepadAxisMotion{
-            .pad = DEFAULT_PAD,
-            .axis = Input::Gamepad::Axis::TRIGGER_LEFT,
-            .value = (pad.Buttons & PSP_CTRL_L2) ? 1.0f : 0.0f,
-        });
-    }
-    if (diff & PSP_CTRL_R2) {
-        m_platform.event().submit<EventInput>(EventInputGamepadAxisMotion{
-            .pad = DEFAULT_PAD,
-            .axis = Input::Gamepad::Axis::TRIGGER_RIGHT,
-            .value = (pad.Buttons & PSP_CTRL_R2) ? 1.0f : 0.0f,
         });
     }
 #endif /* PSP_ENABLE_CONTROLLER_EXTENSION */
