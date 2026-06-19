@@ -30,6 +30,7 @@ private:
 private:
     void bind_texture(const PSPGuTexture &texture);
     void unbind_texture();
+    void load_matrices(const ViewContext2D &view);
 
 private:
     struct Impl;

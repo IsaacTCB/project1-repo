@@ -6,6 +6,7 @@
 #include <pspgu.h>
 #include <pspgum.h>
 #include <psptypes.h>
+#include <utility>
 
 #include "core/assertion.h"
 #include "core/camera.h"
@@ -137,80 +138,12 @@ void PSPGuRenderer::destroy_texture(TextureHandle handle) {
     }
 }
 
-static void apply_camera_projection(Camera2D *camera, const Vec2 &size) {
-    sceGumLoadIdentity();
-
-    float left, right, top, bottom;
-    if (camera->anchor == Camera2D::AnchorMode::CENTER) {
-        float width_half = size.x * 0.5f;
-        float height_half = size.y * 0.5f;
-
-        left = -width_half;
-        right = width_half;
-        bottom = -height_half;
-        top = height_half;
-    } else {
-        left = 0.0f;
-        right = size.x;
-        bottom = 0.0f;
-        top = size.y;
-    }
-
-    float zoom = 1.0f / std::max(camera->zoom, 0.0001f);
-    left *= zoom;
-    right *= zoom;
-    top *= zoom;
-    bottom *= zoom;
-
-    sceGumOrtho(left, right, bottom, top, -1.0f, 1.0f);
-}
-
-static void apply_camera_view(Camera2D *camera) {
-    sceGumLoadIdentity();
-
-    /* translate to view */
-    ScePspFVector3 vec{
-        .x = camera->position.x,
-        .y = camera->position.y,
-        .z = 0.0f,
-    };
-    sceGumTranslate(&vec);
-
-    /* rotate view */
-    ScePspFVector3 rot{
-        .x = 0.0f,
-        .y = 0.0f,
-        .z = camera->rotation,
-    };
-    sceGumRotateXYZ(&rot);
-
-    /* apply offset */
-    ScePspFVector3 offset{
-        .x = camera->offset.x,
-        .y = camera->offset.y,
-        .z = 0.0f,
-    };
-    sceGumTranslate(&offset);
-
-    /* reverse it! */
-    sceGumFullInverse();
-}
-
 void PSPGuRenderer::render_pass(const ViewContext2D &view, const RenderQueue &queue) {
-    /* start frame */
+    /* start frame and start matrices */
     sceGuStart(GU_DIRECT, Impl::s_display_list);
+    load_matrices(view);
 
-    /* apply view matrices */
-    sceGumMatrixMode(GU_PROJECTION);
-    apply_camera_projection(view.view_camera, view.view_size);
-
-    sceGumMatrixMode(GU_VIEW);
-    apply_camera_view(view.view_camera);
-
-    sceGumMatrixMode(GU_MODEL);
-    sceGumLoadIdentity();
-
-    /* draw something here */
+    /* draw objects */
     for (const auto &command : queue.get()) {
         std::visit([this](const auto &cmd) {
             this->command(cmd);
@@ -352,4 +285,97 @@ void PSPGuRenderer::command(const RenderCommandDraw &command) {
         QUAD_INDEX_COUNT,
         g_quad_indices,
         vertices);
+}
+
+/* matrix functions */
+
+static void matrix_load_projection(const ViewContext2D &view) {
+    Camera2D *camera = view.view_camera;
+    const Vec2 &size = view.view_size;
+
+    sceGumLoadIdentity();
+
+    float left, right, top, bottom;
+    if (camera->anchor == Camera2D::AnchorMode::CENTER) {
+        float width_half = size.x * 0.5f;
+        float height_half = size.y * 0.5f;
+
+        left = -width_half;
+        right = width_half;
+        bottom = -height_half;
+        top = height_half;
+    } else {
+        left = 0.0f;
+        right = size.x;
+        bottom = 0.0f;
+        top = size.y;
+    }
+
+    float zoom = 1.0f / std::max(camera->zoom, 0.0001f);
+    left *= zoom;
+    right *= zoom;
+    top *= zoom;
+    bottom *= zoom;
+
+    sceGumOrtho(left, right, bottom, top, -1.0f, 1.0f);
+}
+
+static void matrix_load_view(const ViewContext2D &view) {
+    const Camera2D *camera = view.view_camera;
+
+    sceGumLoadIdentity();
+
+    /* translate to view */
+    ScePspFVector3 vec{
+        .x = camera->position.x,
+        .y = camera->position.y,
+        .z = 0.0f,
+    };
+    sceGumTranslate(&vec);
+
+    /* rotate view */
+    ScePspFVector3 rot{
+        .x = 0.0f,
+        .y = 0.0f,
+        .z = camera->rotation,
+    };
+    sceGumRotateXYZ(&rot);
+
+    /* apply offset */
+    ScePspFVector3 offset{
+        .x = camera->offset.x,
+        .y = camera->offset.y,
+        .z = 0.0f,
+    };
+    sceGumTranslate(&offset);
+
+    /* reverse it! */
+    sceGumFullInverse();
+}
+
+static constexpr auto get_matrix_pipeline() {
+    using PipelineLoadFn = void (*)(const ViewContext2D &view);
+    using PipelineStep = std::pair<int, PipelineLoadFn>;
+
+    /* first value is matrix mode, second is its load function */
+    return std::to_array<PipelineStep>({
+        {GU_PROJECTION, matrix_load_projection},
+        {GU_VIEW, matrix_load_view},
+        {GU_MODEL, nullptr},
+    });
+}
+
+void PSPGuRenderer::load_matrices(const ViewContext2D &view) {
+    constexpr auto pipeline = get_matrix_pipeline();
+    for (const auto &[matrix_mode, matrix_func] : pipeline) {
+        sceGumMatrixMode(matrix_mode);
+
+        /* load the view matrix */
+        if (matrix_func) {
+            matrix_func(view);
+            continue;
+        }
+
+        sceGumLoadIdentity();
+    }
 }
