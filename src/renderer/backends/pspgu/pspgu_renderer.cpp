@@ -35,6 +35,7 @@ PSPGuRenderer::PSPGuRenderer([[maybe_unused]] DisplayWindowHandle &window_data) 
     m_impl.reset(new Impl());
 
     sceGuInit();
+    gumInit();
 
     /* init framebuffers */
     for (auto &fb : Impl::s_framebuffers) {

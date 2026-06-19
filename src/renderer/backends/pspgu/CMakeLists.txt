@@ -6,6 +6,7 @@ add_library(renderer_pspgu STATIC
 target_link_libraries(renderer_pspgu PRIVATE
     pspge
     pspgu
-    pspgum
+    pspvfpu
+    pspgum_vfpu
 )
 target_compile_definitions(renderer_pspgu PUBLIC -DRENDERER_PSPGU_ENABLED=1)
