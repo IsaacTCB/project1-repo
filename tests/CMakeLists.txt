@@ -24,6 +24,9 @@ function(create_test name)
     gtest_discover_tests(${name})
 endfunction()
 
+# Handles tests
+add_subdirectory(handles)
+
 # Math tests
 add_subdirectory(math)
 
