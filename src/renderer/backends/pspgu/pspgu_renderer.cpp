@@ -113,8 +113,16 @@ void PSPGuRenderer::on_screen_resized([[maybe_unused]] const Vec2i &screen_size)
 /* FIXME: texture is always stored in CPU ram. We need to move it
  * over to vram and swizzle it too. */
 TextureHandle PSPGuRenderer::load_texture(ImageData &image) {
-    /* TODO: once proper handle error handling gets added, then
-     * this should fail safely if image is larger than 512x512 */
+    /* validate image and image size */
+    if (!image || image.width > 512 || image.height > 512) {
+        return TextureHandle{};
+    }
+
+    /* FIXME: we only support RGBA conversion for now. */
+    if (image.channels != 4) {
+        return TextureHandle{};
+    }
+
     PSPGuImageBuffer converted = convert_image(image);
     sceKernelDcacheWritebackInvalidateAll();
 
