@@ -44,7 +44,7 @@ void PSPGuImageBuffer::allocate() {
 
     m_ptr = static_cast<uint8_t *>(aligned_alloc(m_size, 64));
     if (!m_ptr) {
-        ASSERT("allocation failed");
+        ASSERT(false, "allocation failed");
         m_size = 0;
     }
 }
