@@ -221,16 +221,17 @@ void PSPGuRenderer::command(const RenderCommandDraw &command) {
         /* fetch texture */
         TextureHandle handle = command.texture.value();
         auto *texture = m_impl->texture_pool.get(handle);
-        ASSERT(texture, "PSPGuRenderer::Command(RenderCommandDraw): failed to locate texture");
-
-        if ((texture->logical_width != texture->buffer.width) ||
-            (texture->logical_height != texture->buffer.height)) {
-            /* update uv coords */
-            uv_min *= texture->logical_ratio;
-            uv_max *= texture->logical_ratio;
+        if (texture) {
+            if ((texture->logical_width != texture->buffer.width) ||
+                (texture->logical_height != texture->buffer.height)) {
+                /* update uv coords */
+                uv_min *= texture->logical_ratio;
+                uv_max *= texture->logical_ratio;
+            }
+            bind_texture(*texture);
+        } else {
+            unbind_texture();
         }
-
-        bind_texture(*texture);
     } else {
         /* this is a solid color */
         unbind_texture();
