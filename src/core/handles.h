@@ -58,8 +58,6 @@ private:
 template <typename T>
 class HandlePool {
 public:
-    HandlePool() = default;
-
     template <typename... Args>
     Handle emplace(Args &&...args) {
         Slot *slot = reserve_slot();
