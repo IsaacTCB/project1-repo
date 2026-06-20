@@ -7,11 +7,84 @@
 
 #include "assertion.h"
 
-#define HANDLE_UPPER (0xFFFF0000)
-#define HANDLE_LOWER (0x0000FFFF)
-#define HANDLE_BITSHIFT (16)
+struct Handle {
+public:
+    using StorageType = uint32_t;
+    static_assert(std::is_unsigned_v<StorageType>);
 
-using Handle = uint32_t;
+public:
+    constexpr explicit Handle() = default;
+
+    constexpr explicit Handle(StorageType value)
+        : m_value(value) {}
+
+    [[nodiscard]] static constexpr Handle from_index_gen(size_t index, size_t gen) noexcept {
+        StorageType value = static_cast<StorageType>(index) << GENERATION_BITS;
+        value |= gen & GENERATION_MASK;
+        return Handle{value};
+    }
+
+    [[nodiscard]] static constexpr Handle from_index(size_t index) noexcept {
+        return from_index_gen(index, 0);
+    }
+
+public:
+    [[nodiscard]] constexpr size_t index() const noexcept {
+        return ((m_value & INDEX_MASK) >> GENERATION_BITS);
+    }
+
+    [[nodiscard]] constexpr size_t gen() const noexcept {
+        return (m_value & GENERATION_MASK);
+    }
+
+    [[nodiscard]] constexpr StorageType value() const noexcept {
+        return m_value;
+    }
+
+    [[nodiscard]] constexpr Handle inc_gen() const {
+        StorageType new_value = (m_value + 1) & GENERATION_MASK;
+        new_value |= m_value & INDEX_MASK;
+        return Handle{new_value};
+    }
+
+    [[nodiscard]] constexpr Handle dec_gen() const {
+        StorageType new_value = (m_value - 1) & GENERATION_MASK;
+        new_value |= m_value & INDEX_MASK;
+        return Handle{new_value};
+    }
+
+public:
+    constexpr bool operator==(const Handle &other) const noexcept {
+        return this->m_value == other.m_value;
+    }
+
+    constexpr bool operator!=(const Handle &other) const noexcept {
+        return !(*this == other);
+    }
+
+private:
+    /* Split point between upper and lower bits */
+    static constexpr StorageType GENERATION_BITS =
+        std::numeric_limits<StorageType>::digits / 2;
+
+    /* Upper bits stores index */
+    static constexpr StorageType INDEX_MASK =
+        std::numeric_limits<StorageType>::max() << GENERATION_BITS;
+
+    /* Lower bits stores generation */
+    static constexpr StorageType GENERATION_MASK =
+        ~INDEX_MASK;
+
+    StorageType m_value;
+};
+
+template <>
+struct std::formatter<Handle> : std::formatter<std::string_view> {
+    auto format(const Handle &vec, format_context &ctx) const {
+        std::string s = std::format("({}:{})", vec.index(), vec.gen());
+        return formatter<std::string_view>::format(s, ctx);
+    }
+};
 
 template <typename T>
 class HandlePool;
@@ -104,7 +177,7 @@ public:
             return;
         }
 
-        slot->handle = handle_add_generation(slot->handle, 1);
+        slot->handle = slot->handle.inc_gen();
         slot->data.reset();
 
         auto index = static_cast<size_t>(slot - m_pool.data());
@@ -116,25 +189,6 @@ public:
         while (!m_available_slots.empty()) {
             m_available_slots.pop();
         }
-    }
-
-private:
-    static size_t handle_get_index(Handle handle) {
-        return (handle & HANDLE_UPPER) >> HANDLE_BITSHIFT;
-    }
-
-    static Handle handle_from_index(size_t index) {
-        return static_cast<Handle>(index << HANDLE_BITSHIFT);
-    }
-
-    static size_t handle_get_generation(Handle handle) {
-        return static_cast<size_t>(handle & HANDLE_LOWER);
-    }
-
-    static Handle handle_add_generation(Handle handle, int amount) {
-        return static_cast<Handle>(
-            (handle & HANDLE_UPPER) |
-            ((handle + amount) & HANDLE_LOWER));
     }
 
 private:
@@ -159,14 +213,14 @@ private:
             size_t index = m_pool.size();
             m_pool.emplace_back();
             slot = &m_pool.at(index);
-            slot->handle = handle_from_index(index);
+            slot->handle = Handle::from_index(index);
         }
         return slot;
     }
 
     [[nodiscard]]
     const Slot *get_slot(Handle handle) const {
-        size_t index = handle_get_index(handle);
+        size_t index = handle.index();
 
         if (index >= m_pool.size()) {
             return nullptr;

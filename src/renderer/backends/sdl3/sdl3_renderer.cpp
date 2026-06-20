@@ -54,7 +54,7 @@ TextureHandle SDL3Renderer::load_texture(ImageData &image) {
             break;
         default:
             ASSERT(false, "Invalid bpp");
-            return {};
+            return Handle{};
     }
 
     auto pitch = static_cast<int>(image.width * image.channels);
