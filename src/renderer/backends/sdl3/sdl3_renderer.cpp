@@ -8,6 +8,7 @@
 #include "core/handles.h"
 #include "core/logger.h"
 #include "core/math/vec2i.h"
+#include "renderer/api/render_handles.h"
 
 struct SDL3Renderer::Impl {
     SDL_Window *window;
@@ -51,7 +52,9 @@ void SDL3Renderer::on_screen_resized(const Vec2i &screen_size) {
 }
 
 TextureHandle SDL3Renderer::load_texture(ImageData &image) {
-    ASSERT(image.pixels.size() > 0, "Image is not loaded");
+    if (!image) {
+        return TextureHandle{};
+    }
 
     SDL_PixelFormat format;
     switch (image.channels) {
@@ -63,7 +66,7 @@ TextureHandle SDL3Renderer::load_texture(ImageData &image) {
             break;
         default:
             ASSERT(false, "Invalid bpp");
-            return {};
+            return TextureHandle{};
     }
 
     auto pitch = static_cast<int>(image.width * image.channels);
@@ -72,14 +75,20 @@ TextureHandle SDL3Renderer::load_texture(ImageData &image) {
     SDL_Surface *surface = SDL_CreateSurfaceFrom(
         (int)image.width, (int)image.height, format,
         image.pixels.data(), pitch);
-    ASSERT(surface, "Unable to create SDL surface");
+    if (!surface) {
+        LOG_ERROR("SDL3Renderer::load_texture(): Failed to create image surface!\nreason: {}", SDL_GetError());
+        return TextureHandle{};
+    }
 
     SDL_Texture *texture = SDL_CreateTextureFromSurface(
         m_impl->renderer,
         surface);
-    ASSERT(texture, "Unable to create SDL texture");
-    SDL_DestroySurface(surface);
+    if (!texture) {
+        LOG_ERROR("SDL3Renderer::load_texture(): Failed to create texture from surface!\nreason: {}", SDL_GetError());
+        return TextureHandle{};
+    }
 
+    SDL_DestroySurface(surface);
     SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
     return m_impl->texture_pool.emplace(texture);
 }
