@@ -18,20 +18,18 @@ void AssetCache<T>::set_load_callbacks(Func1 &&load_fn, Func2 &&unload_fn) {
 template <typename Handle>
 AssetRef<Handle> AssetCache<Handle>::get(std::string_view path) {
     size_t hash = get_hash(path);
-    CacheSlot *slot;
+    CacheSlot *slot = nullptr;
     if (auto it = m_cache.find(hash); it != m_cache.end()) {
         slot = &it->second;
     } else {
         ASSERT(m_load_fn, "Cache attempted to load without having load callback!");
         Handle handle = m_load_fn(path);
-        /* TODO: somehow verify if handle was valid */
-        slot = emplace_slot(hash, handle);
-        ASSERT(slot, "Failed to emplace asset slot");
+        if (handle) {
+            slot = emplace_slot(hash, handle);
+        }
     }
 
     if (!slot) {
-        /* in case that we weren't
-         * able to fetch it */
         return AssetRef<Handle>{};
     }
 

@@ -105,5 +105,8 @@ void AssetRef<Handle>::release() {
 
 template <typename Handle>
 Handle AssetRef<Handle>::get() const {
+    if (!m_ctrl_block) {
+        return Handle{};
+    }
     return m_handle;
 }

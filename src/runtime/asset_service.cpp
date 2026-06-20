@@ -47,9 +47,8 @@ TextureHandle AssetService::load_texture(std::string_view path) const {
 
     ImageData image = Image::decode(path);
     if (!image) {
-        /* FIXME: do not exit if texture wasn't found. */
-        LOG_CRITICAL("No '{}' image file found in the current working directory.", path);
-        exit(-1);
+        LOG_WARN("Unable to load image at \"{}\"", path);
+        return TextureHandle{};
     }
 
     LOG_TRACE("loading texture {}", path);
@@ -59,5 +58,6 @@ TextureHandle AssetService::load_texture(std::string_view path) const {
 void AssetService::unload_texture(TextureHandle handle) const {
     LOG_TRACE("unloading texture {}", handle);
     ASSERT(m_provider.renderer.unload_texture);
+    ASSERT(handle, "Attempted to destroy an invalid handle");
     m_provider.renderer.unload_texture(handle, m_provider.renderer.userdata);
 }
