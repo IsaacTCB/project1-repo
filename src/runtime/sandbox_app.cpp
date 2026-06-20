@@ -36,7 +36,7 @@ public:
         /* create main window/screen */
         DisplayWindowProps props{};
         props.size = {800, 600};
-        props.api = RendererAPI::SDL3Renderer;
+        props.api = RendererAPI::OpenGL;
 
         m_window = display.init_display(props);
         if (!m_window) {

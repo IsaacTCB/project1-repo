@@ -53,7 +53,12 @@ function(target_add_renderer target name)
     message(STATUS "Linked renderer ${name} to ${target}")
 endfunction()
 
-# Common stuff included here too.
+function(target_add_renderer_src target name sources)
+    target_add_renderer(${target} ${name})
+    target_sources(${target} PRIVATE ${sources}) # Hacky, I guess.
+endfunction()
+
+# Common stuff
 add_library(engine STATIC
     src/runtime/sandbox_app.cpp
     src/runtime/input_service.cpp
