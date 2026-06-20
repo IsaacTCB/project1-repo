@@ -31,10 +31,6 @@ public:
     }
 
 public:
-    [[nodiscard]] constexpr bool valid() const noexcept {
-        return (m_value & INDEX_MASK) != 0;
-    }
-
     [[nodiscard]] constexpr size_t index() const noexcept {
         if (!valid()) {
             return INDEX_INVALID;
@@ -50,10 +46,11 @@ public:
         return m_value;
     }
 
-    [[nodiscard]] constexpr explicit operator bool() const noexcept {
-        return valid();
+    [[nodiscard]] constexpr bool valid() const noexcept {
+        return (m_value & INDEX_MASK) != 0;
     }
 
+public:
     [[nodiscard]] constexpr Handle inc_gen() const {
         StorageType new_value = (m_value + 1) & GENERATION_MASK;
         new_value |= m_value & INDEX_MASK;
@@ -67,6 +64,19 @@ public:
     }
 
 public:
+    /* Conversion operators */
+
+    [[nodiscard]] constexpr explicit operator StorageType() const noexcept {
+        return value();
+    }
+
+    [[nodiscard]] constexpr explicit operator bool() const noexcept {
+        return valid();
+    }
+
+public:
+    /* Comparison operators */
+
     constexpr bool operator==(const Handle &other) const noexcept {
         return this->m_value == other.m_value;
     }
