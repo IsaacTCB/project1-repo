@@ -167,12 +167,8 @@ public:
 
     const T *get(Handle handle) const {
         const Slot *slot = get_slot(handle);
-        if (!slot) {
-            return nullptr;
-        }
-
-        ASSERT(slot->data.has_value(), "Attempted to get a dead slot!");
-        return &slot->data.value();
+        return slot ? &slot->data.value()
+                    : nullptr;
     }
 
     T *get(Handle handle) {
