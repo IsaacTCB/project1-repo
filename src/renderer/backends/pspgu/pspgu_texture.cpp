@@ -49,9 +49,9 @@ void PSPGuImageBuffer::allocate() {
     }
 }
 
-void PSPGuImageBuffer::free() {
+void PSPGuImageBuffer::release() {
     if (m_ptr) {
-        ::free(m_ptr);
+        free(m_ptr);
         m_ptr = nullptr;
         m_size = 0;
     }

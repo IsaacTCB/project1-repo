@@ -9,22 +9,22 @@
 
 class PSPGuImageBuffer {
 public:
-    PSPGuImageBuffer() = default;
-
     explicit PSPGuImageBuffer(uint16_t width, uint16_t height, uint32_t format)
         : width(width), height(height), format(format) {
         allocate();
     }
 
     ~PSPGuImageBuffer() {
-        free();
+        release();
     }
 
     PSPGuImageBuffer(const PSPGuImageBuffer &other)
         : width(other.width), height(other.height),
           format(other.format), m_size(other.m_size) {
         allocate();
-        std::copy(other.m_ptr, other.m_ptr + m_size, m_ptr);
+        if (m_ptr) {
+            std::copy(other.m_ptr, other.m_ptr + m_size, m_ptr);
+        }
     }
 
     PSPGuImageBuffer(PSPGuImageBuffer &&rhs) noexcept
@@ -35,7 +35,11 @@ public:
     }
 
     PSPGuImageBuffer &operator=(const PSPGuImageBuffer &other) {
-        free();
+        if (&other == this) {
+            return *this;
+        }
+
+        release();
 
         width = other.width;
         height = other.height;
@@ -45,13 +49,21 @@ public:
 
         if (other.m_ptr) {
             allocate();
-            std::copy(other.m_ptr, other.m_ptr + m_size, m_ptr);
+            if (m_ptr) {
+                std::copy(other.m_ptr, other.m_ptr + m_size, m_ptr);
+            }
         }
 
         return *this;
     }
 
     PSPGuImageBuffer &operator=(PSPGuImageBuffer &&other) noexcept {
+        if (&other == this) {
+            return *this;
+        }
+
+        release();
+
         width = other.width;
         height = other.height;
         format = other.format;
@@ -68,13 +80,12 @@ public:
 
 private:
     void allocate();
-    void free();
+    void release();
 
 public:
     uint16_t width;
     uint16_t height;
     uint32_t format;
-    bool swizzled;
 
 private:
     uint8_t *m_ptr{};
