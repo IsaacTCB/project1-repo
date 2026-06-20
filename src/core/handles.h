@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <queue>
 #include <vector>
 
@@ -62,16 +63,7 @@ public:
     template <typename... Args>
     Handle emplace(Args &&...args) {
         Slot *slot = reserve_slot();
-        slot->value = T{std::forward<Args>(args)...};
-        slot->alive = true;
-        return slot->handle;
-    }
-
-    template <typename T2>
-    Handle emplace(T2 &&value) {
-        Slot *slot = reserve_slot();
-        slot->value = std::move(value);
-        slot->alive = true;
+        slot->data.emplace(std::forward<Args>(args)...);
         return slot->handle;
     }
 
@@ -81,8 +73,8 @@ public:
             return nullptr;
         }
 
-        ASSERT(slot->alive, "Attempted to get a dead slot!");
-        return &slot->value;
+        ASSERT(slot->data.has_value(), "Attempted to get a dead slot!");
+        return &slot->data.value();
     }
 
     T *get(Handle handle) {
@@ -115,18 +107,13 @@ public:
         }
 
         slot->handle = handle_add_generation(slot->handle, 1);
-        slot->alive = false;
+        slot->data.reset();
 
         auto index = static_cast<size_t>(slot - m_pool.data());
         m_available_slots.emplace(index);
     }
 
     void clear() {
-        // for (Slot& slot : m_pool) {
-        //     if (!slot.alive) { continue; }
-        //     /* execute clear operation here */
-        // }
-
         m_pool.clear();
         while (!m_available_slots.empty()) {
             m_available_slots.pop();
@@ -154,9 +141,8 @@ private:
 
 private:
     struct Slot {
-        T value;
+        std::optional<T> data;
         Handle handle;
-        bool alive;
     };
     std::vector<Slot> m_pool;
     std::queue<size_t> m_available_slots;
@@ -189,7 +175,7 @@ private:
         }
 
         const Slot &slot = m_pool.at(index);
-        if (!slot.alive) {
+        if (!slot.data.has_value()) {
             return nullptr;
         }
 
