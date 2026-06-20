@@ -106,12 +106,12 @@ void InputService::pad_foreach(Func &&func) {
             continue;
         }
 
+        auto device = static_cast<Input::Gamepad::DeviceID>(i);
+
         using ReturnType = std::invoke_result_t<Func, Input::Gamepad::DeviceID>;
         if constexpr (std::is_void_v<ReturnType>) {
-            auto device = static_cast<Input::Gamepad::DeviceID>(i);
             std::invoke(func, device);
         } else {
-            auto device = static_cast<Input::Gamepad::DeviceID>(i);
             if (std::invoke(func, device)) {
                 return;
             }
