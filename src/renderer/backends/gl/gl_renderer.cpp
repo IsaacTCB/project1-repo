@@ -4,6 +4,7 @@
 #include "gl_shader_sources.h"
 
 #include "core/logger.h"
+#include "renderer/api/render_handles.h"
 
 #include <glad/gl.h>
 
@@ -136,9 +137,17 @@ void GLRenderer::on_screen_resized(const Vec2i &screen_size) {
 }
 
 TextureHandle GLRenderer::load_texture(ImageData &image) {
+    if (!image) {
+        return TextureHandle{};
+    }
+
     m_impl->context.bind();
-    ASSERT(image.pixels.size() > 0, "Image is not loaded");
+
     ImplTexture texture = gl_create_texture(image);
+    if (texture.id == 0) {
+        return TextureHandle{};
+    }
+
     LOG_TRACE("gl: loaded texture: {0} ({1}x{2})", texture.id, image.width, image.height);
     return m_impl->texture_pool.emplace(texture);
 }
@@ -179,7 +188,9 @@ static ImplTexture gl_create_texture(ImageData &image) {
 
     GLuint texture_id;
     glGenTextures(1, &texture_id);
-    ASSERT(texture_id != 0, "Unable to create gl texture");
+    if (texture_id == 0) {
+        return {};
+    }
 
     glBindTexture(GL_TEXTURE_2D, texture_id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -212,7 +223,9 @@ void GLRenderer::command(const RenderCommandDraw &command) {
     } else {
         texture = &m_impl->white_texture;
     }
-    ASSERT(texture, "Texture is still nullptr");
+
+    texture = texture ? texture
+                      : &m_impl->white_texture;
 
     glBindVertexArray(m_impl->vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_impl->ibo);
