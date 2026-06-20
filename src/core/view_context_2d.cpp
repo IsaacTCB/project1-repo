@@ -164,19 +164,6 @@ ViewContext2D::BoundRect ViewContext2D::get_bounds_aabb() const {
     };
 }
 
-inline static bool angle_is_rotated(float angle, float eps) {
-    /* HACK: checking if non-zero is not ideal bc it won't detect
-     * angles near 360deg such as (2 * PI - 0.00001) */
-    return (std::fabs(angle) > eps);
-}
-
-inline static Vec2 camera_get_anchor_offset(const ViewContext2D &ctx) {
-    if (ctx.view_camera->anchor == Camera2D::AnchorMode::CENTER) {
-        return ctx.view_size * 0.5f;
-    }
-    return Vec2{};
-}
-
 ViewContext2D::BoundRect ViewContext2D::get_ortho() const {
     /* init values */
     float left = 0.0f;
@@ -202,4 +189,17 @@ ViewContext2D::BoundRect ViewContext2D::get_ortho() const {
         .tl = Vec2{left, top},
         .br = Vec2{right, bottom},
     };
+}
+
+inline static bool angle_is_rotated(float angle, float eps) {
+    /* HACK: checking if non-zero is not ideal bc it won't detect
+     * angles near 360deg such as (2 * PI - 0.00001) */
+    return (std::fabs(angle) > eps);
+}
+
+inline static Vec2 camera_get_anchor_offset(const ViewContext2D &ctx) {
+    if (ctx.view_camera->anchor == Camera2D::AnchorMode::CENTER) {
+        return ctx.view_size * 0.5f;
+    }
+    return Vec2{};
 }
