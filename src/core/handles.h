@@ -50,7 +50,7 @@ public:
         return m_value;
     }
 
-    [[nodiscard]] constexpr operator bool() const noexcept {
+    [[nodiscard]] constexpr explicit operator bool() const noexcept {
         return is_valid();
     }
 
