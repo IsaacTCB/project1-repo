@@ -31,12 +31,12 @@ public:
     }
 
 public:
-    [[nodiscard]] bool is_valid() const noexcept {
+    [[nodiscard]] constexpr bool valid() const noexcept {
         return (m_value & INDEX_MASK) != 0;
     }
 
     [[nodiscard]] constexpr size_t index() const noexcept {
-        if (!is_valid()) {
+        if (!valid()) {
             return INDEX_INVALID;
         }
         return ((m_value & INDEX_MASK) >> GENERATION_BITS) - 1;
@@ -51,7 +51,7 @@ public:
     }
 
     [[nodiscard]] constexpr explicit operator bool() const noexcept {
-        return is_valid();
+        return valid();
     }
 
     [[nodiscard]] constexpr Handle inc_gen() const {
@@ -104,7 +104,7 @@ template <>
 struct std::formatter<Handle> : std::formatter<std::string_view> {
     auto format(const Handle &vec, format_context &ctx) const {
         std::string s;
-        if (vec.is_valid()) {
+        if (vec.valid()) {
             s = std::format("({}:{})", vec.index(), vec.gen());
         } else {
             s = "(null)";
