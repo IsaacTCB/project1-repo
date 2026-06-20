@@ -192,11 +192,11 @@ ViewContext2D::BoundRect ViewContext2D::get_ortho() const {
     bottom -= anchor.y;
 
     /* zoom in */
-    float zoom = 1.0f / std::max(view_camera->zoom, 0.0001f);
-    left *= zoom;
-    right *= zoom;
-    top *= zoom;
-    bottom *= zoom;
+    float zoom_factor = std::max(view_camera->zoom, EPSILON);
+    left /= zoom_factor;
+    right /= zoom_factor;
+    top /= zoom_factor;
+    bottom /= zoom_factor;
 
     return {
         .tl = Vec2{left, top},
