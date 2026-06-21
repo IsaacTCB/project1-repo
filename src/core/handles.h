@@ -1,9 +1,11 @@
 #pragma once
 
 #include <cstdint>
+#include <format>
 #include <limits>
 #include <optional>
 #include <queue>
+#include <type_traits>
 #include <vector>
 
 #include "assertion.h"
@@ -11,7 +13,9 @@
 struct Handle {
 public:
     using StorageType = uint32_t;
-    static_assert(std::is_unsigned_v<StorageType>);
+    static_assert(std::is_unsigned_v<StorageType> &&
+                  std::is_integral_v<StorageType> &&
+                  std::numeric_limits<StorageType>::is_integer);
 
 public:
     constexpr Handle() = default;
@@ -21,7 +25,8 @@ public:
             return Handle{};
         }
 
-        StorageType value = static_cast<StorageType>(index + 1) << GENERATION_BITS;
+        auto converted_idx = static_cast<StorageType>(index) + 1;
+        auto value = static_cast<StorageType>(converted_idx << GENERATION_BITS);
         value |= gen & GENERATION_MASK;
         return Handle{value};
     }
@@ -31,12 +36,8 @@ public:
     }
 
 public:
-    [[nodiscard]] bool is_valid() const noexcept {
-        return (m_value & INDEX_MASK) != 0;
-    }
-
     [[nodiscard]] constexpr size_t index() const noexcept {
-        if (!is_valid()) {
+        if (!valid()) {
             return INDEX_INVALID;
         }
         return ((m_value & INDEX_MASK) >> GENERATION_BITS) - 1;
@@ -50,10 +51,11 @@ public:
         return m_value;
     }
 
-    [[nodiscard]] constexpr operator bool() const noexcept {
-        return is_valid();
+    [[nodiscard]] constexpr bool valid() const noexcept {
+        return (m_value & INDEX_MASK) != 0;
     }
 
+public:
     [[nodiscard]] constexpr Handle inc_gen() const {
         StorageType new_value = (m_value + 1) & GENERATION_MASK;
         new_value |= m_value & INDEX_MASK;
@@ -67,6 +69,19 @@ public:
     }
 
 public:
+    /* Conversion operators */
+
+    [[nodiscard]] constexpr explicit operator StorageType() const noexcept {
+        return value();
+    }
+
+    [[nodiscard]] constexpr explicit operator bool() const noexcept {
+        return valid();
+    }
+
+public:
+    /* Comparison operators */
+
     constexpr bool operator==(const Handle &other) const noexcept {
         return this->m_value == other.m_value;
     }
@@ -85,12 +100,12 @@ public:
         std::numeric_limits<StorageType>::digits / 2;
 
     /* Upper bits stores index */
-    static constexpr StorageType INDEX_MASK =
-        std::numeric_limits<StorageType>::max() << GENERATION_BITS;
+    static constexpr auto INDEX_MASK = static_cast<StorageType>(
+        ~StorageType{0} << GENERATION_BITS);
 
     /* Lower bits stores generation */
-    static constexpr StorageType GENERATION_MASK =
-        ~INDEX_MASK;
+    static constexpr auto GENERATION_MASK = static_cast<StorageType>(
+        ~INDEX_MASK);
 
     static constexpr auto INDEX_INVALID = std::numeric_limits<size_t>::max();
     static constexpr auto INDEX_MAX = static_cast<size_t>(INDEX_MASK >> GENERATION_BITS) - 1;
@@ -104,7 +119,7 @@ template <>
 struct std::formatter<Handle> : std::formatter<std::string_view> {
     auto format(const Handle &vec, format_context &ctx) const {
         std::string s;
-        if (vec.is_valid()) {
+        if (vec.valid()) {
             s = std::format("({}:{})", vec.index(), vec.gen());
         } else {
             s = "(null)";
@@ -167,12 +182,8 @@ public:
 
     const T *get(Handle handle) const {
         const Slot *slot = get_slot(handle);
-        if (!slot) {
-            return nullptr;
-        }
-
-        ASSERT(slot->data.has_value(), "Attempted to get a dead slot!");
-        return &slot->data.value();
+        return slot ? &slot->data.value()
+                    : nullptr;
     }
 
     T *get(Handle handle) {

@@ -36,7 +36,7 @@ TEST(HandlesTest, ConstructFromIndexAndGeneration) {
 TEST(HandlesTest, EnsureDefaultHandleIsInvalid) {
     Handle invalid{};
     EXPECT_FALSE(invalid);
-    EXPECT_EQ(static_cast<bool>(invalid), invalid.is_valid());
+    EXPECT_EQ(static_cast<bool>(invalid), invalid.valid());
 }
 
 TEST(HandlesTest, EnsureHandleFromIndexIsValid) {
