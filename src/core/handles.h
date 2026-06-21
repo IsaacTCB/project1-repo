@@ -108,7 +108,11 @@ public:
         ~INDEX_MASK << 0);
 
     static constexpr auto INDEX_INVALID = std::numeric_limits<size_t>::max();
+
+    /* Maximum accepted index (not count!) */
     static constexpr auto INDEX_MAX = static_cast<size_t>(INDEX_MASK >> GENERATION_BITS) - 1;
+
+    /* Maximum accepted generation (not count!) */
     static constexpr auto GENERATION_MAX = static_cast<size_t>(GENERATION_MASK);
 
 private:
@@ -134,38 +138,65 @@ class HandlePool;
 template <typename T>
 class HandleDestructor {
 public:
-    operator const T *() const {
-        return m_object;
-    }
-
-    operator T *() {
-        return m_object;
-    }
-
-    T *operator->() {
-        return m_object;
-    }
-
-    const T *operator->() const {
-        return m_object;
-    }
-
     ~HandleDestructor() {
-        ASSERT(m_pool, "Pool does not exist!");
-        m_pool->remove(m_handle);
+        if (this->valid()) {
+            m_pool->remove(m_handle);
+        }
+    }
+
+    HandleDestructor(HandleDestructor &&other) noexcept
+        : m_pool(other.m_pool),
+          m_object(other.m_object),
+          m_handle(other.m_handle) {
+        other.m_pool = nullptr;
+        other.m_object = nullptr;
+        other.m_handle = Handle{};
+    }
+
+    HandleDestructor &operator=(HandleDestructor &&rhs) noexcept {
+        if (*this == rhs) {
+            return *this;
+        }
+
+        m_pool = rhs.m_pool;
+        m_object = rhs.m_object;
+        m_handle = rhs.m_handle;
+
+        rhs.m_pool = nullptr;
+        rhs.m_object = nullptr;
+        rhs.m_handle = Handle{};
+
+        return *this;
     }
 
     HandleDestructor(HandleDestructor &other) = delete;
-    HandleDestructor(HandleDestructor &&other) = delete;
     HandleDestructor &operator=(HandleDestructor &rhs) = delete;
-    HandleDestructor &operator=(HandleDestructor &&rhs) = delete;
+
+    [[nodiscard]] bool valid() const noexcept {
+        return (m_pool && m_object && m_handle);
+    }
+
+public:
+    [[nodiscard]] explicit operator bool() const noexcept {
+        return valid();
+    }
+
+    [[nodiscard]] operator T *() const {
+        return m_object;
+    }
+
+    [[nodiscard]] T *operator->() const {
+        ASSERT(m_object, "Attempted to access object from an invalid HandleDestructor<T>!");
+        return m_object;
+    }
 
 private:
-    HandleDestructor(HandlePool<T> *pool, T *object, Handle handle)
+    explicit HandleDestructor() = default;
+    explicit HandleDestructor(HandlePool<T> *pool, T *object, Handle handle)
         : m_pool(pool), m_object(object), m_handle(handle) {}
 
-    HandlePool<T> *m_pool;
-    T *m_object;
+    HandlePool<T> *m_pool{};
+    T *m_object{};
     Handle m_handle;
     friend HandlePool<T>;
 };
@@ -199,8 +230,8 @@ public:
      * @return RAII-styled object that automatically calls this->remove() on destructor. */
     HandleDestructor<T> get_and_destroy(Handle handle) {
         T *obj = this->get(handle);
-        ASSERT(obj);
-        return {this, obj, handle};
+        return obj ? HandleDestructor<T>{this, obj, handle}
+                   : HandleDestructor<T>{};
     }
 
     [[nodiscard]]

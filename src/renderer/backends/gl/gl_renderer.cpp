@@ -153,8 +153,14 @@ TextureHandle GLRenderer::load_texture(ImageData &image) {
 }
 
 void GLRenderer::destroy_texture(TextureHandle handle) {
-    m_impl->context.bind();
     auto texture = m_impl->texture_pool.get_and_destroy(handle);
+    if (!texture) {
+        ASSERT(false, "Attempted to delete a non-existent handle");
+        LOG_ERROR("GLRenderer::destroy_texture(): Attempted to destroy texture with non-existent handle '{}'", handle);
+        return;
+    }
+
+    m_impl->context.bind();
     glDeleteTextures(1, &texture->id);
 }
 
