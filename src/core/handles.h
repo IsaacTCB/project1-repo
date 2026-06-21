@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <format>
 #include <limits>
 #include <optional>
 #include <queue>
@@ -99,10 +100,11 @@ public:
         std::numeric_limits<StorageType>::digits / 2;
 
     /* Upper bits stores index */
-    static constexpr StorageType INDEX_MASK = (~StorageType{0} << GENERATION_BITS);
+    static constexpr auto INDEX_MASK = static_cast<StorageType>(
+        ~StorageType{0} << GENERATION_BITS);
 
     /* Lower bits stores generation */
-    static constexpr StorageType GENERATION_MASK = static_cast<StorageType>(
+    static constexpr auto GENERATION_MASK = static_cast<StorageType>(
         ~INDEX_MASK);
 
     static constexpr auto INDEX_INVALID = std::numeric_limits<size_t>::max();
