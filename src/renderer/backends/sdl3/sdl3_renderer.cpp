@@ -97,7 +97,7 @@ void SDL3Renderer::destroy_texture(TextureHandle handle) {
     auto slot = m_impl->texture_pool.get_and_destroy(handle);
     if (!slot) {
         ASSERT(false, "Attempted to delete a non-existent handle");
-        LOG_ERROR("SDL3Renderer::destroy_texture(): Attempted to delete a non-existent handle");
+        LOG_ERROR("SDL3Renderer::destroy_texture(): Attempted to delete a non-existent texture handle '{}'", handle);
         return;
     }
 
