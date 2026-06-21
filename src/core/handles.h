@@ -105,7 +105,7 @@ public:
 
     /* Lower bits stores generation */
     static constexpr auto GENERATION_MASK = static_cast<StorageType>(
-        ~INDEX_MASK);
+        ~INDEX_MASK << 0);
 
     static constexpr auto INDEX_INVALID = std::numeric_limits<size_t>::max();
     static constexpr auto INDEX_MAX = static_cast<size_t>(INDEX_MASK >> GENERATION_BITS) - 1;
