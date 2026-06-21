@@ -4,6 +4,7 @@
 #include <limits>
 #include <optional>
 #include <queue>
+#include <type_traits>
 #include <vector>
 
 #include "assertion.h"
@@ -11,7 +12,9 @@
 struct Handle {
 public:
     using StorageType = uint32_t;
-    static_assert(std::is_unsigned_v<StorageType>);
+    static_assert(std::is_unsigned_v<StorageType> &&
+                  std::is_integral_v<StorageType> &&
+                  std::numeric_limits<StorageType>::is_integer);
 
 public:
     constexpr Handle() = default;
@@ -21,7 +24,8 @@ public:
             return Handle{};
         }
 
-        StorageType value = static_cast<StorageType>(index + 1) << GENERATION_BITS;
+        auto converted_idx = static_cast<StorageType>(index) + 1;
+        auto value = static_cast<StorageType>(converted_idx << GENERATION_BITS);
         value |= gen & GENERATION_MASK;
         return Handle{value};
     }
@@ -95,12 +99,11 @@ public:
         std::numeric_limits<StorageType>::digits / 2;
 
     /* Upper bits stores index */
-    static constexpr StorageType INDEX_MASK =
-        std::numeric_limits<StorageType>::max() << GENERATION_BITS;
+    static constexpr StorageType INDEX_MASK = (~StorageType{0} << GENERATION_BITS);
 
     /* Lower bits stores generation */
-    static constexpr StorageType GENERATION_MASK =
-        ~INDEX_MASK;
+    static constexpr StorageType GENERATION_MASK = static_cast<StorageType>(
+        ~INDEX_MASK);
 
     static constexpr auto INDEX_INVALID = std::numeric_limits<size_t>::max();
     static constexpr auto INDEX_MAX = static_cast<size_t>(INDEX_MASK >> GENERATION_BITS) - 1;
