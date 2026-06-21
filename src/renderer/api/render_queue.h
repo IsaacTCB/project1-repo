@@ -1,6 +1,5 @@
 #pragma once
 
-#include <optional>
 #include <variant>
 #include <vector>
 
@@ -9,7 +8,7 @@
 #include "render_handles.h"
 
 struct RenderCommandDraw {
-    std::optional<TextureHandle> texture;
+    TextureHandle texture; /* handle is null = draw solid color */
     float x, y, width, height;
     Color color;
     // int zsort;
@@ -32,7 +31,7 @@ public:
     }
 
     void draw_texture(TextureHandle texture, const Vec2i &position, const Vec2i &size) {
-        RenderCommandDraw draw{
+        m_queue.emplace_back(RenderCommandDraw{
             .texture = texture,
             .x = static_cast<float>(position.x),
             .y = static_cast<float>(position.y),
@@ -40,21 +39,19 @@ public:
             .height = static_cast<float>(size.y),
             .color = Color::WHITE,
             // .zsort = 0,
-        };
-        m_queue.emplace_back(draw);
+        });
     }
 
     void draw_color(Color color, const Vec2i &position, const Vec2i &size) {
-        RenderCommandDraw draw{
-            .texture = std::nullopt,
+        m_queue.emplace_back(RenderCommandDraw{
+            .texture = Handle{},
             .x = static_cast<float>(position.x),
             .y = static_cast<float>(position.y),
             .width = static_cast<float>(size.x),
             .height = static_cast<float>(size.y),
             .color = color,
             // .zsort = 0,
-        };
-        m_queue.emplace_back(draw);
+        });
     }
 
 private:

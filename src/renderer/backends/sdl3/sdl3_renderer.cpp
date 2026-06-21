@@ -118,11 +118,8 @@ void SDL3Renderer::command(const RenderCommandDraw &command) {
     auto b = command.color.b;
     auto a = command.color.a;
 
-    if (command.texture.has_value()) {
-        Handle handle = command.texture.value();
-        SDL_Texture **slot = m_impl->texture_pool.get(handle);
-        ASSERT(slot, "Attempted to draw a non-existent handle");
-
+    Handle handle = command.texture;
+    if (auto **slot = m_impl->texture_pool.get(handle)) {
         SDL_Texture *texture = *slot;
         SDL_FRect rect{
             .x = 0.0f,
