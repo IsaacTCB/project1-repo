@@ -109,25 +109,18 @@ void SDL3Renderer::command(const RenderCommandDraw &command) {
     auto b = command.color.b;
     auto a = command.color.a;
 
-    if (command.texture.has_value()) {
-        Handle handle = command.texture.value();
-        if (handle) {
-            SDL_Texture **slot = m_impl->texture_pool.get(handle);
-
-            SDL_Texture *texture = *slot;
-            SDL_FRect rect{
-                .x = 0.0f,
-                .y = 0.0f,
-                .w = static_cast<float>(texture->w),
-                .h = static_cast<float>(texture->h),
-            };
-            SDL_SetTextureColorMod(texture, r, g, b);
-            SDL_SetTextureAlphaMod(texture, a);
-            SDL_RenderTexture(m_impl->renderer, texture, &rect, &dest);
-        } else {
-            SDL_SetRenderDrawColor(m_impl->renderer, r, g, b, a);
-            SDL_RenderFillRect(m_impl->renderer, &dest);
-        }
+    Handle handle = command.texture;
+    if (auto **slot = m_impl->texture_pool.get(handle)) {
+        SDL_Texture *texture = *slot;
+        SDL_FRect rect{
+            .x = 0.0f,
+            .y = 0.0f,
+            .w = static_cast<float>(texture->w),
+            .h = static_cast<float>(texture->h),
+        };
+        SDL_SetTextureColorMod(texture, r, g, b);
+        SDL_SetTextureAlphaMod(texture, a);
+        SDL_RenderTexture(m_impl->renderer, texture, &rect, &dest);
     } else {
         SDL_SetRenderDrawColor(m_impl->renderer, r, g, b, a);
         SDL_RenderFillRect(m_impl->renderer, &dest);
