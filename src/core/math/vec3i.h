@@ -168,6 +168,8 @@ public:
     };
 };
 
+static_assert(sizeof(Vec3i) == sizeof(int) * 3);
+
 template <>
 struct std::formatter<Vec3i> : std::formatter<std::string_view> {
     auto format(const Vec3i &vec, format_context &ctx) const {
