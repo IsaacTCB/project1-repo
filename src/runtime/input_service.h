@@ -9,6 +9,7 @@
 
 #include <array>
 #include <functional>
+#include <limits>
 #include <type_traits>
 #include <vector>
 
@@ -95,6 +96,15 @@ private:
     std::array<bool, Input::Gamepad::GAMEPAD_MAX> m_pad_connected{};
     std::array<PadState, Input::Gamepad::GAMEPAD_MAX> m_pad_state{};
     std::array<PadState, Input::Gamepad::GAMEPAD_MAX> m_pad_state_previous{};
+
+    /* safety check */
+    static_assert(
+        Input::Mouse::BUTTON_COUNT < std::numeric_limits<decltype(m_mouse_state)>::digits,
+        "Mouse Button count is too big for InputService::m_mouse_state! Consider changing its underlying type.");
+
+    static_assert(
+        Input::Gamepad::BUTTON_COUNT < std::numeric_limits<decltype(PadState::buttons)>::digits,
+        "Gamepad Button count is too big for InputService::PadState::buttons! Consider changing its underlying type.");
 };
 
 template <typename Func>
