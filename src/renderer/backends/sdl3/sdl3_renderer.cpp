@@ -75,6 +75,7 @@ TextureHandle SDL3Renderer::load_texture(ImageData &image) {
         m_impl->renderer,
         surface);
     if (!texture) {
+        SDL_DestroySurface(surface);
         LOG_ERROR("SDL3Renderer::load_texture(): Failed to create texture from surface!\nreason: {}", SDL_GetError());
         return TextureHandle{};
     }
