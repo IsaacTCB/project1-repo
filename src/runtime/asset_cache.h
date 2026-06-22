@@ -22,8 +22,6 @@ public:
      * @param unload_fn Callback used when unloading. Passes Handle as an argument.
      */
     template <typename Func1, typename Func2>
-        requires std::convertible_to<Func1, LoadFn> &&
-                 std::convertible_to<Func2, UnloadFn>
     void set_load_callbacks(Func1 &&load_fn, Func2 &&unload_fn);
 
     /**
