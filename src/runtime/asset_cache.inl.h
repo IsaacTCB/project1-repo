@@ -8,9 +8,13 @@
 
 template <typename T>
 template <typename Func1, typename Func2>
-    requires std::convertible_to<Func1, typename AssetCache<T>::LoadFn> &&
-             std::convertible_to<Func2, typename AssetCache<T>::UnloadFn>
 void AssetCache<T>::set_load_callbacks(Func1 &&load_fn, Func2 &&unload_fn) {
+    using LoadFn = typename AssetCache::LoadFn;
+    using UnloadFn = typename AssetCache::UnloadFn;
+
+    static_assert(std::convertible_to<Func1, LoadFn>);
+    static_assert(std::convertible_to<Func2, UnloadFn>);
+
     m_load_fn = std::forward<Func1>(load_fn);
     m_unload_fn = std::forward<Func2>(unload_fn);
 }

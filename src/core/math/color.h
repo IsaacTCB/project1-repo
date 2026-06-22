@@ -50,6 +50,8 @@ inline const Color Color::RED{0xFF, 0x00, 0x00};
 inline const Color Color::GREEN{0x00, 0xFF, 0x00};
 inline const Color Color::BLUE{0x00, 0x00, 0xFF};
 
+static_assert(sizeof(Color) == sizeof(uint8_t) * 4);
+
 template <>
 struct std::formatter<Color> : std::formatter<std::string_view> {
     auto format(const Color &color, format_context &ctx) const {

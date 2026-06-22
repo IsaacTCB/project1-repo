@@ -90,10 +90,6 @@ public:
         return !(*this == other);
     }
 
-private:
-    constexpr explicit Handle(StorageType value)
-        : m_value(value) {}
-
 public:
     /* Split point between upper and lower bits */
     static constexpr StorageType GENERATION_BITS =
@@ -116,6 +112,9 @@ public:
     static constexpr auto GENERATION_MAX = static_cast<size_t>(GENERATION_MASK);
 
 private:
+    constexpr explicit Handle(StorageType value)
+        : m_value(value) {}
+
     StorageType m_value;
 };
 
@@ -208,7 +207,7 @@ public:
     Handle emplace(Args &&...args) {
         Slot *slot = reserve_slot();
         slot->data.emplace(std::forward<Args>(args)...);
-        return slot->handle;
+        return slot->next_handle;
     }
 
     const T *get(Handle handle) const {
@@ -246,7 +245,7 @@ public:
             return;
         }
 
-        slot->handle = slot->handle.inc_gen();
+        slot->next_handle = slot->next_handle.inc_gen();
         slot->data.reset();
 
         auto index = static_cast<size_t>(slot - m_pool.data());
@@ -263,7 +262,7 @@ public:
 private:
     struct Slot {
         std::optional<T> data;
-        Handle handle;
+        Handle next_handle;
     };
     std::vector<Slot> m_pool;
     std::queue<size_t> m_available_slots;
@@ -280,11 +279,10 @@ private:
         } else {
             /* allocate new slot */
             size_t index = m_pool.size();
-            auto handle = Handle::from_index(index);
-            if (handle) {
+            if (auto handle = Handle::from_index(index); handle) {
                 m_pool.emplace_back();
                 slot = &m_pool.at(index);
-                slot->handle = handle;
+                slot->next_handle = handle;
             } else {
                 ASSERT(false, "Handle::from_index() failed! Attempted to allocate invalid handle!")
             }
@@ -310,7 +308,7 @@ private:
             return nullptr;
         }
 
-        if (slot.handle != handle) {
+        if (slot.next_handle != handle) {
             return nullptr;
         }
 
