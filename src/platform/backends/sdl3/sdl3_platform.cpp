@@ -21,7 +21,7 @@ static Input::Mouse::Buttons convert_mouse_button(uint8_t button) {
     return static_cast<Input::Mouse::Buttons>(button);
 }
 
-SDL_AppResult PlatformImpl::init([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
+SDL_AppResult SDL3_PlatformImpl::init([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
     log_init();
 
     if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
@@ -47,7 +47,7 @@ SDL_AppResult PlatformImpl::init([[maybe_unused]] int argc, [[maybe_unused]] cha
     return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult PlatformImpl::iterate() {
+SDL_AppResult SDL3_PlatformImpl::iterate() {
     /* get delta */
     uint64_t current_tick = SDL_GetTicksNS();
     float delta = static_cast<float>(current_tick - m_last_tick) / 1000000000.0f;
@@ -73,7 +73,7 @@ SDL_AppResult PlatformImpl::iterate() {
     return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult PlatformImpl::event(SDL_Event &event) {
+SDL_AppResult SDL3_PlatformImpl::event(SDL_Event &event) {
     switch (event.type) {
         case SDL_EVENT_QUIT:
             m_event_server.submit<EventPlatformExited>();
@@ -196,7 +196,7 @@ SDL_AppResult PlatformImpl::event(SDL_Event &event) {
     return SDL_APP_CONTINUE;
 }
 
-void PlatformImpl::close(SDL_AppResult result) {
+void SDL3_PlatformImpl::close(SDL_AppResult result) {
     m_app_handler.close();
 
     if (result == SDL_APP_SUCCESS) {
@@ -208,7 +208,7 @@ void PlatformImpl::close(SDL_AppResult result) {
     m_os_server.exit_app();
 }
 
-bool PlatformImpl::apply_framelimit(uint64_t work_ms_time, uint64_t target_ms_rate) {
+bool SDL3_PlatformImpl::apply_framelimit(uint64_t work_ms_time, uint64_t target_ms_rate) {
     bool capped = false;
 
     if (work_ms_time < target_ms_rate) {

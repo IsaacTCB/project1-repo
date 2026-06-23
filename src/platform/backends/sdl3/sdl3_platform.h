@@ -1,16 +1,15 @@
 #pragma once
 
 #include "platform/api/application_handler.h"
-
 #include "platform/api/event_server.h"
-#include "sdl3_common.h"
+
 #include "sdl3_display_server.h"
 #include "sdl3_io_server.h"
 #include "sdl3_os_server.h"
 
 constexpr uint32_t TARGET_FPS = 60;
 
-class PlatformImpl {
+class SDL3_PlatformImpl {
 public:
     SDL_AppResult init(int argc, char *argv[]);
     SDL_AppResult iterate();
