@@ -1,5 +1,4 @@
-class Platform;
-struct PlatformImplState;
+#pragma once
 
 #define DECLARE_SERVER(Server)                  \
 public:                                         \
