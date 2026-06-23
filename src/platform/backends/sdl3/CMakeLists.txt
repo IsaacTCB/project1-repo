@@ -20,9 +20,6 @@ endif()
 
 set(SDL3_SOURCES
     sdl3_common.cpp
-    sdl3_display_server.cpp
-    sdl3_io_server.cpp
-    sdl3_os_server.cpp
     sdl3_gamepad.cpp
     sdl3_platform.cpp
     sdl3_main.cpp

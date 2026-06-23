@@ -1,17 +1,11 @@
 #pragma once
 
-class Platform;
+#include "runtime/platform_services.h"
 
 class ApplicationHandler {
 public:
-    ApplicationHandler(Platform &platform);
-    ~ApplicationHandler() = default;
-
-    void init();
-    void update(float ts);
+    void init(const PlatformServices &platform_services);
+    void update(float delta);
     void render();
     void close();
-
-private:
-    Platform &m_platform;
 };

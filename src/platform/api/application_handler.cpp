@@ -1,16 +1,16 @@
+#include "application_handler.h"
+
 #include "application.h"
 #include "core/assertion.h"
 #include "core/logger.h"
+#include "runtime/platform_services.h"
 
 #include <cstdlib>
 
 static std::unique_ptr<IApplication> m_app;
 
-ApplicationHandler::ApplicationHandler(Platform &platform)
-    : m_platform{platform} {}
-
-void ApplicationHandler::init() {
-    m_app = IApplication::create_application(m_platform);
+void ApplicationHandler::init(const PlatformServices &platform_services) {
+    m_app = IApplication::create_application(platform_services);
     ASSERT(m_app, "Unable to create application");
 
     if (!m_app) {
@@ -24,9 +24,9 @@ void ApplicationHandler::init() {
     m_app->on_init();
 }
 
-void ApplicationHandler::update(float ts) {
+void ApplicationHandler::update(float delta) {
     ASSERT(m_app, "Application does not exist!");
-    m_app->on_update(ts);
+    m_app->on_update(delta);
 }
 
 void ApplicationHandler::render() {

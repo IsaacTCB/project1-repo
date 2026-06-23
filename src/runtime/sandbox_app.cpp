@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <memory>
+#include <optional>
 
 #include "core/events/input_events.h"
 #include "core/events/platform_events.h"
@@ -10,7 +11,6 @@
 #include "core/math/vec2i.h"
 
 #include "platform/api/application.h"
-#include "platform/api/platform.h"
 
 #include "renderer/api/render_handles.h"
 #include "renderer/api/render_queue.h"
@@ -19,19 +19,23 @@
 #include "asset_service.h"
 #include "input_service.h"
 
+#include "platform/api/event_server.h"
+#include "runtime/server/display_server.h"
+#include "runtime/server/os_server.h"
+
 class SandboxApplication : public IApplication {
     DECLARE_APP(SandboxApplication);
 
 public:
     void on_init() override {
-        auto &os = m_platform->os();
+        auto &os = m_platform.os;
         LOG_INFO("platform: {}", os.get_platform());
         LOG_INFO("os: {}", os.get_os());
 
         /* =================== */
         /*       DISPLAY       */
         /* =================== */
-        auto &display = m_platform->display();
+        auto &display = m_platform.display;
 
         /* create main window/screen */
         DisplayWindowProps props{};
@@ -81,12 +85,12 @@ public:
         delta = std::min(delta, 0.25f);
 
         /* close application if requested */
-        for ([[maybe_unused]] const auto &event : m_platform->event().span<EventPlatformExited>()) {
-            m_platform->os().exit_app();
+        for ([[maybe_unused]] const auto &event : m_platform.event.span<EventPlatformExited>()) {
+            m_platform.os.exit_app();
             return;
         }
 
-        for (const auto &event : m_platform->event().span<EventWindow>()) {
+        for (const auto &event : m_platform.event.span<EventWindow>()) {
             if (const auto *ptr = std::get_if<EventWindowResized>(&event)) {
                 LOG_TRACE("resized: {}", ptr->size);
 
@@ -106,7 +110,7 @@ public:
 
         m_input_service.update();
 
-        for (const auto &event : m_platform->event().span<EventInput>()) {
+        for (const auto &event : m_platform.event.span<EventInput>()) {
             m_input_service.event(event);
         }
 
@@ -182,7 +186,7 @@ public:
 
         m_renderer.reset();
 
-        m_platform->display().close_display(m_window);
+        m_platform.display.close_display(m_window);
     }
 
 private:

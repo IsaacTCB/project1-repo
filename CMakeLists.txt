@@ -69,7 +69,6 @@ add_library(engine STATIC
     src/core/math/vec2i.cpp
     src/core/math/vec3.cpp
     src/core/math/vec3i.cpp
-    src/platform/api/platform.cpp
     src/platform/api/application_handler.cpp
     src/renderer/api/renderer.cpp)
 

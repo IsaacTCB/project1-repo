@@ -3,7 +3,7 @@
 #include <memory>
 
 #include "core/image/image.h"
-#include "platform/api/display_server.h"
+#include "runtime/server/display_server.h"
 
 #include "render_handles.h"
 #include "render_queue.h"

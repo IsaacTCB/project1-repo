@@ -1,6 +1,6 @@
 #pragma once
 
-#include "platform.h"
+#include "runtime/platform_services.h"
 
 #include <memory>
 
@@ -16,18 +16,18 @@ public:
 
 protected:
     friend class ApplicationHandler;
-    static std::unique_ptr<IApplication> create_application(Platform &platform);
+    static std::unique_ptr<IApplication> create_application(const PlatformServices &platform);
 
-    explicit IApplication(Platform *platform) : m_platform{platform} {};
-    Platform *const m_platform = nullptr; // non-owning reference to platform.
+    explicit IApplication(const PlatformServices *platform) : m_platform{*platform} {};
+    PlatformServices m_platform; // non-owning reference to platform.
 };
 
 #define DECLARE_APP(AppName) \
 public:                      \
-    AppName(Platform *platform) : IApplication(platform) {}
+    AppName(const PlatformServices *platform) : IApplication(platform) {}
 
-#define SET_APP(AppName)                                                                 \
-    std::unique_ptr<IApplication> IApplication::create_application(Platform &platform) { \
-        return std::unique_ptr<IApplication>(new AppName(&platform));                    \
+#define SET_APP(AppName)                                                                               \
+    std::unique_ptr<IApplication> IApplication::create_application(const PlatformServices &platform) { \
+        return std::unique_ptr<IApplication>(new AppName(&platform));                                  \
     }
 #define APPLICATION_DEFINED
