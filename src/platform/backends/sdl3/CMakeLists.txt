@@ -1,22 +1,12 @@
 cmake_minimum_required(VERSION 3.11)
 
-set(SDL3_VERSION 3.4)
-set(SDL3_FETCH_VERSION 3.4.2)
+list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-find_package(SDL3 ${SDL3_VERSION} QUIET)
-if(NOT SDL3_FOUND)
-    message(VERBOSE "SDL3 installation was not found on system. Downloading SDL3 ${SDL3_VERSION}...")
+include(engine_platform)
+include(sdl3_utils)
 
-    include(FetchContent)
-    FetchContent_Declare("SDL3"
-        GIT_REPOSITORY  https://github.com/libsdl-org/SDL.git
-        GIT_TAG         release-${SDL3_FETCH_VERSION}
-        GIT_SHALLOW     TRUE
-        GIT_PROGRESS    TRUE
-    )
-    FetchContent_MakeAvailable("SDL3")
-    set(SDL3_FOUND TRUE)
-endif()
+# Fetches SDL3
+find_or_download_sdl3()
 
 set(SDL3_SOURCES
     sdl3_common.cpp
@@ -25,54 +15,38 @@ set(SDL3_SOURCES
     sdl3_main.cpp
 )
 
-if(ANDROID)
-    add_library(main SHARED ${SDL3_SOURCES})
-    # target_add_renderer(main sdl3)
-    add_library(${TARGET_NAME} ALIAS main)
-else()
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        add_executable(${TARGET_NAME} ${SDL3_SOURCES})
-    else()
-        # For non-debug builds, disable console on Windows.
-        add_executable(${TARGET_NAME} WIN32 ${SDL3_SOURCES})
-    endif()
-
-    if(MINGW)
-        target_link_options(${TARGET_NAME} PRIVATE -static-libgcc -static-libstdc++ -static)
-    endif()
-endif()
-
-target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
-target_compile_definitions(${TARGET_NAME} PRIVATE SDL_MAIN_USE_CALLBACKS)
-
-target_include_directories(${TARGET_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/src)
-target_compile_options(${TARGET_NAME} PRIVATE ${ENGINE_COMPILE_OPTIONS})
-target_compile_definitions(${TARGET_NAME} PRIVATE ${ENGINE_COMPILE_DEFINITIONS})
+# Create target with ${TARGET_NAME}
+create_sdl3_target(${SDL3_SOURCES})
+engine_add_platform(${TARGET_NAME})
 
 if(EMSCRIPTEN)
-    target_compile_definitions(${TARGET_NAME} PRIVATE -DUSE_THREADS=0)
-    set(CMAKE_EXECUTABLE_SUFFIX ".html")
+    target_compile_definitions(${TARGET_NAME} PRIVATE USE_THREADS=0)
+    set_target_properties(${TARGET_NAME} PROPERTIES SUFFIX ".html")
 else()
-    target_compile_definitions(${TARGET_NAME} PRIVATE -DUSE_THREADS=1)
+    target_compile_definitions(${TARGET_NAME} PRIVATE USE_THREADS=1)
 endif()
 
+if(MINGW)
+    target_link_options(${TARGET_NAME}
+        PRIVATE
+        -static-libgcc
+        -static-libstdc++
+        -static
+    )
+endif()
+
+# Enable SDL callback
+target_compile_definitions(${TARGET_NAME} PRIVATE SDL_MAIN_USE_CALLBACKS)
 target_link_libraries(${TARGET_NAME}
     PRIVATE
-    engine::core
-    engine::runtime
-    PUBLIC
     SDL3::SDL3
 )
 
-target_add_renderer(${TARGET_NAME} sdl3)
-target_add_renderer_src(${TARGET_NAME} gl sdl3_gl_context.cpp)
+engine_add_renderer(${TARGET_NAME} sdl3)
+engine_add_renderer(${TARGET_NAME} gl sdl3_gl_context.cpp)
 
 if(WIN32)
-    add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-        COMMAND "${CMAKE_COMMAND}"
-        -E copy_if_different
-        "$<TARGET_FILE:SDL3::SDL3>"
-        "$<TARGET_FILE_DIR:${TARGET_NAME}>"
-        VERBATIM
-    )
+    engine_copy_dll(
+        ${TARGET_NAME}
+        SDL3::SDL3)
 endif()

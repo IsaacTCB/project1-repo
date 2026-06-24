@@ -1,3 +1,5 @@
+include(engine_utils)
+
 set(CORE_SOURCES
     logger.cpp
     math/vec2.cpp
@@ -7,7 +9,4 @@ set(CORE_SOURCES
 )
 
 add_library(core STATIC ${CORE_SOURCES})
-target_include_directories(core PUBLIC ${CMAKE_SOURCE_DIR}/src)
-target_compile_definitions(core PUBLIC ${ENGINE_COMPILE_DEFINITIONS})
-
-target_compile_options(core PRIVATE ${ENGINE_COMPILE_OPTIONS})
+engine_add_module(core)
