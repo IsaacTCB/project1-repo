@@ -24,7 +24,7 @@ if(NOT CMAKE_BUILD_TYPE)
     "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-# These should be included in ALL engine modules.
+# These should be included in ALL core modules.
 # TODO: make a proper macro for adding these!
 set(ENGINE_COMPILE_DEFINITIONS)
 set(ENGINE_COMPILE_OPTIONS)
@@ -58,26 +58,11 @@ function(target_add_renderer_src target name sources)
     target_sources(${target} PRIVATE ${sources}) # Hacky, I guess.
 endfunction()
 
-# Common stuff
-add_library(engine STATIC
-    src/runtime/sandbox_app.cpp
-    src/runtime/input_service.cpp
-    src/runtime/asset_service.cpp
-    src/runtime/image/decoder.cpp
-    src/core/logger.cpp
-    src/core/math/vec2.cpp
-    src/core/math/vec2i.cpp
-    src/core/math/vec3.cpp
-    src/core/math/vec3i.cpp
-    src/platform/api/application_handler.cpp
-    src/renderer/api/renderer.cpp)
+add_subdirectory(src/core core)
+add_library(engine::core ALIAS core)
 
-target_include_directories(engine PUBLIC src)
-target_compile_options(engine PUBLIC ${ENGINE_COMPILE_OPTIONS})
-target_compile_definitions(engine PUBLIC ${ENGINE_COMPILE_DEFINITIONS})
-
-add_subdirectory(${CMAKE_SOURCE_DIR}/external/stb_image)
-target_link_libraries(engine PRIVATE stb_image)
+add_subdirectory(src/runtime runtime)
+add_library(engine::runtime ALIAS runtime)
 
 # Platform (entrypoint)
 if(PLATFORM_SDL3)

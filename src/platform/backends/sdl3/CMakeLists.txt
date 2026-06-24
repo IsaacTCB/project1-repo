@@ -45,6 +45,10 @@ endif()
 target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_compile_definitions(${TARGET_NAME} PRIVATE SDL_MAIN_USE_CALLBACKS)
 
+target_include_directories(${TARGET_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/src)
+target_compile_options(${TARGET_NAME} PRIVATE ${ENGINE_COMPILE_OPTIONS})
+target_compile_definitions(${TARGET_NAME} PRIVATE ${ENGINE_COMPILE_DEFINITIONS})
+
 if(EMSCRIPTEN)
     target_compile_definitions(${TARGET_NAME} PRIVATE -DUSE_THREADS=0)
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
@@ -54,7 +58,8 @@ endif()
 
 target_link_libraries(${TARGET_NAME}
     PRIVATE
-    engine
+    engine::core
+    engine::runtime
     PUBLIC
     SDL3::SDL3
 )
