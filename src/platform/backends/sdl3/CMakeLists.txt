@@ -12,41 +12,48 @@ set(SDL3_SOURCES
     sdl3_common.cpp
     sdl3_gamepad.cpp
     sdl3_platform.cpp
-    sdl3_main.cpp
 )
 
-# Create target with ${TARGET_NAME}
-create_sdl3_target(${SDL3_SOURCES})
-engine_add_platform(${TARGET_NAME})
+add_library(sdl3_platform_runtime
+    STATIC
+    ${SDL3_SOURCES}
+)
 
-if(EMSCRIPTEN)
-    target_compile_definitions(${TARGET_NAME} PRIVATE USE_THREADS=0)
-    set_target_properties(${TARGET_NAME} PROPERTIES SUFFIX ".html")
-else()
-    target_compile_definitions(${TARGET_NAME} PRIVATE USE_THREADS=1)
-endif()
+engine_add_platform(sdl3_platform_runtime)
 
-if(MINGW)
-    target_link_options(${TARGET_NAME}
-        PRIVATE
-        -static-libgcc
-        -static-libstdc++
-        -static
-    )
-endif()
+engine_add_renderer(sdl3_platform_runtime sdl3)
+engine_add_renderer(sdl3_platform_runtime gl ${CMAKE_CURRENT_SOURCE_DIR}/sdl3_gl_context.cpp)
 
-# Enable SDL callback
-target_compile_definitions(${TARGET_NAME} PRIVATE SDL_MAIN_USE_CALLBACKS)
-target_link_libraries(${TARGET_NAME}
+target_link_libraries(sdl3_platform_runtime
     PRIVATE
     SDL3::SDL3
 )
 
-engine_add_renderer(${TARGET_NAME} sdl3)
-engine_add_renderer(${TARGET_NAME} gl sdl3_gl_context.cpp)
+function(engine_create_application target_name)
+    create_sdl3_target(${target_name} ${ARGN})
+    target_link_libraries(${target_name} PRIVATE sdl3_platform_runtime)
 
-if(WIN32)
-    engine_copy_dll(
-        ${TARGET_NAME}
-        SDL3::SDL3)
-endif()
+    # Enable SDL callbacks
+    target_compile_definitions(${target_name} PRIVATE SDL_MAIN_USE_CALLBACKS)
+
+    if(EMSCRIPTEN)
+        target_compile_definitions(${target_name} PRIVATE USE_THREADS=0)
+        set_target_properties(${target_name} PROPERTIES SUFFIX ".html")
+    else()
+        target_compile_definitions(${target_name} PRIVATE USE_THREADS=1)
+    endif()
+
+    if(MINGW)
+        target_link_options(${target_name}
+            PRIVATE
+            -static-libgcc
+            -static-libstdc++
+            -static
+        )
+    endif()
+
+    engine_copy_dll(${target_name})
+endfunction()
+
+engine_create_application(${TARGET_NAME} sdl3_main.cpp)
+

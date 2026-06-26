@@ -19,18 +19,17 @@ macro(find_or_download_sdl3)
 endmacro()
 
 # Creates SDL3 target using ${TARGET_NAME}
-macro(create_sdl3_target)
+macro(create_sdl3_target target_name)
     if(ANDROID)
         # Android has special target requirements:
         # it needs to be a shared library called 'main'.
-        add_library(${TARGET_NAME} SHARED ${ARGN})
-        set(TARGET_NAME main)
+        add_library(${target_name} SHARED ${ARGN})
     else()
         if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-            add_executable(${TARGET_NAME} ${ARGN})
+            add_executable(${target_name} ${ARGN})
         else()
             # For non-debug builds, disable console on Windows.
-            add_executable(${TARGET_NAME} WIN32 ${ARGN})
+            add_executable(${target_name} WIN32 ${ARGN})
         endif()
     endif()
 endmacro()

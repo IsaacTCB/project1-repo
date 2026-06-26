@@ -21,4 +21,3 @@ engine_add_module(runtime)
 # stb_image
 add_subdirectory(${CMAKE_SOURCE_DIR}/external/stb_image external/stb_image)
 target_link_libraries(runtime PRIVATE stb_image)
-
