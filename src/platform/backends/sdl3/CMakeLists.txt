@@ -12,12 +12,16 @@ set(SDL3_SOURCES
     sdl3_common.cpp
     sdl3_gamepad.cpp
     sdl3_platform.cpp
+    sdl3_main.cpp
 )
 
 add_library(sdl3_platform_runtime
     STATIC
     ${SDL3_SOURCES}
 )
+
+# Enable SDL callbacks
+target_compile_definitions(sdl3_platform_runtime PRIVATE SDL_MAIN_USE_CALLBACKS)
 
 engine_add_platform(sdl3_platform_runtime)
 
@@ -32,9 +36,8 @@ target_link_libraries(sdl3_platform_runtime
 function(engine_create_application target_name)
     create_sdl3_target(${target_name} ${ARGN})
     target_link_libraries(${target_name} PRIVATE sdl3_platform_runtime)
-
-    # Enable SDL callbacks
-    target_compile_definitions(${target_name} PRIVATE SDL_MAIN_USE_CALLBACKS)
+    # target_link_libraries(${target_name} PRIVATE engine::core)
+    # target_link_libraries(${target_name} PRIVATE engine::runtime)
 
     if(EMSCRIPTEN)
         target_compile_definitions(${target_name} PRIVATE USE_THREADS=0)
@@ -54,6 +57,4 @@ function(engine_create_application target_name)
 
     engine_copy_dll(${target_name})
 endfunction()
-
-engine_create_application(${TARGET_NAME} sdl3_main.cpp)
 

@@ -12,5 +12,6 @@ set(TARGET_NAME "game" CACHE STRING "The application's desired target name")
 #   Engine options
 # ==================
 option(ENGINE_BUILD_TESTS "Build test suite" ${PROJECT_IS_TOP_LEVEL})
+option(ENGINE_BUILD_EXAMPLES "Build built-in engine examples" ${PROJECT_IS_TOP_LEVEL})
 
 set(OPTIONS_LOADED_ TRUE)

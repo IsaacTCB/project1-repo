@@ -37,6 +37,14 @@ if(PLATFORM_SDL3)
 endif()
 
 # ==================
+#   Build Examples
+# ==================
+
+if(ENGINE_BUILD_EXAMPLES)
+    add_subdirectory(apps)
+endif()
+
+# ==================
 #       Tests
 # ==================
 

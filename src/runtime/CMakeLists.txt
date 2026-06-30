@@ -1,11 +1,11 @@
 include(engine_utils)
 
 set(RUNTIME_SOURCES
-    sandbox_app.cpp
-    input_service.cpp
+    app/application_handler.cpp
     asset_service.cpp
+    input_service.cpp
     image/decoder.cpp
-    ${CMAKE_SOURCE_DIR}/src/platform/api/application_handler.cpp
+    runtime.cpp
 )
 
 # TODO: Somehow remove renderer.cpp from here!

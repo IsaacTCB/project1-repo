@@ -1,7 +1,9 @@
 #pragma once
 
-#include "platform/api/application_handler.h"
+#include <optional>
+
 #include "platform/api/event_server.h"
+#include "runtime/runtime.h"
 
 #include "sdl3_display_server.h"
 #include "sdl3_io_server.h"
@@ -20,8 +22,8 @@ private:
     static bool apply_framelimit(uint64_t work_ms_time, uint64_t target_ms_rate);
 
 private:
+    std::optional<EngineRuntime> m_runtime;
     uint64_t m_last_tick{};
-    ApplicationHandler m_app_handler;
 
 private:
     SDL3_DisplayServer m_display_server;

@@ -10,6 +10,20 @@
 #include "core/events/platform_events.h"
 #include "core/events/window_events.h"
 #include "core/logger.h"
+#include "runtime/app/application.h"
+#include "runtime/platform_services.h"
+
+class ApplicationHandler final : public IApplicationHandler {
+public:
+    ApplicationHandler() = default;
+
+protected:
+    IApplication *create_app(const IApplication::Servers &app_servers, const PlatformServices &platform_services) override {
+        return IApplication::create_application(app_servers, platform_services);
+    }
+};
+
+static ApplicationHandler s_app_handler;
 
 static Input::Key::Scancode convert_scancode(SDL_Scancode scancode) {
     ASSERT(scancode >= 0 && scancode < Input::Key::SCANCODE_COUNT);
@@ -37,12 +51,14 @@ SDL_AppResult SDL3_PlatformImpl::init([[maybe_unused]] int argc, [[maybe_unused]
 
     m_last_tick = SDL_GetTicks();
 
-    m_app_handler.init({
+    m_runtime.emplace(PlatformServices{
         .display = m_display_server,
         .io = m_io_server,
         .os = m_os_server,
         .event = m_event_server,
     });
+
+    m_runtime->init(s_app_handler);
 
     return SDL_APP_CONTINUE;
 }
@@ -54,8 +70,8 @@ SDL_AppResult SDL3_PlatformImpl::iterate() {
     m_last_tick = current_tick;
 
     /* process game */
-    m_app_handler.update(delta);
-    m_app_handler.render();
+    m_runtime->update(delta);
+    m_runtime->render();
 
     /* apply framelimit */
     constexpr uint64_t TARGET_TICKRATE = 1000000000 / TARGET_FPS;
@@ -197,7 +213,7 @@ SDL_AppResult SDL3_PlatformImpl::event(SDL_Event &event) {
 }
 
 void SDL3_PlatformImpl::close(SDL_AppResult result) {
-    m_app_handler.close();
+    m_runtime->close();
 
     if (result == SDL_APP_SUCCESS) {
         LOG_INFO("App closed successfully!");
