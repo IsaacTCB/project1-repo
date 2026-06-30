@@ -14,6 +14,7 @@ void IApplicationHandler::init(const IApplication::Servers &app_servers, const P
         exit(-1);
     }
 
+    LOG_TRACE("init application: {}", m_app->get_name());
     m_app->on_init();
 }
 

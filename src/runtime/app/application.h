@@ -15,6 +15,15 @@ public:
 public:
     virtual ~IApplication() = default;
 
+    /**
+     * @brief Returns the name of the current application
+     *
+     * @return A const char *pointer to a null-terminated
+     * string of the name.
+     */
+    [[nodiscard]]
+    virtual const char *get_name() const = 0;
+
 public:
     /**
      * @brief Initialization code. Called on init.
@@ -80,7 +89,11 @@ public:                                       \
     AppName(                                  \
         const IApplication::Servers &servers, \
         const PlatformServices *platform)     \
-        : IApplication(servers, platform) {}
+        : IApplication(servers, platform) {}  \
+                                              \
+    const char *get_name() const override {   \
+        return #AppName;                      \
+    }
 
 #define SET_APP(AppName)                            \
     IApplication *IApplication::create_application( \
