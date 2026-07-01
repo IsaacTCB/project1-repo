@@ -2,6 +2,7 @@
 
 #include "application.h"
 #include "core/assertion.h"
+#include "core/logger.h"
 #include "runtime/platform_services.h"
 
 #include <cstdlib>

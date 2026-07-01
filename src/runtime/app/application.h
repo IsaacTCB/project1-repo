@@ -61,7 +61,8 @@ protected:
      * be implemented in the application. The caller
      * WILL have to manage its lifetime.
      *
-     * See ::SET_APP(app_name) for usage
+     * See ::SET_APP(app_name) to know how to implement
+     * this.
      *
      * @param servers A valid set of application
      * servers.
