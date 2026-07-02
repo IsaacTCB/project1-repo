@@ -43,14 +43,14 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
 
     m_window = display.init_display(props);
     if (!m_window) {
-        LOG_CRITICAL("run_platform_test(): Failed to create main window");
+        LOG_CRITICAL("EngineRuntime::init(): Failed to create main window");
         exit(-1);
     }
 
     /* initialize renderer */
     m_renderer = Renderer::create(m_window);
     if (!m_renderer) {
-        LOG_CRITICAL("run_platform_test(): Failed to create renderer");
+        LOG_CRITICAL("EngineRuntime::init(): Failed to create renderer");
         exit(-1);
     }
 
