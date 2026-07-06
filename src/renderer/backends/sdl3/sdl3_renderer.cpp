@@ -5,7 +5,7 @@
 #include <SDL3/SDL.h>
 
 #include "core/assertion.h"
-#include "core/handles.h"
+#include "core/utils/handles.h"
 #include "core/logger.h"
 #include "core/math/vec2i.h"
 #include "renderer/api/render_handles.h"
