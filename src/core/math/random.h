@@ -8,7 +8,6 @@ namespace Random {
  * @brief Updates PRNG seed value
  *
  * @param seed A 32-bit value to set state
- * @return Generated seed
  */
 void set_seed(uint32_t seed);
 
@@ -20,9 +19,14 @@ void set_seed(uint32_t seed);
 uint32_t get_seed();
 
 /**
- * @brief Sets current time as seed.
+ * @brief Generates and applies a "random"
+ * seed based on the current system clock.
  *
- * Great to reduce predictiveness on boot.
+ * Calling this function on startup ensures
+ * that the PRNG produces different values
+ * across multiple sessions.
+ *
+ * @return The newly generated 32-bit seed
  */
 uint32_t randomize();
 
