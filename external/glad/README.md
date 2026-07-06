@@ -22,11 +22,12 @@ To produce those exact same files:
 - **gl:** Version 3.3 - Core
 - **extensions**: `GL_KHR_debug`
 
-Everything else should remain untouched.
+Everything else should remain untouched, unless your intent is to
+add new extensions or support other backends.
 
 ## Files extracted from upstream
 
-- `LICENSE`
+- `LICENSE.txt`
 
 ## Changes from upstream
 
