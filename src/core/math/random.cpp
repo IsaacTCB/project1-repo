@@ -1,5 +1,4 @@
 #include "random.h"
-#include "core/assertion.h"
 
 #include <chrono>
 #include <cstdint>
