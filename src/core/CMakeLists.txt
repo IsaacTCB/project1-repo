@@ -2,6 +2,7 @@ include(engine_utils)
 
 set(CORE_SOURCES
     logger.cpp
+    math/random.cpp
     math/vec2.cpp
     math/vec2i.cpp
     math/vec3.cpp
