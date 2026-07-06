@@ -56,7 +56,7 @@ uint32_t Random::randi() {
 }
 
 int Random::randi_range(int min, int max) {
-    ASSERT(min > max, "Random::randi_range(): min is larger than max.");
+    ASSERT(min < max, "Random::randi_range(): min is larger than max.");
 
     /* add one, cuz modulo is exclusive */
     auto length = static_cast<uint32_t>(
@@ -78,6 +78,6 @@ float Random::randf() {
 }
 
 float Random::randf_range(float min, float max) {
-    ASSERT(min > max, "Random::randf_range(): min is larger than max.");
+    ASSERT(min < max, "Random::randf_range(): min is larger than max.");
     return ((max - min) * Random::randf()) + min;
 }
