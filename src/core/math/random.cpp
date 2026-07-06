@@ -3,14 +3,18 @@
 
 #include <chrono>
 #include <cstdint>
+
+#if defined(ENABLE_PCG32)
+#include <pcg_random.hpp>
+using RandomAlgorithm = pcg32;
+#else
 #include <random>
+using RandomAlgorithm = std::mt19937;
+#endif
+
 
 struct RandomImpl {
 public:
-    /* TODO: replace RNG with a modern algorithm
-     * that's more suitable for games, like PCG32 (Godot)
-     * or Xorshift128 (Unity) */
-    using RandomAlgorithm = std::mt19937;
     RandomAlgorithm rng;
 
 public:
@@ -61,7 +65,17 @@ int Random::randi_range(int min, int max) {
     /* add one, cuz modulo is exclusive */
     auto length = static_cast<uint32_t>(
         static_cast<int64_t>(max) - min + 1);
-    return min + (randi() % length);
+
+    uint32_t rand;
+#if defined(ENABLE_PCG32)
+    rand = static_cast<uint32_t>(s_impl.rng(length));
+#else
+    /* loses uniform distribution, but it's faster. */
+    rand = static_cast<uint32_t>(s_impl.rng());
+    rand %= length;
+#endif
+
+    return static_cast<int>(min + rand);
 }
 
 /* ================ */
@@ -70,7 +84,7 @@ int Random::randi_range(int min, int max) {
 
 float Random::randf() {
     constexpr auto RANDOM_MAX = static_cast<float>(
-        RandomImpl::RandomAlgorithm::max());
+        RandomAlgorithm::max());
 
     /* normalize length */
     return static_cast<float>(s_impl.rng()) /
