@@ -1,5 +1,5 @@
 engine_create_application(${EXAMPLE_NAME}
-    sandbox_app.cpp
+    src/sandbox_app.cpp
 )
 
 # Adds engine-level warnings and compile definitions

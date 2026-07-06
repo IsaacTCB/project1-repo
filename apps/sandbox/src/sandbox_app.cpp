@@ -1,4 +1,7 @@
+#include <vector>
+
 #include "core/logger.h"
+#include "core/math/random.h"
 #include "core/math/vec2.h"
 #include "core/math/vec2i.h"
 
@@ -7,12 +10,18 @@
 #include "runtime/asset_service.h"
 #include "runtime/input_service.h"
 
+#include "entity.h"
+
 class SandboxApplication : public IApplication {
     DECLARE_APP(SandboxApplication);
 
 public:
     void on_init() override {
         m_texture = m_servers.asset.get_texture("test.png");
+
+        m_entities.emplace_back(Vec2{0.0f, 0.0f}, 1.0f);
+
+        Random::randomize();
     }
 
     void on_update(float delta) override {
@@ -24,8 +33,10 @@ public:
             LOG_TRACE("Undamn");
         }
 
+        Vec2i mouse_pos{m_servers.input.get_mouse_pos()};
         if (m_servers.input.is_mouse_button_just_pressed(Input::Mouse::Buttons::LEFT)) {
-            LOG_TRACE("Walk");
+            float speed_scale = Random::randf_range(0.85f, 1.2f);
+            m_entities.emplace_back(Vec2(mouse_pos), speed_scale);
         }
         if (m_servers.input.is_mouse_button_just_released(Input::Mouse::Buttons::RIGHT)) {
             LOG_TRACE("Walked");
@@ -59,7 +70,10 @@ public:
 
         /* clamp stick and add it into player position */
         move.limit_length(1.0f);
-        m_entity.pos += move * PLAYER_SPEED * delta;
+
+        for (auto &entity : m_entities) {
+            entity.pos += move * PLAYER_SPEED * delta * entity.speed_scale;
+        }
     }
 
     void on_draw(RenderQueue &queue) override {
@@ -67,8 +81,16 @@ public:
         queue.draw_color(Color{88, 90, 220}, {0, 0}, {400, 400});
         queue.draw_color(Color{48, 45, 120, 80}, {40, 40}, {320, 320});
 
-        Vec2i draw_pos{m_entity.pos};
-        queue.draw_texture(m_texture.get(), draw_pos, {200, 200});
+        for (const auto &entity : m_entities) {
+            Vec2i draw_pos{entity.pos};
+
+            /* get scale size */
+            Vec2 scale{200.0f, 200.0f};
+            float scale_factor = entity.speed_scale;
+            scale_factor *= scale_factor * scale_factor;
+
+            queue.draw_texture(m_texture.get(), draw_pos, Vec2i(scale * scale_factor));
+        }
 
         Vec2i mouse_pos{m_servers.input.get_mouse_pos()};
         queue.draw_color(Color{0xFF, 0x0, 0xFF}, mouse_pos, {8, 8});
@@ -79,10 +101,7 @@ public:
     }
 
 private:
-    struct Entity {
-        Vec2 pos;
-    };
-    Entity m_entity;
+    std::vector<Entity> m_entities;
     TextureRef m_texture;
 };
 
