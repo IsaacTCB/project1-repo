@@ -12,7 +12,6 @@ using RandomAlgorithm = pcg32;
 using RandomAlgorithm = std::mt19937;
 #endif
 
-
 struct RandomImpl {
 public:
     RandomAlgorithm rng;
@@ -60,7 +59,15 @@ uint32_t Random::randi() {
 }
 
 int Random::randi_range(int min, int max) {
-    ASSERT(min < max, "Random::randi_range(): min is larger than max.");
+    if (min == max) {
+        return min;
+    }
+
+    if (min > max) {
+        int t = min;
+        min = max;
+        max = t;
+    }
 
     /* add one, cuz modulo is exclusive */
     auto length = static_cast<uint32_t>(
@@ -92,6 +99,10 @@ float Random::randf() {
 }
 
 float Random::randf_range(float min, float max) {
-    ASSERT(min < max, "Random::randf_range(): min is larger than max.");
+    if (min > max) {
+        float t = min;
+        min = max;
+        max = t;
+    }
     return ((max - min) * Random::randf()) + min;
 }
