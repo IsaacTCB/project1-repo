@@ -1,11 +1,11 @@
 #include "application_handler.h"
 
+#include <cstdlib>
+
 #include "application.h"
 #include "core/assertion.h"
 #include "core/logger.h"
 #include "runtime/platform_services.h"
-
-#include <cstdlib>
 
 void IApplicationHandler::init(const IApplication::Servers &app_servers, const PlatformServices &platform_services) {
     m_app = std::unique_ptr<IApplication>(create_app(app_servers, platform_services));

@@ -1,16 +1,15 @@
 #include "input_service.h"
 
-#include "core/assertion.h"
-#include "core/logger.h"
-
-#include "core/input/gamepad.h"
-#include "core/input/keyboard.h"
-#include "core/input/mouse.h"
-
 #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
+
+#include "core/assertion.h"
+#include "core/input/gamepad.h"
+#include "core/input/keyboard.h"
+#include "core/input/mouse.h"
+#include "core/logger.h"
 
 #define GET_BIT(index) (1u << index)
 
