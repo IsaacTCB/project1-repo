@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <limits>
 
 #if defined(ENABLE_PCG32)
 #include <pcg_random.hpp>
@@ -57,6 +58,25 @@ uint32_t Random::randi() {
     return static_cast<uint32_t>(s_impl.rng());
 }
 
+uint32_t Random::randi(uint32_t length) {
+    if (length == std::numeric_limits<uint32_t>::max()) {
+        return randi();
+    }
+
+    /* add one, cuz modulo is exclusive */
+    length++;
+
+    uint32_t rand;
+#if defined(ENABLE_PCG32)
+    rand = static_cast<uint32_t>(s_impl.rng(length));
+#else
+    /* loses uniform distribution, but it's faster. */
+    rand = randi();
+    rand %= length;
+#endif
+    return rand;
+}
+
 int Random::randi_range(int min, int max) {
     if (min == max) {
         return min;
@@ -68,20 +88,10 @@ int Random::randi_range(int min, int max) {
         max = t;
     }
 
-    /* add one, cuz modulo is exclusive */
     auto length = static_cast<uint32_t>(
         static_cast<int64_t>(max) - min + 1);
 
-    uint32_t rand;
-#if defined(ENABLE_PCG32)
-    rand = static_cast<uint32_t>(s_impl.rng(length));
-#else
-    /* loses uniform distribution, but it's faster. */
-    rand = static_cast<uint32_t>(s_impl.rng());
-    rand %= length;
-#endif
-
-    return static_cast<int>(min + rand);
+    return static_cast<int>(min + randi(length));
 }
 
 /* ================ */
@@ -97,11 +107,15 @@ float Random::randf() {
            static_cast<float>(RANDOM_MAX);
 }
 
+float Random::randf(float length) {
+    return randf() * length;
+}
+
 float Random::randf_range(float min, float max) {
     if (min > max) {
         float t = min;
         min = max;
         max = t;
     }
-    return ((max - min) * Random::randf()) + min;
+    return Random::randf(max - min) + min;
 }

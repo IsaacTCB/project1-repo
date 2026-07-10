@@ -38,6 +38,13 @@ uint32_t randomize();
 uint32_t randi();
 
 /**
+ * @brief Generates a pseudo-random integer value
+ *
+ * @return Random integer between 0 and `length` inclusive
+ */
+uint32_t randi(uint32_t length);
+
+/**
  * @brief Generates a pseudo-random integer value inside the specified range.
  *
  * @param min Minimum range value. Must be smaller than max.
@@ -52,6 +59,13 @@ int randi_range(int min, int max);
  * @return Random floating point number between 0.0 and 1.0 inclusive.
  */
 float randf();
+
+/**
+ * @brief Generates a pseudo-random floating point value
+ *
+ * @return Random floating point number between 0.0 and `length` inclusive.
+ */
+float randf(float length);
 
 /**
  * @brief Generates a pseudo-random floating point value inside the specified range.
