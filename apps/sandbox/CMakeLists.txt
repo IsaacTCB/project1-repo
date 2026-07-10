@@ -1,9 +1,9 @@
 engine_create_application(${EXAMPLE_NAME}
-    sandbox_app.cpp
+    src/sandbox_app.cpp
 )
 
 set(EXAMPLE_ASSETS
-    test.png
+    assets/test.png
 )
 
 # Adds engine-level warnings and compile definitions
