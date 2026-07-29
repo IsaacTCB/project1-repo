@@ -7,6 +7,7 @@
 
 #include "renderer/api/render_queue.h"
 #include "runtime/app/application.h"
+#include "runtime/app/context/frame_context.h"
 #include "runtime/asset_service.h"
 #include "runtime/input_service.h"
 
@@ -24,7 +25,9 @@ public:
         Random::randomize();
     }
 
-    void on_update(float delta) override {
+    void on_update(UpdateContext &ctx) override {
+        float delta = ctx.frame.delta;
+
         if (m_servers.input.is_key_just_pressed(Input::Key::Scancode::SPACE)) {
             LOG_TRACE("Damn");
         }
@@ -76,10 +79,10 @@ public:
         }
     }
 
-    void on_draw(RenderQueue &queue) override {
+    void on_draw(RenderContext &ctx) override {
         /* TODO: verify if texture actually exists. */
-        queue.draw_color(Color{88, 90, 220}, {0, 0}, {400, 400});
-        queue.draw_color(Color{48, 45, 120, 80}, {40, 40}, {320, 320});
+        ctx.queue.draw_color(Color{88, 90, 220}, {0, 0}, {400, 400});
+        ctx.queue.draw_color(Color{48, 45, 120, 80}, {40, 40}, {320, 320});
 
         for (const auto &entity : m_entities) {
             Vec2i draw_pos{entity.pos};
@@ -89,11 +92,11 @@ public:
             float scale_factor = entity.speed_scale;
             scale_factor *= scale_factor * scale_factor;
 
-            queue.draw_texture(m_texture.get(), draw_pos, Vec2i(scale * scale_factor));
+            ctx.queue.draw_texture(m_texture.get(), draw_pos, Vec2i(scale * scale_factor));
         }
 
         Vec2i mouse_pos{m_servers.input.get_mouse_pos()};
-        queue.draw_color(Color{0xFF, 0x0, 0xFF}, mouse_pos, {8, 8});
+        ctx.queue.draw_color(Color{0xFF, 0x0, 0xFF}, mouse_pos, {8, 8});
     }
 
     void on_close() override {

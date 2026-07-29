@@ -9,6 +9,7 @@
 #include "core/events/window_events.h"
 #include "core/logger.h"
 
+#include "core/math/color.h"
 #include "platform/api/event_server.h"
 
 #include "renderer/api/render_handles.h"
@@ -20,6 +21,7 @@
 #include "input_service.h"
 #include "platform_services.h"
 #include "runtime/app/application.h"
+#include "runtime/app/context/frame_context.h"
 #include "server/display_server.h"
 #include "server/os_server.h"
 
@@ -118,16 +120,26 @@ void EngineRuntime::update(float delta) {
         m_input_service.event(event);
     }
 
-    m_app_handler->update(delta);
+    /* update it */
+    UpdateContext update_ctx{
+        .frame = build_frame_context(delta),
+    };
+    m_app_handler->update(update_ctx);
 }
 
 void EngineRuntime::render() {
     m_queue.clear();
 
-    m_app_handler->render(m_queue);
+    /* build render frame! */
+    RenderContext render{
+        .frame = m_frame_ctx,
+        .queue = m_queue,
+        .clear_color = Color{25, 25, 25, 0},
+    };
+    m_app_handler->render(render);
 
-    m_renderer->clear(Color{25, 25, 25, 0});
-    m_renderer->render_pass(m_queue);
+    m_renderer->clear(render.clear_color);
+    m_renderer->render_pass(render.queue);
     m_renderer->swap_buffers();
 }
 
@@ -139,4 +151,11 @@ void EngineRuntime::close() {
 
     m_renderer.reset();
     m_platform.display.close_display(m_window);
+}
+
+FrameContext &EngineRuntime::build_frame_context(float delta) {
+    m_frame_ctx = {
+        .delta = delta,
+    };
+    return m_frame_ctx;
 }

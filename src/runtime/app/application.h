@@ -1,6 +1,7 @@
 #pragma once
 
 #include "renderer/api/render_queue.h"
+#include "runtime/app/context/frame_context.h"
 #include "runtime/asset_service.h"
 #include "runtime/input_service.h"
 #include "runtime/platform_services.h"
@@ -36,7 +37,7 @@ public:
      * @param delta The elapsed time in seconds between
      * this frame and the previous one.
      */
-    virtual void on_update(float delta) = 0;
+    virtual void on_update(UpdateContext &ctx) = 0;
 
     /**
      * @brief Draws the world. Called on every frame
@@ -45,7 +46,7 @@ public:
      * @param queue The render command list. Contains
      * methods for drawing stuff in 2D space.
      */
-    virtual void on_draw(RenderQueue &queue) = 0;
+    virtual void on_draw(RenderContext &ctx) = 0;
 
     /**
      * @brief Deinitialization code. Called right before the
