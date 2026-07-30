@@ -33,6 +33,11 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     /* bind with app handler */
     m_app_handler = &app_handler;
 
+    /* initialize fps counter */
+    m_fps = 0;
+    m_fps_accum = 0;
+    m_fps_timer = 0.0f;
+
     auto &os = m_platform.os;
     LOG_INFO("platform: {}", os.get_platform());
     LOG_INFO("os: {}", os.get_os());
@@ -86,7 +91,29 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     m_app_handler->init(app_servers, m_platform);
 }
 
+bool EngineRuntime::count_fps(float delta) {
+    m_fps_timer += delta;
+    m_fps_accum++;
+
+    /* if a second has passed,
+     * transfer accumulator to fps */
+    if (m_fps_timer >= 1.0f) {
+        m_fps = m_fps_accum;
+        m_fps_accum = {};
+        m_fps_timer = {};
+
+        return true;
+    }
+
+    return false;
+}
+
 void EngineRuntime::update(float delta) {
+    /* it's important that we call this
+     * before clamping delta time since
+     * we want accurate results */
+    bool new_second = count_fps(delta);
+
     /* clamps deltatime to avoid huge skips */
     delta = std::min(delta, 0.25f);
 
@@ -123,6 +150,7 @@ void EngineRuntime::update(float delta) {
     /* update it */
     UpdateContext update_ctx{
         .frame = build_frame_context(delta),
+        .new_second = new_second,
     };
     m_app_handler->update(update_ctx);
 }
@@ -138,8 +166,12 @@ void EngineRuntime::render() {
     };
     m_app_handler->render(render);
 
-    m_renderer->clear(render.clear_color);
-    m_renderer->render_pass(render.queue);
+    render_frame(render);
+}
+
+void EngineRuntime::render_frame(RenderContext &ctx) {
+    m_renderer->clear(ctx.clear_color);
+    m_renderer->render_pass(ctx.queue);
     m_renderer->swap_buffers();
 }
 
@@ -156,6 +188,7 @@ void EngineRuntime::close() {
 FrameContext &EngineRuntime::build_frame_context(float delta) {
     m_frame_ctx = {
         .delta = delta,
+        .fps = m_fps,
     };
     return m_frame_ctx;
 }

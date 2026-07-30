@@ -31,6 +31,16 @@ private:
      */
     FrameContext &build_frame_context(float delta);
 
+    /**
+     * @brief Updates fps counter
+     *
+     * @param delta Elapsed time since last frame
+     * @return If this is the first frame for this second
+     */
+    bool count_fps(float delta);
+
+    void render_frame(RenderContext &ctx);
+
 private:
     PlatformServices m_platform;
     IApplicationHandler *m_app_handler;
@@ -40,6 +50,9 @@ private:
     DisplayWindowHandle m_window;
     std::unique_ptr<Renderer> m_renderer;
     RenderQueue m_queue;
+
+    uint32_t m_fps, m_fps_accum;
+    float m_fps_timer;
 
     InputService m_input_service;
     std::optional<AssetService> m_asset_service;
