@@ -13,6 +13,7 @@ struct FrameContext {
 
     /**
      * @brief How many frames have passed since last second?
+     * Refreshes every second.
      */
     uint32_t fps;
 };
