@@ -153,7 +153,7 @@ public:
     }
 
     HandleDestructor &operator=(HandleDestructor &&rhs) noexcept {
-        if (*this == rhs) {
+        if (this == &rhs) {
             return *this;
         }
 

@@ -4,12 +4,14 @@
 #include <memory>
 #include <optional>
 
+#include "core/assertion.h"
 #include "core/events/input_events.h"
 #include "core/events/platform_events.h"
 #include "core/events/window_events.h"
 #include "core/logger.h"
 
 #include "core/math/color.h"
+#include "core/view_context_2d.h"
 #include "platform/api/event_server.h"
 
 #include "renderer/api/render_handles.h"
@@ -148,8 +150,10 @@ void EngineRuntime::update(float delta) {
     }
 
     /* update it */
+    m_view_ctx = {};
     UpdateContext update_ctx{
         .frame = build_frame_context(delta),
+        .view_context = m_view_ctx,
         .new_second = new_second,
     };
     m_app_handler->update(update_ctx);
@@ -161,9 +165,12 @@ void EngineRuntime::render() {
     /* build render frame! */
     RenderContext render{
         .frame = m_frame_ctx,
+        .view_context = m_view_ctx,
         .queue = m_queue,
         .clear_color = Color{25, 25, 25, 0},
     };
+
+    ASSERT(m_view_ctx.view_camera, "View context must be built every frame!");
     m_app_handler->render(render);
 
     render_frame(render);
@@ -171,7 +178,7 @@ void EngineRuntime::render() {
 
 void EngineRuntime::render_frame(RenderContext &ctx) {
     m_renderer->clear(ctx.clear_color);
-    m_renderer->render_pass(ctx.queue);
+    m_renderer->render_pass(ctx.view_context, ctx.queue);
     m_renderer->swap_buffers();
 }
 
@@ -189,6 +196,10 @@ FrameContext &EngineRuntime::build_frame_context(float delta) {
     m_frame_ctx = {
         .delta = delta,
         .fps = m_fps,
+        .viewport = m_renderer->get_absolute_viewport({
+            .position = {0.0f, 0.0f},
+            .size = {1.0f, 1.0f},
+        }),
     };
     return m_frame_ctx;
 }

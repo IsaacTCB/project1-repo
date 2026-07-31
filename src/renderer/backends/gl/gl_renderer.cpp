@@ -3,8 +3,10 @@
 #include "gl_shader.h"
 #include "gl_shader_sources.h"
 
+#include "core/camera.h"
 #include "core/logger.h"
-#include "renderer/api/render_handles.h"
+#include "core/view_context_2d.h"
+#include "core/viewport.h"
 
 #include <glad/gl.h>
 
@@ -131,6 +133,13 @@ void GLRenderer::swap_buffers() {
 
 void GLRenderer::on_screen_resized(const Vec2i &screen_size) {
     ASSERT(screen_size.x > 0 && screen_size.y > 0, "Width & height must not be 0.");
+    m_screen_viewport = {
+        .position = {0.0f, 0.0f},
+        .size = {
+            static_cast<float>(screen_size.x),
+            static_cast<float>(screen_size.y),
+        },
+    };
     glViewport(0, 0, screen_size.x, screen_size.y);
     m_impl->proj = glm::ortho(0.0f, static_cast<float>(screen_size.x), static_cast<float>(screen_size.y), 0.0f, -1.0f, 1.0f);
     m_impl->shader->set_mat4("u_view_proj", m_impl->proj);
@@ -164,8 +173,34 @@ void GLRenderer::destroy_texture(TextureHandle handle) {
     glDeleteTextures(1, &texture->id);
 }
 
-void GLRenderer::render_pass(const RenderQueue &queue) {
+static glm::mat4 get_camera_projection(const ViewContext2D &view) {
+    /* This ortho is top-left origin, but OpenGL uses
+     * bottom-left origin. As a result, that unflips
+     * everything so that Y+ means down again. */
+    auto ortho = view.get_ortho();
+    return glm::ortho(ortho.tl.x, ortho.br.x, ortho.br.y, ortho.tl.y, -1.0f, 1.0f);
+}
+
+static glm::mat4 get_camera_view_matrix(Camera2D *camera) {
+    auto i = glm::identity<glm::mat4>();
+
+    return glm::translate(i, {camera->position.x, camera->position.y, 0.0f}) *
+           glm::rotate(i, camera->rotation, {0.0f, 0.0f, 1.0f}) *
+           glm::translate(i, {camera->offset.x, camera->offset.y, 0.0f});
+}
+
+void GLRenderer::render_pass(const ViewContext2D &view, const RenderQueue &queue) {
     m_impl->context.bind();
+    apply_viewport(view.window_viewport);
+
+    glm::vec2 view_size{view.view_size.x, view.view_size.y};
+    glm::mat4 proj_matrix = get_camera_projection(view);
+    glm::mat4 view_matrix = get_camera_view_matrix(view.view_camera);
+    m_impl->proj = proj_matrix * glm::inverse(view_matrix);
+
+    glUseProgram(m_impl->shader->get_program());
+    m_impl->shader->set_mat4("u_view_proj", m_impl->proj);
+
     for (const auto &command : queue.get()) {
         std::visit([this](const auto &cmd) {
             this->command(cmd);
@@ -247,4 +282,14 @@ void GLRenderer::command(const RenderCommandDraw &command) {
     glBindTexture(GL_TEXTURE_2D, texture->id);
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+}
+
+void GLRenderer::apply_viewport(const Viewport &viewport) {
+    glViewport(
+        static_cast<GLint>(viewport.position.x),
+        static_cast<GLint>(
+            /* flips the Y axis cuz gl... */
+            m_screen_viewport.size.y - (viewport.position.y + viewport.size.y)),
+        static_cast<GLint>(viewport.size.x),
+        static_cast<GLint>(viewport.size.y));
 }

@@ -16,3 +16,10 @@ std::unique_ptr<Renderer> Renderer::create(DisplayWindowHandle &window_data) {
             return std::unique_ptr<Renderer>(nullptr);
     }
 }
+
+Viewport Renderer::get_absolute_viewport(const Viewport &viewport) {
+    return {
+        .position = m_screen_viewport.size * viewport.position,
+        .size = m_screen_viewport.size * viewport.size,
+    };
+}
