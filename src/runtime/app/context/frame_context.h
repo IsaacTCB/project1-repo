@@ -27,10 +27,6 @@ struct FrameContext {
 
 struct UpdateContext {
     const FrameContext &frame;
-
-    /* shared with RenderContext */
-    ViewContext2D &view_context;
-
     bool new_second;
 };
 
@@ -38,7 +34,7 @@ struct RenderContext {
     FrameContext &frame;
 
     /* final ViewContext */
-    ViewContext2D &view_context;
+    ViewContext2D *view_context;
 
     /* used in rendering */
     RenderQueue &queue;

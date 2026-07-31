@@ -7,6 +7,7 @@
 #include "core/math/vec2.h"
 #include "core/math/vec2i.h"
 
+#include "core/view_context_2d.h"
 #include "renderer/api/render_queue.h"
 #include "runtime/app/application.h"
 #include "runtime/app/context/frame_context.h"
@@ -38,7 +39,7 @@ public:
          * by the on_render() function! this way
          * we don't need to waste time building
          * the same view context twice */
-        ctx.view_context = Camera2DUtils::build_view_context(m_camera, ctx.frame.viewport);
+        m_view_context = Camera2DUtils::build_view_context(m_camera, ctx.frame.viewport);
 
         if (m_servers.input.is_key_just_pressed(Input::Key::Scancode::SPACE)) {
             LOG_TRACE("Damn");
@@ -48,7 +49,7 @@ public:
             LOG_TRACE("Undamn");
         }
 
-        Vec2i mouse_pos{ctx.view_context.screen_to_world(m_servers.input.get_mouse_pos())};
+        Vec2 mouse_pos = get_mouse_coords();
         if (m_servers.input.is_mouse_button_just_pressed(Input::Mouse::Buttons::LEFT)) {
             float speed_scale = Random::randf_range(0.85f, 1.2f);
             m_entities.emplace_back(Vec2(mouse_pos), speed_scale);
@@ -114,6 +115,8 @@ public:
     }
 
     void on_draw(RenderContext &ctx) override {
+        ctx.view_context = &m_view_context;
+
         /* TODO: verify if texture actually exists. */
         ctx.queue.draw_color(Color{88, 90, 220}, {0, 0}, {400, 400});
         ctx.queue.draw_color(Color{48, 45, 120, 80}, {40, 40}, {320, 320});
@@ -132,16 +135,16 @@ public:
         Vec2i mouse_pos{m_servers.input.get_mouse_pos()};
 
         /* draw spot */
-        auto world_1 = ctx.view_context.screen_to_world(Vec2{mouse_pos});
-        auto mouse_alt = ctx.view_context.world_to_screen(world_1);
-        auto world_2 = ctx.view_context.screen_to_world(mouse_alt);
+        Vec2 world_1 = m_view_context.screen_to_world(Vec2{mouse_pos});
+        Vec2 mouse_alt = m_view_context.world_to_screen(world_1);
+        Vec2 world_2 = m_view_context.screen_to_world(mouse_alt);
 
         world_2.x -= 4;
         world_2.y -= 4;
         ctx.queue.draw_color(Color{0xFF, 0x00, 0x00, 0x60}, Vec2i{world_2}, {16, 16});
         ctx.queue.draw_color(Color{0xFF, 0x00, 0xFF, 0xFF}, Vec2i{world_1}, {8, 8});
 
-        auto bounds = ctx.view_context.get_bounds_aabb();
+        auto bounds = m_view_context.get_bounds_aabb();
         ctx.queue.draw_color(
             Color{0xFF, 0x00, 0xFF, 0x20},
             Vec2i{bounds.tl} + Vec2i{8, 8},
@@ -152,10 +155,18 @@ public:
         LOG_INFO("Application ended!");
     }
 
+    [[nodiscard]]
+    Vec2 get_mouse_coords() {
+        Vec2 screen_pos = m_servers.input.get_mouse_pos();
+        return m_view_context.screen_to_world(screen_pos);
+    }
+
 private:
     std::vector<Entity> m_entities;
     TextureRef m_texture;
     Camera2D m_camera;
+
+    ViewContext2D m_view_context;
 };
 
 SET_APP(SandboxApplication);

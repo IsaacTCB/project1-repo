@@ -3,7 +3,6 @@
 #include <memory>
 #include <optional>
 
-#include "core/view_context_2d.h"
 #include "renderer/api/render_queue.h"
 #include "renderer/api/renderer.h"
 
@@ -47,7 +46,6 @@ private:
     IApplicationHandler *m_app_handler;
 
 private:
-    ViewContext2D m_view_ctx;
     FrameContext m_frame_ctx;
     DisplayWindowHandle m_window;
     std::unique_ptr<Renderer> m_renderer;

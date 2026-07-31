@@ -150,10 +150,8 @@ void EngineRuntime::update(float delta) {
     }
 
     /* update it */
-    m_view_ctx = {};
     UpdateContext update_ctx{
         .frame = build_frame_context(delta),
-        .view_context = m_view_ctx,
         .new_second = new_second,
     };
     m_app_handler->update(update_ctx);
@@ -165,20 +163,19 @@ void EngineRuntime::render() {
     /* build render frame! */
     RenderContext render{
         .frame = m_frame_ctx,
-        .view_context = m_view_ctx,
+        .view_context = nullptr,
         .queue = m_queue,
         .clear_color = Color{25, 25, 25, 0},
     };
 
-    ASSERT(m_view_ctx.view_camera, "View context must be built every frame!");
     m_app_handler->render(render);
-
     render_frame(render);
 }
 
 void EngineRuntime::render_frame(RenderContext &ctx) {
     m_renderer->clear(ctx.clear_color);
-    m_renderer->render_pass(ctx.view_context, ctx.queue);
+    ASSERT(ctx.view_context, "View context must be built every frame!");
+    m_renderer->render_pass(*ctx.view_context, ctx.queue);
     m_renderer->swap_buffers();
 }
 
