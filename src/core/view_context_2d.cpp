@@ -32,8 +32,8 @@ Vec2 ViewContext2D::world_to_screen(const Vec2 &world_coord) const {
 Vec2 ViewContext2D::screen_to_view(const Vec2 &screen_coord) const {
     Vec2 view{screen_coord};
 
-    view -= window_viewport.position;
-    view *= view_size / window_viewport.size;
+    view -= Vec2(window_viewport.position);
+    view *= view_size / Vec2(window_viewport.size);
     view -= camera_get_anchor_offset(*this);
 
     return {view.x, view.y};
@@ -43,8 +43,8 @@ Vec2 ViewContext2D::view_to_screen(const Vec2 &view_coord) const {
     Vec2 screen{view_coord};
 
     screen += camera_get_anchor_offset(*this);
-    screen *= window_viewport.size / view_size;
-    screen += window_viewport.position;
+    screen *= Vec2(window_viewport.size) / view_size;
+    screen += Vec2(window_viewport.position);
 
     return screen;
 }

@@ -1,15 +1,15 @@
 #pragma once
 
-#include "core/math/vec2.h"
+#include "core/math/vec2i.h"
 
 class Viewport {
 public:
-    Vec2 position;
-    Vec2 size;
+    Vec2i position;
+    Vec2i size;
 
 public:
     [[nodiscard]]
     float get_aspect_ratio() const {
-        return size.x / size.y;
+        return static_cast<float>(size.x) / static_cast<float>(size.y);
     }
 };
