@@ -11,7 +11,6 @@
 #include "core/logger.h"
 
 #include "core/math/color.h"
-#include "core/view_context_2d.h"
 #include "platform/api/event_server.h"
 
 #include "renderer/api/render_handles.h"
