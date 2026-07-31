@@ -193,10 +193,7 @@ FrameContext &EngineRuntime::build_frame_context(float delta) {
     m_frame_ctx = {
         .delta = delta,
         .fps = m_fps,
-        .viewport = m_renderer->get_absolute_viewport({
-            .position = {0.0f, 0.0f},
-            .size = {1.0f, 1.0f},
-        }),
+        .viewport = m_renderer->get_viewport(),
     };
     return m_frame_ctx;
 }

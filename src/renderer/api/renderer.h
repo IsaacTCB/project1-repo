@@ -25,7 +25,8 @@ public:
     Renderer(Renderer &&rhs) = delete;
     Renderer operator=(Renderer &&rhs) = delete;
 
-    Viewport get_absolute_viewport(const Viewport &viewport);
+    [[nodiscard]]
+    Viewport get_viewport() const;
 
 public:
     virtual void clear(Color color) = 0;
