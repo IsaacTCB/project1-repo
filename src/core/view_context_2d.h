@@ -8,8 +8,6 @@
  * @class ViewContext2D
  * @brief Represents a viewport context. Contains
  * camera, view size and viewport position.
- *
- * TODO: Add more conversion functions (world_to_screen, view_coord_to_world, etc.)
  */
 class ViewContext2D {
 public:
