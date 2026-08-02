@@ -14,7 +14,10 @@ public:
         return m_events.span<T>();
     }
 
+    void clear() {
+        m_events.clear();
+    }
+
 private:
-    friend class Platform;
     EventQueue m_events;
 };

@@ -1,15 +1,11 @@
-class Platform;
-struct PlatformImplState;
+#pragma once
 
 #define DECLARE_SERVER(Server)                  \
 public:                                         \
+    explicit Server() = default;                \
     Server(const Server &other) = delete;       \
     Server &operator=(Server &other) = delete;  \
     Server(Server &&other) = delete;            \
     Server &operator=(Server &&other) = delete; \
                                                 \
-private:                                        \
-    explicit Server(PlatformImplState &state)   \
-        : m_state(state) {}                     \
-    PlatformImplState & m_state;                \
-    friend Platform
+private:

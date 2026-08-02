@@ -4,6 +4,6 @@ set(TESTS
 
 foreach(test ${TESTS})
     create_test(${test})
-    target_link_libraries(${test} PRIVATE engine)
+    target_link_libraries(${test} PRIVATE core)
 endforeach()
 

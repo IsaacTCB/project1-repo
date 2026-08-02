@@ -17,12 +17,8 @@ using RenderCommand = std::variant<RenderCommandDraw>;
 
 class RenderQueue {
 public:
-    RenderQueue() {
-        m_queue.reserve(1000);
-    }
-
-    void clear() {
-        m_queue.clear();
+    RenderQueue(size_t initial_size = 1000) {
+        m_queue.reserve(initial_size);
     }
 
     [[nodiscard]]
@@ -30,6 +26,11 @@ public:
         return m_queue;
     }
 
+    void clear() {
+        m_queue.clear();
+    }
+
+public:
     void draw_texture(TextureHandle texture, const Vec2i &position, const Vec2i &size) {
         m_queue.emplace_back(RenderCommandDraw{
             .texture = texture,

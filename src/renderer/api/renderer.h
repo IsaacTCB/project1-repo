@@ -2,7 +2,8 @@
 
 #include <memory>
 
-#include "platform/api/display_server.h"
+#include "core/image/image.h"
+#include "runtime/server/display_server.h"
 
 #include "core/image/image.h"
 #include "core/viewport.h"
@@ -24,7 +25,8 @@ public:
     Renderer(Renderer &&rhs) = delete;
     Renderer operator=(Renderer &&rhs) = delete;
 
-    Viewport get_absolute_viewport(const Viewport &viewport);
+    [[nodiscard]]
+    Viewport get_viewport() const;
 
 public:
     virtual void clear(Color color) = 0;

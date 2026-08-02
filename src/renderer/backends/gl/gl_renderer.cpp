@@ -134,10 +134,10 @@ void GLRenderer::swap_buffers() {
 void GLRenderer::on_screen_resized(const Vec2i &screen_size) {
     ASSERT(screen_size.x > 0 && screen_size.y > 0, "Width & height must not be 0.");
     m_screen_viewport = {
-        .position = {0.0f, 0.0f},
+        .position = {0, 0},
         .size = {
-            static_cast<float>(screen_size.x),
-            static_cast<float>(screen_size.y),
+            screen_size.x,
+            screen_size.y,
         },
     };
     glViewport(0, 0, screen_size.x, screen_size.y);

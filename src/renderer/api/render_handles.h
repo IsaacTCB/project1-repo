@@ -1,5 +1,5 @@
 #pragma once
 
-#include "core/handles.h"
+#include "core/utils/handles.h"
 
 using TextureHandle = Handle;

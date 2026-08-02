@@ -4,22 +4,22 @@
 #include "sdl3_platform.h"
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
-    static PlatformImpl s_impl;
+    static SDL3_PlatformImpl s_impl;
     *appstate = &s_impl;
     return s_impl.init(argc, argv);
 }
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
-    auto *impl = static_cast<PlatformImpl *>(appstate);
+    auto *impl = static_cast<SDL3_PlatformImpl *>(appstate);
     return impl->event(*event);
 }
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
-    auto *impl = static_cast<PlatformImpl *>(appstate);
+    auto *impl = static_cast<SDL3_PlatformImpl *>(appstate);
     return impl->iterate();
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
-    auto *impl = static_cast<PlatformImpl *>(appstate);
+    auto *impl = static_cast<SDL3_PlatformImpl *>(appstate);
     impl->close(result);
 }

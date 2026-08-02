@@ -28,11 +28,12 @@ struct DisplayWindowHandle {
 };
 
 /**
- * @class DisplayServer
+ * @class IDisplayServer
  * @brief Platform generic windowing abstraction layer.
  */
-class DisplayServer {
-    DECLARE_SERVER(DisplayServer);
+class IDisplayServer {
+public:
+    DECLARE_SERVER(IDisplayServer)
 
 public:
     /**
@@ -41,19 +42,17 @@ public:
      * @param props The desired window configuration to use.
      * @return A DisplayWindowHandle, that references a window inside this server.
      */
-    DisplayWindowHandle init_display(const DisplayWindowProps &props);
+    virtual DisplayWindowHandle init_display(const DisplayWindowProps &props) = 0;
 
     /**
      * @brief Closes the window display handle.
      */
-    void close_display(DisplayWindowHandle handle);
+    virtual void close_display(DisplayWindowHandle handle) = 0;
 
     /**
      * @brief Gets the current window display size.
      * @return A tuple containing the window's width and height respectively.
      */
     [[nodiscard]]
-    Vec2i get_size(const DisplayWindowHandle &handle) const;
+    virtual Vec2i get_size(const DisplayWindowHandle &handle) const = 0;
 };
-
-#undef DECLARE_SERVER

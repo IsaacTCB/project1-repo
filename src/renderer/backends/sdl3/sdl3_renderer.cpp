@@ -5,9 +5,9 @@
 #include <SDL3/SDL.h>
 
 #include "core/assertion.h"
-#include "core/handles.h"
 #include "core/logger.h"
 #include "core/math/vec2i.h"
+#include "core/utils/handles.h"
 #include "renderer/api/render_handles.h"
 
 struct SDL3Renderer::Impl {
@@ -42,10 +42,10 @@ void SDL3Renderer::swap_buffers() {
 
 void SDL3Renderer::on_screen_resized(const Vec2i &screen_size) {
     m_screen_viewport = {
-        .position = {0.0f, 0.0f},
+        .position = {0, 0},
         .size = {
-            static_cast<float>(screen_size.x),
-            static_cast<float>(screen_size.y),
+            screen_size.x,
+            screen_size.y,
         },
     };
     SDL_SetRenderLogicalPresentation(m_impl->renderer, screen_size.x, screen_size.y, SDL_LOGICAL_PRESENTATION_STRETCH);
@@ -84,6 +84,7 @@ TextureHandle SDL3Renderer::load_texture(ImageData &image) {
         m_impl->renderer,
         surface);
     if (!texture) {
+        SDL_DestroySurface(surface);
         LOG_ERROR("SDL3Renderer::load_texture(): Failed to create texture from surface!\nreason: {}", SDL_GetError());
         return TextureHandle{};
     }
