@@ -16,7 +16,7 @@ add_custom_command(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
             ${EXAMPLE_ASSETS}
-            "${CMAKE_CURRENT_BINARY_DIR}"
+            "$<TARGET_FILE_DIR:${EXAMPLE_NAME}>"
     COMMENT "${EXAMPLE_NAME}: Copying assets onto target directory"
     VERBATIM
 )
