@@ -15,7 +15,7 @@ function(engine_add_renderer target name)
 
     # Add renderer subdirectory
     add_subdirectory(
-        ${CMAKE_SOURCE_DIR}/src/renderer/backends/${name}
+        ${PROJECT_SOURCE_DIR}/src/renderer/backends/${name}
         ${CMAKE_CURRENT_BINARY_DIR}/${renderer_target}
     )
 

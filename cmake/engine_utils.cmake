@@ -7,7 +7,7 @@ macro(engine_detect_platform)
 endmacro()
 
 function(engine_add_module target)
-    target_include_directories(${target} PUBLIC ${CMAKE_SOURCE_DIR}/src)
+    target_include_directories(${target} PUBLIC ${PROJECT_SOURCE_DIR}/src)
     target_compile_options(${target} PRIVATE ${ENGINE_COMPILE_OPTIONS})
     target_compile_definitions(${target} PUBLIC ${ENGINE_COMPILE_DEFINITIONS})
 endfunction()

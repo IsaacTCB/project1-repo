@@ -1,5 +1,5 @@
-add_subdirectory(${CMAKE_SOURCE_DIR}/external/glad glad)
-add_subdirectory(${CMAKE_SOURCE_DIR}/external/glm glm)
+add_subdirectory(${PROJECT_SOURCE_DIR}/external/glad glad)
+add_subdirectory(${PROJECT_SOURCE_DIR}/external/glm glm)
 
 add_library(renderer_gl STATIC
     gl_renderer.cpp
