@@ -20,6 +20,6 @@ engine_add_module(core)
 target_compile_definitions(core PRIVATE $<$<BOOL:${ENABLE_PCG32}>:ENABLE_PCG32>)
 
 if(ENABLE_PCG32)
-    add_subdirectory(${CMAKE_SOURCE_DIR}/external/pcg-cpp external/pcg-cpp)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/external/pcg-cpp external/pcg-cpp)
     target_link_libraries(core PRIVATE pcg-cpp)
 endif()
