@@ -13,16 +13,21 @@ function(engine_add_module target)
 endfunction()
 
 function(engine_copy_dll target)
-
-    if($<TARGET_FILE_DIR:${target}>)
-        add_custom_command(
-            TARGET ${target}
-            POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "$<TARGET_RUNTIME_DLLS:${target}>"
-                "$<TARGET_FILE_DIR:${target}>"
-            COMMAND_EXPAND_LISTS
-            VERBATIM
-        )
+    if(NOT TARGET ${target})
+        message(WARNING "engine_copy_dll: Target '${target}' does not exist.")
+        return()
     endif()
+
+    message(STATUS "Configuring DLL copy for target '${target}'")
+
+    add_custom_command(
+        TARGET ${target}
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E
+        $<IF:$<BOOL:$<TARGET_RUNTIME_DLLS:${target}>>,copy_if_different,echo>
+        "$<TARGET_RUNTIME_DLLS:${target}>"
+        "$<TARGET_FILE_DIR:${target}>"
+        COMMAND_EXPAND_LISTS
+        VERBATIM
+    )
 endfunction()
