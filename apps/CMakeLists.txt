@@ -2,6 +2,7 @@ include(engine_utils)
 
 set(EXAMPLES
     sandbox
+    platformer_2d
 )
 
 foreach(example ${EXAMPLES})
