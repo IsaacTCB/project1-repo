@@ -9,6 +9,8 @@ namespace Input::Gamepad {
  * https://github.com/libsdl-org/SDL/blob/main/include/SDL3/SDL_gamepad.h
  */
 enum class Buttons : uint8_t {
+    UNKNOWN,
+
     /* Face buttons */
     SOUTH,
     EAST,
