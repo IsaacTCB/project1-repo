@@ -75,7 +75,7 @@ public:
     template <typename Func>
         requires std::is_invocable_r_v<bool, Func, Input::Gamepad::DeviceID> ||
                  std::is_invocable_r_v<void, Func, Input::Gamepad::DeviceID>
-    void pad_foreach(Func &&func);
+    void pad_foreach(Func &&func) const;
 
 private:
     bool keyboard_event(const EventInput &event);
@@ -110,7 +110,7 @@ private:
 template <typename Func>
     requires std::is_invocable_r_v<bool, Func, Input::Gamepad::DeviceID> ||
              std::is_invocable_r_v<void, Func, Input::Gamepad::DeviceID>
-void InputService::pad_foreach(Func &&func) {
+void InputService::pad_foreach(Func &&func) const {
     for (size_t i = 0; i < m_pad_connected.size(); i++) {
         if (!m_pad_connected[i]) {
             continue;
