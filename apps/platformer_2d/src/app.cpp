@@ -1,16 +1,19 @@
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 
 #include <core/camera.h>
+#include <core/input/gamepad.h>
+#include <core/input/keyboard.h>
 #include <core/logger.h>
 #include <core/math/color.h>
 #include <core/math/random.h>
 #include <core/math/vec2.h>
 #include <core/math/vec2i.h>
-
 #include <core/view_context_2d.h>
-#include <optional>
+
 #include <runtime/app/application.h>
 #include <runtime/app/context/frame_context.h>
 #include <runtime/asset_service.h>
@@ -20,9 +23,8 @@
 #include <entt/entity/registry.hpp>
 
 #include "components.h"
-#include "core/input/gamepad.h"
-#include "core/input/keyboard.h"
 #include "utils/gridmap.h"
+#include "utils/input.h"
 
 using Tile = uint16_t;
 using Tilemap = GridMap<Tile>;
@@ -40,6 +42,38 @@ constexpr auto m_tilecolor = ([]() constexpr {
 
 std::optional<Tilemap> m_tilemap;
 
+Tile get_tilemap_at_pos(Vec2 pos) {
+    auto tilepos = Vec2i{
+        (int)std::floor(pos.x / (float)TILE_SIZE),
+        (int)std::floor(pos.y / (float)TILE_SIZE),
+    };
+
+    size_t twidth = m_tilemap->width();
+    size_t theight = m_tilemap->height();
+
+    if ((tilepos.x < 0 || (size_t)tilepos.x >= twidth) ||
+        (tilepos.y < 0 || (size_t)tilepos.y >= theight)) {
+        return Tile{};
+    }
+
+    size_t idx = (twidth * tilepos.y) + tilepos.x;
+    return *(m_tilemap->data() + idx);
+}
+
+enum class InputAction : std::uint8_t {
+    /* player movement */
+    LEFT,
+    RIGHT,
+    UP,
+    DOWN,
+
+    /* player actions */
+    JUMP,
+
+    /* COUNT is required */
+    COUNT,
+};
+
 class Platformer2D : public IApplication {
     DECLARE_APP(Platformer2D);
 
@@ -56,6 +90,37 @@ public:
     void on_init() override {
         m_camera.zoom = 1.0f;
         m_camera.anchor = Camera2D::AnchorMode::CENTER;
+
+        m_input_action.bind(
+            InputAction::LEFT,
+            InputActionBind{
+                .keys = {Input::Key::Scancode::LEFT, Input::Key::Scancode::A},
+                .buttons = Input::Gamepad::Buttons::DPAD_LEFT,
+            });
+        m_input_action.bind(
+            InputAction::RIGHT,
+            InputActionBind{
+                .keys = {Input::Key::Scancode::RIGHT, Input::Key::Scancode::D},
+                .buttons = Input::Gamepad::Buttons::DPAD_RIGHT,
+            });
+        m_input_action.bind(
+            InputAction::UP,
+            InputActionBind{
+                .keys = {Input::Key::Scancode::UP, Input::Key::Scancode::W},
+                .buttons = Input::Gamepad::Buttons::DPAD_UP,
+            });
+        m_input_action.bind(
+            InputAction::DOWN,
+            InputActionBind{
+                .keys = {Input::Key::Scancode::DOWN, Input::Key::Scancode::S},
+                .buttons = Input::Gamepad::Buttons::DPAD_DOWN,
+            });
+        m_input_action.bind(
+            InputAction::JUMP,
+            InputActionBind{
+                .keys = {Input::Key::Scancode::SPACE, Input::Key::Scancode::UNKNOWN},
+                .buttons = Input::Gamepad::Buttons::SOUTH,
+            });
 
         m_vignette_texture = m_servers.asset.get_texture("vignette.png");
 
@@ -89,20 +154,24 @@ public:
          * the same view context twice */
         m_view_context = Camera2DUtils::build_view_context(m_camera, ctx.frame.viewport);
 
+        /* update the input action system */
+        m_input_action.update(m_servers.input);
+
         m_camera.zoom = (float)ctx.frame.viewport.size.y / 600.0f;
         m_registry.view<VelocityComponent, InputComponent>().each([&]([[maybe_unused]] auto entity, auto &vel) {
             Vec2 move{
-                ((float)m_servers.input.is_key_pressed(Input::Key::Scancode::RIGHT) -
-                    (float)m_servers.input.is_key_pressed(Input::Key::Scancode::LEFT)),
-                ((float)m_servers.input.is_key_pressed(Input::Key::Scancode::DOWN) -
-                    (float)m_servers.input.is_key_pressed(Input::Key::Scancode::UP)),
+                m_input_action.get_axis(InputAction::LEFT, InputAction::RIGHT),
+                m_input_action.get_axis(InputAction::UP, InputAction::DOWN),
             };
-
             m_servers.input.pad_foreach([&](Input::Gamepad::DeviceID device) {
                 move += m_servers.input.get_pad_stick(device, false);
-            });
 
-            if (move.length() > 0.01f) {
+                Vec2 look = m_servers.input.get_pad_stick(device, true);
+                m_camera.rotation += ((look.x * 0.5f) - m_camera.rotation) * delta * 1.0f;
+            });
+            move.limit_length(1.0f);
+
+            if (move.length() > 0.1f) {
                 Vec2 dir = move.normalized();
 
                 float acc = 20.0f;
@@ -112,14 +181,26 @@ public:
                 }
 
                 vel.velocity += dir * acc * delta;
-                vel.velocity.limit_length(10.0f);
+                vel.velocity.limit_length(move.length() * 10.0f);
             } else {
                 vel.velocity -= vel.velocity * delta * 10.0f;
             }
         });
 
         m_registry.view<TransformComponent, VelocityComponent>().each([](auto &transform, auto &vel) {
-            transform.position += vel.velocity;
+            // move x
+            if (get_tilemap_at_pos(transform.position + Vec2{vel.velocity.x, 0.0f})) {
+                vel.velocity.x = 0.0f;
+            }
+            transform.position.x += vel.velocity.x;
+
+            // move y
+            if (get_tilemap_at_pos(transform.position + Vec2{0, vel.velocity.y})) {
+                /* TODO: snap */
+                vel.velocity.y = 0.0f;
+            }
+            transform.position.y += vel.velocity.y;
+
             /* TODO: perform collision checks */
         });
 
@@ -220,6 +301,8 @@ private:
 
     entt::registry m_registry;
     entt::entity m_player_entity;
+
+    InputActionSystem<InputAction> m_input_action;
 };
 
 SET_APP(Platformer2D);

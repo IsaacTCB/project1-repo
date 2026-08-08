@@ -27,8 +27,7 @@ public:
         return m_data.size() / m_pitch;
     }
 
-    template <typename T2>
-    void fill_rect(size_t xpos, size_t ypos, size_t width, size_t height, T2 &&value = {}) {
+    void fill_rect(size_t xpos, size_t ypos, size_t width, size_t height, T value = T{}) {
         /* TODO: check boundaries */
 
         size_t xstart = std::max(xpos, static_cast<size_t>(0));
@@ -38,7 +37,7 @@ public:
 
         for (size_t y = ystart; y < yend; ++y) {
             for (size_t x = xstart; x < xend; ++x) {
-                m_data[(y * m_pitch) + x] = std::forward<T2>(value);
+                m_data[(y * m_pitch) + x] = value;
             }
         }
     }
