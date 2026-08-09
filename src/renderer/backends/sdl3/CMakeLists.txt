@@ -6,5 +6,5 @@ add_library(renderer_sdl3 STATIC
     sdl3_renderer.cpp
 )
 
-target_link_libraries(renderer_sdl3 PRIVATE SDL3::SDL3)
+target_link_libraries(renderer_sdl3 PRIVATE SDL3::SDL3 engine::core)
 target_compile_definitions(renderer_sdl3 PUBLIC -DRENDERER_SDL3_ENABLED=1)

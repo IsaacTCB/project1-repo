@@ -4,6 +4,7 @@ option(ENABLE_PCG32 "Uses PCG32 as the primary PRNG algorithm" ON)
 
 set(CORE_SOURCES
     logger.cpp
+    view_context_2d.cpp
     math/random.cpp
     math/vec2.cpp
     math/vec2i.cpp

@@ -4,6 +4,7 @@
 #include <memory>
 #include <optional>
 
+#include "core/assertion.h"
 #include "core/events/input_events.h"
 #include "core/events/platform_events.h"
 #include "core/events/window_events.h"
@@ -161,17 +162,19 @@ void EngineRuntime::render() {
     /* build render frame! */
     RenderContext render{
         .frame = m_frame_ctx,
+        .view_context = nullptr,
         .queue = m_queue,
         .clear_color = Color{25, 25, 25, 0},
     };
-    m_app_handler->render(render);
 
+    m_app_handler->render(render);
     render_frame(render);
 }
 
 void EngineRuntime::render_frame(RenderContext &ctx) {
     m_renderer->clear(ctx.clear_color);
-    m_renderer->render_pass(ctx.queue);
+    ASSERT(ctx.view_context, "View context must be built every frame!");
+    m_renderer->render_pass(*ctx.view_context, ctx.queue);
     m_renderer->swap_buffers();
 }
 
@@ -189,6 +192,7 @@ FrameContext &EngineRuntime::build_frame_context(float delta) {
     m_frame_ctx = {
         .delta = delta,
         .fps = m_fps,
+        .viewport = m_renderer->get_viewport(),
     };
     return m_frame_ctx;
 }

@@ -16,3 +16,7 @@ std::unique_ptr<Renderer> Renderer::create(DisplayWindowHandle &window_data) {
             return std::unique_ptr<Renderer>(nullptr);
     }
 }
+
+Viewport Renderer::get_viewport() const {
+    return m_screen_viewport;
+}

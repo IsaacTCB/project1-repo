@@ -5,9 +5,9 @@
 #include <SDL3/SDL.h>
 
 #include "core/assertion.h"
-#include "core/utils/handles.h"
 #include "core/logger.h"
 #include "core/math/vec2i.h"
+#include "core/utils/handles.h"
 #include "renderer/api/render_handles.h"
 
 struct SDL3Renderer::Impl {
@@ -23,6 +23,8 @@ SDL3Renderer::SDL3Renderer(DisplayWindowHandle &window_data)
     m_impl->renderer = SDL_CreateRenderer(m_impl->window, nullptr);
     SDL_SetRenderDrawBlendMode(m_impl->renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderVSync(m_impl->renderer, 1);
+
+    on_screen_resized(window_data.props.size);
 }
 
 SDL3Renderer::~SDL3Renderer() {
@@ -39,6 +41,13 @@ void SDL3Renderer::swap_buffers() {
 }
 
 void SDL3Renderer::on_screen_resized(const Vec2i &screen_size) {
+    m_screen_viewport = {
+        .position = {0, 0},
+        .size = {
+            screen_size.x,
+            screen_size.y,
+        },
+    };
     SDL_SetRenderLogicalPresentation(m_impl->renderer, screen_size.x, screen_size.y, SDL_LOGICAL_PRESENTATION_STRETCH);
 }
 
@@ -128,7 +137,7 @@ void SDL3Renderer::command(const RenderCommandDraw &command) {
     }
 }
 
-void SDL3Renderer::render_pass(const RenderQueue &queue) {
+void SDL3Renderer::render_pass([[maybe_unused]] const ViewContext2D &view, const RenderQueue &queue) {
     for (const auto &command : queue.get()) {
         std::visit([this](const auto &cmd) {
             this->command(cmd);

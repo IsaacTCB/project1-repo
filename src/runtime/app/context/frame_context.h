@@ -3,6 +3,8 @@
 #include <cstdint>
 
 #include "core/math/color.h"
+#include "core/view_context_2d.h"
+#include "core/viewport.h"
 #include "renderer/api/render_queue.h"
 
 struct FrameContext {
@@ -16,6 +18,11 @@ struct FrameContext {
      * Refreshes every second.
      */
     uint32_t fps;
+
+    /**
+     * @brief Current screen viewport for this frame
+     */
+    Viewport viewport;
 };
 
 struct UpdateContext {
@@ -24,7 +31,10 @@ struct UpdateContext {
 };
 
 struct RenderContext {
-    const FrameContext &frame;
+    FrameContext &frame;
+
+    /* final ViewContext */
+    ViewContext2D *view_context;
 
     /* used in rendering */
     RenderQueue &queue;
