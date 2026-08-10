@@ -1,4 +1,5 @@
 #include "gl_renderer.h"
+#include "gl_batch_builder.h"
 #include "gl_context.h"
 #include "gl_shader.h"
 #include "gl_shader_sources.h"
@@ -11,10 +12,8 @@
 #include "core/view_context_2d.h"
 #include "core/viewport.h"
 #include "renderer/api/render_queue.h"
-#include "renderer/backends/gl/gl_batchbuilder.h"
 
 #include <glad/gl.h>
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 

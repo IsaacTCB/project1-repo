@@ -4,7 +4,7 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/external/glm glm)
 add_library(renderer_gl STATIC
     gl_renderer.cpp
     gl_shader.cpp
-    gl_batchbuilder.cpp
+    gl_batch_builder.cpp
 )
 
 target_link_libraries(renderer_gl

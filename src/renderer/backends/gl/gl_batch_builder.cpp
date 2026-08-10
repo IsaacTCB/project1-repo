@@ -1,4 +1,4 @@
-#include "gl_batchbuilder.h"
+#include "gl_batch_builder.h"
 
 #include <array>
 #include <cstddef>
@@ -7,7 +7,6 @@
 #include <glad/gl.h>
 #include <glm/glm.hpp>
 
-#include "core/logger.h"
 #include "renderer/backends/gl/gl_texture.h"
 
 constexpr size_t QUAD_VERTEX_COUNT = 4;
