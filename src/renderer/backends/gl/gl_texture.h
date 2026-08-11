@@ -2,7 +2,7 @@
 
 #include <cstddef>
 
-#include "gl_shader.h"
+#include <glad/gl.h>
 
 struct GLTexture {
     GLuint id;
