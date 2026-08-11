@@ -59,7 +59,7 @@ bool GLBatchBuilder::can_fit_quad() const {
            m_indices.size() <= m_indices.capacity() - QUAD_INDEX_COUNT;
 }
 
-void GLBatchBuilder::draw_rect(float x, float y, float width, float height, const glm::vec4 &color, const GLTexture &texture) {
+void GLBatchBuilder::draw_rect(float x, float y, float width, float height, const glm::vec4 &color, const GLTexture &texture, GLShader &shader) {
     if (!can_fit_quad()) {
         flush();
     }
@@ -67,6 +67,7 @@ void GLBatchBuilder::draw_rect(float x, float y, float width, float height, cons
     /* build BatchKey */
     BatchKey key{
         .texture = texture.id,
+        .shader = shader.get_program(),
     };
 
     if (!m_current_key.has_value()) {
@@ -128,8 +129,10 @@ void GLBatchBuilder::flush() {
 
     glBindVertexArray(m_vao);
 
+    /* init texture and shader */
+    glUseProgram(m_current_key->shader);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, m_current_key.has_value() ? m_current_key->texture : 1);
+    glBindTexture(GL_TEXTURE_2D, m_current_key->texture);
 
     /* copy vertex buffer */
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);

@@ -69,8 +69,6 @@ GLRenderer::GLRenderer(DisplayWindowHandle &window_data)
     m_impl->shader = std::make_unique<GLShader>(
         g_vertex_shader_source,
         g_fragment_shader_source);
-
-    glUseProgram(m_impl->shader->get_program());
     m_impl->shader->set_int("u_texture", 0);
 
     m_impl->batch.init();
@@ -162,7 +160,6 @@ void GLRenderer::render_pass(const ViewContext2D &view, const RenderQueue &queue
     glm::mat4 view_matrix = get_camera_view_matrix(view.view_camera);
     m_impl->proj = proj_matrix * glm::inverse(view_matrix);
 
-    glUseProgram(m_impl->shader->get_program());
     m_impl->shader->set_mat4("u_view_proj", m_impl->proj);
 
     for (const auto &command : queue.get()) {
@@ -239,7 +236,7 @@ void GLRenderer::command(const RenderCommandDraw &command) {
     m_impl->batch.draw_rect(
         command.x, command.y,
         command.width, command.height,
-        color, *texture);
+        color, *texture, *m_impl->shader);
 }
 
 void GLRenderer::apply_viewport(const Viewport &viewport) {

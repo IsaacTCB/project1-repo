@@ -8,6 +8,7 @@
 #include <glad/gl.h>
 #include <glm/glm.hpp>
 
+#include "gl_shader.h"
 #include "gl_texture.h"
 
 class GLBatchBuilder {
@@ -15,7 +16,7 @@ public:
     void init(size_t quad_count = 1000);
     void close();
 
-    void draw_rect(float x, float y, float width, float height, const glm::vec4 &color, const GLTexture &texture);
+    void draw_rect(float x, float y, float width, float height, const glm::vec4 &color, const GLTexture &texture, GLShader &shader);
     void flush();
 
 private:
@@ -30,9 +31,11 @@ private:
 private:
     struct BatchKey {
         GLuint texture;
+        GLuint shader;
 
         bool operator==(const BatchKey &rhs) const {
-            return rhs.texture == texture;
+            return rhs.texture == texture &&
+                   rhs.shader == shader;
         }
 
         bool operator!=(const BatchKey &rhs) const {
