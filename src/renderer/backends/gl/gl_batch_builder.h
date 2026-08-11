@@ -20,15 +20,6 @@ public:
     void flush();
 
 private:
-    [[nodiscard]]
-    bool can_fit_quad() const;
-
-private:
-    GLuint m_vao;
-    GLuint m_vbo;
-    GLuint m_ibo;
-
-private:
     struct BatchKey {
         GLuint texture;
         GLuint shader;
@@ -48,6 +39,15 @@ private:
         glm::vec2 uv;
         glm::vec4 color;
     };
+
+private:
+    [[nodiscard]]
+    bool can_fit_quad() const;
+
+    void set_batch_key(const BatchKey &key);
+
+private:
+    GLuint m_vao, m_vbo, m_ibo;
 
     std::vector<BatchVertex> m_vertices;
     std::vector<std::uint32_t> m_indices;

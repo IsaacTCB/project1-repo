@@ -55,25 +55,32 @@ bool GLBatchBuilder::can_fit_quad() const {
            m_indices.size() <= m_indices.capacity() - QUAD_INDEX_COUNT;
 }
 
+void GLBatchBuilder::set_batch_key(const BatchKey &key) {
+    /* if the no key has been set, just set it and skip */
+    if (!m_current_key.has_value()) {
+        m_current_key.emplace(key);
+        return;
+    }
+
+    /* if key is the same, don't flush */
+    if (*m_current_key == key) {
+        return;
+    }
+
+    /* the new key is different, flush all quads into a draw call */
+    flush();
+    m_current_key.emplace(key);
+}
+
 void GLBatchBuilder::draw_rect(float x, float y, float width, float height, const glm::vec4 &color, const GLTexture &texture, GLShader &shader) {
     if (!can_fit_quad()) {
         flush();
     }
 
-    /* build BatchKey */
-    BatchKey key{
+    set_batch_key({
         .texture = texture.id,
         .shader = shader.get_program(),
-    };
-
-    if (!m_current_key.has_value()) {
-        m_current_key.emplace(key);
-    }
-
-    if (*m_current_key != key) {
-        flush();
-        m_current_key.emplace(key);
-    }
+    });
 
     const auto index_base =
         static_cast<std::uint32_t>(m_vertices.size());
