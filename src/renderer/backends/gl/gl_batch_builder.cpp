@@ -7,6 +7,7 @@
 #include <glad/gl.h>
 #include <glm/glm.hpp>
 
+#include "core/assertion.h"
 #include "renderer/backends/gl/gl_texture.h"
 
 constexpr size_t QUAD_VERTEX_COUNT = 4;
@@ -70,7 +71,7 @@ void GLBatchBuilder::draw_rect(float x, float y, float width, float height, cons
 
     if (*m_current_key != key) {
         flush();
-        *m_current_key = key;
+        m_current_key.emplace(key);
     }
 
     const auto index_base =
@@ -112,6 +113,12 @@ void GLBatchBuilder::draw_rect(float x, float y, float width, float height, cons
 void GLBatchBuilder::flush() {
     /* fail-safe: nothing was drawn, don't flush. */
     if (m_vertices.size() == 0) {
+        m_current_key.reset();
+        return;
+    }
+
+    if (!m_current_key.has_value()) {
+        ASSERT(false, "GLBatchBuilder::flush(): Attempted to flush without having set a key beforehand.");
         return;
     }
 
@@ -142,4 +149,5 @@ void GLBatchBuilder::flush() {
 
     m_vertices.clear();
     m_indices.clear();
+    m_current_key.reset();
 }
