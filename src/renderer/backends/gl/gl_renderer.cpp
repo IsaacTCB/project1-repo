@@ -23,10 +23,7 @@ struct GLRenderer::Impl {
     GLContext context;
     HandlePool<GLTexture> texture_pool;
     std::unique_ptr<GLShader> shader;
-
     glm::mat4 proj;
-    GLuint vao, vbo, ibo;
-
     GLTexture white_texture;
     GLBatchBuilder batch;
 };
@@ -69,36 +66,6 @@ GLRenderer::GLRenderer(DisplayWindowHandle &window_data)
         m_impl->white_texture = gl_create_texture(white_pixel);
     }
 
-    glGenVertexArrays(1, &m_impl->vao);
-    glBindVertexArray(m_impl->vao);
-
-    // clang-format off
-    float vertices[]{
-        0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
-        1.0f, 0.0f, 0.0f,  1.0f, 0.0f,
-        1.0f, 1.0f, 0.0f,  1.0f, 1.0f,
-        0.0f, 1.0f, 0.0f,  0.0f, 1.0f,
-    };
-
-    uint32_t indices[] = {
-        0, 1, 2,
-        2, 3, 0,
-    };
-    // clang-format on
-
-    glGenBuffers(1, &m_impl->vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, m_impl->vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(sizeof(float) * 0));
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(sizeof(float) * 3));
-    glEnableVertexAttribArray(1);
-
-    glGenBuffers(1, &m_impl->ibo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_impl->ibo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
     m_impl->shader = std::make_unique<GLShader>(
         g_vertex_shader_source,
         g_fragment_shader_source);
@@ -113,10 +80,6 @@ GLRenderer::GLRenderer(DisplayWindowHandle &window_data)
 
 GLRenderer::~GLRenderer() {
     m_impl->batch.close();
-
-    glDeleteBuffers(1, &m_impl->ibo);
-    glDeleteBuffers(1, &m_impl->vbo);
-    glDeleteVertexArrays(1, &m_impl->vao);
 }
 
 void GLRenderer::clear(Color color) {
@@ -264,9 +227,6 @@ void GLRenderer::command(const RenderCommandDraw &command) {
     if (!texture) {
         texture = &m_impl->white_texture;
     }
-
-    glBindVertexArray(m_impl->vao);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_impl->ibo);
 
     auto [col_r, col_g, col_b, col_a] = command.color.normalized();
     glm::vec4 color{

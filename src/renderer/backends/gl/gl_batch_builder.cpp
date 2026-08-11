@@ -35,6 +35,10 @@ void GLBatchBuilder::init(size_t quad_count) {
     glGenBuffers(1, &m_ibo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
 
+    /* FIXME: the batch builder currently does not create a shader program for it to use.
+     * That's currently being delegated to GLRenderer, but that's a hack and not a proper
+     * solution. */
+
     /* NOTE: this batcher is currently only used for quads. In the future we might
      * want to add other primitive shapes, like triangles and shader-less circles.
      * That's why we are building the index buffer dynamically per-frame. */
