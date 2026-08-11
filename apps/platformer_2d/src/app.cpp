@@ -259,27 +259,33 @@ public:
         ctx.queue.draw_color(Color{255, 0, 0, 255}, Vec2i{mouse_pos}, Vec2i{8, 8});
     }
 
-    void draw_checker_background(RenderContext &ctx) {
+    void draw_checker_background(RenderContext &ctx) const {
         /* FIXME: not an app problem, but an engine one:
          * currently our OpenGL renderer does not support any
          * batching, so each rectangle will consume ONE draw
          * call, which is wasteful since we are rendering
          * hundreds of rectangles. */
-        auto bounds = ctx.view_context->get_bounds_aabb();
-        auto tx = static_cast<int>(std::floor(bounds.tl.x / 16.0f));
-        auto ty = static_cast<int>(std::floor(bounds.tl.y / 16.0f));
-        auto tw = static_cast<int>(std::ceil(bounds.width() / 16.0f) + 1);
-        auto th = static_cast<int>(std::ceil(bounds.height() / 16.0f) + 1);
+        constexpr float PARALLAX = 0.8f;
+        const Vec2 parallax_offset = m_camera.position * PARALLAX;
+
+        const auto bounds = ctx.view_context->get_bounds_aabb();
+        const auto tx = static_cast<int>(std::floor((bounds.tl.x - parallax_offset.x) / 16.0f));
+        const auto ty = static_cast<int>(std::floor((bounds.tl.y - parallax_offset.y) / 16.0f));
+        const auto tw = static_cast<int>(std::ceil(bounds.width() / 16.0f) + 1);
+        const auto th = static_cast<int>(std::ceil(bounds.height() / 16.0f) + 1);
         for (int y = 0; y < th; ++y) {
             for (int x = 0; x < tw; ++x) {
-                int bx = x + tx;
-                int by = y + ty;
+                const int bx = x + tx;
+                const int by = y + ty;
 
-                bool odd = (std::abs(by + bx) % 2) == 1;
+                const bool odd = (std::abs(by + bx) % 2) == 1;
                 ctx.queue.draw_color(
                     odd ? Color{114, 168, 211}
                         : Color{115, 174, 210},
-                    Vec2i{bx * 16, by * 16},
+                    Vec2i{
+                        (bx * 16) + static_cast<int>(parallax_offset.x),
+                        (by * 16) + static_cast<int>(parallax_offset.y),
+                    },
                     Vec2i{16, 16});
             }
         }
