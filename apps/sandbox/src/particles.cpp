@@ -35,18 +35,13 @@ void ParticleSystem2D::render(RenderQueue &queue) {
 /* private */
 
 void ParticleSystem2D::update_emitters(float delta) {
-    m_emitters.foreach ([this, delta](EmitterStorage &emitter) {
-        if (!emitter.emitting) {
-            return;
-        }
-
-        /* update emitter */
-        emitter.emission_accumulator += delta * emitter.emission_rate;
-        while (emitter.emission_accumulator >= 1.0f) {
-            emit(emitter);
-            emitter.emission_accumulator -= 1.0f;
-        }
-    });
+    m_emitters.update(
+        delta,
+        [](EmitterPool::EmitterData &instance, void *user) {
+            auto *system = static_cast<ParticleSystem2D *>(user);
+            system->emit(instance);
+        },
+        this);
 }
 
 void ParticleSystem2D::update_particles(float delta) {
@@ -67,7 +62,7 @@ void ParticleSystem2D::update_particles(float delta) {
     }
 }
 
-void ParticleSystem2D::emit(ParticleSystem2D::EmitterStorage &emitter) {
+void ParticleSystem2D::emit(EmitterPool::EmitterData &emitter) {
     const ParticleEffect2D *effect = m_effects.get(emitter.effect);
     if (!effect) {
         return;
