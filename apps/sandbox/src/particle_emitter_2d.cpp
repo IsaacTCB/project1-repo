@@ -1,4 +1,4 @@
-#include "particles_emitter.h"
+#include "particle_emitter_2d.h"
 
 #include "core/math/vec2.h"
 

@@ -10,7 +10,7 @@
 #include "core/utils/handles.h"
 #include "renderer/api/render_queue.h"
 
-#include "particles_emitter.h"
+#include "particle_emitter_2d.h"
 
 using EffectHandle = Handle;
 struct ParticleEffect2D {

@@ -1,4 +1,4 @@
-#include "particles.h"
+#include "particle_system_2d.h"
 
 #include "core/math/random.h"
 #include "core/math/vec2.h"
