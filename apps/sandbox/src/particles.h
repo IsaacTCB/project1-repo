@@ -8,8 +8,9 @@
 #include "core/math/color.h"
 #include "core/math/vec2.h"
 #include "core/utils/handles.h"
-
 #include "renderer/api/render_queue.h"
+
+#include "particles_emitter.h"
 
 using EffectHandle = Handle;
 struct ParticleEffect2D {
@@ -26,41 +27,6 @@ struct ParticleEffect2D {
 
     Color color_start = Color::WHITE;
     Color color_end = Color::WHITE;
-};
-
-class ParticleSystem2D;
-
-using EmitterHandle = Handle;
-class ParticleEmitter2D {
-public:
-    ParticleEmitter2D() = default;
-    ~ParticleEmitter2D();
-    ParticleEmitter2D(const ParticleEmitter2D &) = delete;
-    ParticleEmitter2D &operator=(const ParticleEmitter2D &) = delete;
-    ParticleEmitter2D(ParticleEmitter2D &&other) noexcept;
-    ParticleEmitter2D &operator=(ParticleEmitter2D &&other) noexcept;
-
-    void set_position(const Vec2 &position);
-    void set_rotation(float angle_radius);
-    void set_emitting(bool emitting);
-
-    void reset() {
-        destroy_handle();
-        m_system = nullptr;
-        m_handle = {};
-    }
-
-protected:
-    friend ParticleSystem2D;
-    ParticleEmitter2D(ParticleSystem2D *system, EmitterHandle handle)
-        : m_system(system), m_handle(handle) {}
-
-private:
-    void destroy_handle();
-
-private:
-    ParticleSystem2D *m_system{nullptr};
-    EmitterHandle m_handle{};
 };
 
 class ParticleSystem2D {
@@ -160,7 +126,7 @@ private:
     void emit(EmitterStorage &emitter);
 
 private:
-    static constexpr size_t PARTICLE_COUNT = 100;
+    static constexpr size_t PARTICLE_COUNT = 1000;
 
     struct ParticleStorage {
         std::array<Vec2, PARTICLE_COUNT> pos;
