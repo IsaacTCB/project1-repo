@@ -2,6 +2,7 @@
 #include <vector>
 
 #include "core/camera.h"
+#include "core/input/keyboard.h"
 #include "core/logger.h"
 #include "core/math/random.h"
 #include "core/math/vec2.h"
@@ -16,6 +17,22 @@
 #include "runtime/input_service.h"
 
 #include "entity.h"
+#include "particles.h"
+
+ParticleEffect2D s_particle{
+    .lifetime_min = 0.5f,
+    .lifetime_max = 8.0f,
+
+    .emission_rate = 60.0f,
+
+    .speed_min = 25.0f,
+    .speed_max = 35.0f,
+
+    .spread = 0.5f,
+
+    .color_start = Color::WHITE,
+    .color_end = Color::RED,
+};
 
 class SandboxApplication : public IApplication {
     DECLARE_APP(SandboxApplication);
@@ -30,6 +47,11 @@ public:
 
         m_camera.zoom = 0.8f;
         m_camera.anchor = Camera2D::AnchorMode::CENTER;
+
+        auto handle = m_particles.create_effect(s_particle);
+        m_emitter = m_particles.create_emitter(handle);
+        m_emitter.set_emitting(true);
+        m_emitter.set_rotation(2.0f);
     }
 
     void on_update(UpdateContext &ctx) override {
@@ -54,8 +76,19 @@ public:
             float speed_scale = Random::randf_range(0.85f, 1.2f);
             m_entities.emplace_back(Vec2(mouse_pos), speed_scale);
         }
+
+        /* update emitter */
+        m_emitter.set_position(mouse_pos);
+        static float m_angle = 0.0f;
+        m_angle += delta * 3.0f;
+        m_emitter.set_rotation(m_angle);
+
         if (m_servers.input.is_mouse_button_just_released(Input::Mouse::Buttons::RIGHT)) {
             LOG_TRACE("Walked");
+        }
+
+        if (m_servers.input.is_key_just_pressed(Input::Key::Scancode::T)) {
+            m_emitter.reset();
         }
 
         Vec2 move{};
@@ -112,6 +145,8 @@ public:
 
         m_camera.position.x = std::floor(m_entities[0].pos.x + 100.0f);
         m_camera.position.y = std::floor(m_entities[0].pos.y + 100.0f);
+
+        m_particles.update(delta);
     }
 
     void on_draw(RenderContext &ctx) override {
@@ -149,6 +184,8 @@ public:
             Color{0xFF, 0x00, 0xFF, 0x20},
             Vec2i{bounds.tl} + Vec2i{8, 8},
             Vec2i{bounds.size()} - Vec2i{16, 16});
+
+        m_particles.render(ctx.queue);
     }
 
     void on_close() override {
@@ -167,6 +204,9 @@ private:
     Camera2D m_camera;
 
     ViewContext2D m_view_context;
+
+    ParticleSystem2D m_particles;
+    ParticleEmitter2D m_emitter;
 };
 
 SET_APP(SandboxApplication);

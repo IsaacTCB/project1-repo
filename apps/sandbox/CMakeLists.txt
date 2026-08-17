@@ -1,5 +1,6 @@
 engine_create_application(${EXAMPLE_NAME}
     src/sandbox_app.cpp
+    src/particles.cpp
 )
 
 set(EXAMPLE_ASSETS
