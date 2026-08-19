@@ -16,18 +16,18 @@
 #include "runtime/asset_service.h"
 #include "runtime/camera_2d_utils.h"
 #include "runtime/input_service.h"
+#include "runtime/system/particle_system_2d.h"
 
 #include "entity.h"
-#include "particle_system_2d.h"
 
 ParticleEffect2D s_particle{
-    .lifetime_min = 0.5f,
-    .lifetime_max = 8.0f,
+    .lifetime_min = 0.25f,
+    .lifetime_max = 4.0f,
 
-    .emission_rate = 60.0f,
+    .emission_rate = 120.0f,
 
-    .speed_min = 25.0f,
-    .speed_max = 35.0f,
+    .speed_min = 50.0f,
+    .speed_max = 70.0f,
 
     .spread = 0.5f,
 
@@ -81,7 +81,7 @@ public:
         /* update emitter */
         m_emitter.set_position(mouse_pos);
         static float m_angle = 0.0f;
-        m_angle += delta * 3.0f;
+        m_angle += delta * 6.0f;
         m_emitter.set_rotation(m_angle);
 
         if (m_servers.input.is_mouse_button_just_released(Input::Mouse::Buttons::RIGHT)) {

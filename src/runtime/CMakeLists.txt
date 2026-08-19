@@ -5,6 +5,8 @@ set(RUNTIME_SOURCES
     asset_service.cpp
     input_service.cpp
     image/decoder.cpp
+    system/particle_emitter_2d.cpp
+    system/particle_system_2d.cpp
     runtime.cpp
 )
 
