@@ -24,18 +24,18 @@ ParticleEffect2D s_particle{
     .lifetime_min = 0.25f,
     .lifetime_max = 1.0f,
 
-    .emission_rate = 120.0f,
+    .emission_rate = 400,
 
     .speed_min = 50.0f,
     .speed_max = 70.0f,
 
     .spread = 3.1415926535f,
 
-    .color_start = Color{0xEB, 0xCF, 0x34, 0x80},
-    .color_end = Color{0x3F, 0x00, 0x00, 0x00},
+    .color_start = Color{0xEB, 0xCF, 0x34, 0x40},
+    .color_end = Color{0xFF, 0x00, 0x00, 0x00},
 
     .scale_start = 0.1f,
-    .scale_end = 3.0f,
+    .scale_end = 8.0f,
 
     .particle_size = Vec2{16.0f, 16.0f},
 };

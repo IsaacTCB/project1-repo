@@ -52,7 +52,7 @@ void ParticleEmitter2D::destroy_handle() {
 /*    EmitterPool    */
 /* ================= */
 
-void EmitterPool::set_rate(EmitterHandle emitter, float emission_rate) {
+void EmitterPool::set_rate(EmitterHandle emitter, uint32_t emission_rate) {
     EmitterData *instance = m_pool.get(emitter);
     if (!instance) {
         return;

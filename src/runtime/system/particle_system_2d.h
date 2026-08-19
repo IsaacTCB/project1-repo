@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <utility>
 
@@ -18,7 +19,7 @@ struct ParticleEffect2D {
     float lifetime_max;
 
     /* how many times per second this particle will get generated? */
-    float emission_rate;
+    uint32_t emission_rate;
 
     float speed_min = 1.0f;
     float speed_max = 1.0f;
@@ -58,9 +59,9 @@ public:
     [[nodiscard]]
     ParticleEmitter2D create_emitter(EffectHandle effect) {
         /* HACK: don't do this */
-        float rate = m_effects.has(effect)
-                       ? m_effects.get(effect)->emission_rate
-                       : 0.0f;
+        uint32_t rate = m_effects.has(effect)
+                          ? m_effects.get(effect)->emission_rate
+                          : 0;
 
         return m_emitters.create(EmitterPool::EmitterData{
             .effect = effect,

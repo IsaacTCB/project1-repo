@@ -2,6 +2,7 @@
 
 #include "core/math/vec2.h"
 #include "core/utils/handles.h"
+#include <cstdint>
 
 using EmitterHandle = Handle;
 
@@ -54,7 +55,7 @@ public:
         Handle effect; /* effect particle handle */
         Vec2 position;
         float rotation;
-        float emission_rate;
+        uint32_t emission_rate;
 
         /* emitter state */
         float emission_accumulator;
@@ -82,7 +83,7 @@ public:
             }
 
             /* update emitter */
-            emitter.emission_accumulator += delta * emitter.emission_rate;
+            emitter.emission_accumulator += delta * static_cast<float>(emitter.emission_rate);
             while (emitter.emission_accumulator >= 1.0f) {
                 emit_callback(emitter, user);
                 emitter.emission_accumulator -= 1.0f;
@@ -91,7 +92,7 @@ public:
     }
 
 protected:
-    void set_rate(EmitterHandle emitter, float emission_rate);
+    void set_rate(EmitterHandle emitter, uint32_t emission_rate);
     void set_position(EmitterHandle emitter, const Vec2 &position);
     void set_angle(EmitterHandle emitter, float angle);
     void set_emitting(EmitterHandle emitter, bool emitting);
