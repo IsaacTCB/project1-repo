@@ -7,14 +7,21 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 
+/**
+ * @brief Lerps a color from A to B
+ *
+ * @param a color A
+ * @param b color B
+ * @param t amount to lerp to
+ * @return A new color object interpolated between `a`` and `b` using `t`
+ */
 static Color lerp_color(const Color &a, const Color &b, float t) {
     return Color{
-        static_cast<uint8_t>(a.r + (int)(static_cast<float>(b.r - a.r) * t)),
-        static_cast<uint8_t>(a.g + (int)(static_cast<float>(b.g - a.g) * t)),
-        static_cast<uint8_t>(a.b + (int)(static_cast<float>(b.b - a.b) * t)),
-        static_cast<uint8_t>(a.a + (int)(static_cast<float>(b.a - a.a) * t)),
+        static_cast<uint8_t>(a.r + static_cast<int>(static_cast<float>(b.r - a.r) * t)),
+        static_cast<uint8_t>(a.g + static_cast<int>(static_cast<float>(b.g - a.g) * t)),
+        static_cast<uint8_t>(a.b + static_cast<int>(static_cast<float>(b.b - a.b) * t)),
+        static_cast<uint8_t>(a.a + static_cast<int>(static_cast<float>(b.a - a.a) * t)),
     };
 }
 
@@ -28,17 +35,29 @@ void ParticleSystem2D::update(float delta) {
 }
 
 void ParticleSystem2D::render(RenderQueue &queue) {
-    for (size_t i = 0; i < PARTICLE_COUNT; ++i) {
-        if (!m_particles->alive[i]) {
+    for (size_t p{}; p < PARTICLE_COUNT; ++p) {
+        if (!m_particles->alive[p]) {
             continue;
         }
 
-        float percent = m_particles->lifetime_remaining[i] /
-                        m_particles->lifetime[i];
-        percent = std::max(percent, 0.0f);
+        ParticleEffect2D *effect = m_effects.get(m_particles->effect[p]);
+        if (!effect) {
+            continue;
+        }
 
-        Color color = lerp_color(m_particles->color_end[i], m_particles->color_start[i], percent);
-        queue.draw_color(color, Vec2i{m_particles->pos[i]}, Vec2i{Vec2{16.0f, 16.0f} * percent});
+        /* get lifetime percent */
+        float t = m_particles->lifetime_remaining[p] /
+                  m_particles->lifetime[p];
+        t = 1.0f - std::clamp(t, 0.0f, 1.0f);
+
+        /* get effect values */
+        Color color = lerp_color(effect->color_start, effect->color_end, t);
+        float scale = std::lerp(effect->scale_start, effect->scale_end, t);
+
+        /* draw particle (centered) */
+        Vec2 size = effect->particle_size * scale;
+        Vec2 pos = m_particles->pos[p] - (size * 0.5f);
+        queue.draw_color(color, Vec2i{pos}, Vec2i{size});
     }
 }
 
@@ -93,10 +112,7 @@ void ParticleSystem2D::emit(EmitterPool::EmitterData &emitter) {
         std::sin(angle) * initial_speed,
     };
     m_particles->vel[m_index] = initial_velocity;
-
-    /* colors */
-    m_particles->color_start[m_index] = effect->color_start;
-    m_particles->color_end[m_index] = effect->color_end;
+    m_particles->effect[m_index] = emitter.effect;
 
     /* apply emitter state */
     m_particles->pos[m_index] = emitter.position;

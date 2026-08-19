@@ -20,13 +20,22 @@ struct ParticleEffect2D {
     /* how many times per second this particle will get generated? */
     float emission_rate;
 
-    float speed_min;
-    float speed_max;
+    float speed_min = 1.0f;
+    float speed_max = 1.0f;
 
-    float spread;
+    float spread = 0.0f;
 
+    /* color transition state */
     Color color_start = Color::WHITE;
     Color color_end = Color::WHITE;
+
+    /* size scale */
+    float scale_start = 1.0f;
+    float scale_end = 0.2f;
+
+    /* particle props */
+    Vec2 particle_size{16.0f, 16.0f};
+    // TODO: add particle textures
 };
 
 class ParticleSystem2D {
@@ -76,8 +85,7 @@ private:
         std::array<Vec2, PARTICLE_COUNT> vel;
         std::array<float, PARTICLE_COUNT> lifetime;
         std::array<float, PARTICLE_COUNT> lifetime_remaining;
-        std::array<Color, PARTICLE_COUNT> color_start;
-        std::array<Color, PARTICLE_COUNT> color_end;
+        std::array<EffectHandle, PARTICLE_COUNT> effect{};
         std::array<bool, PARTICLE_COUNT> alive{};
     };
 

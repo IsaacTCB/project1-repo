@@ -22,17 +22,22 @@
 
 ParticleEffect2D s_particle{
     .lifetime_min = 0.25f,
-    .lifetime_max = 4.0f,
+    .lifetime_max = 1.0f,
 
     .emission_rate = 120.0f,
 
     .speed_min = 50.0f,
     .speed_max = 70.0f,
 
-    .spread = 0.5f,
+    .spread = 3.1415926535f,
 
-    .color_start = Color::WHITE,
-    .color_end = Color::RED,
+    .color_start = Color{0xEB, 0xCF, 0x34, 0x80},
+    .color_end = Color{0x3F, 0x00, 0x00, 0x00},
+
+    .scale_start = 0.1f,
+    .scale_end = 3.0f,
+
+    .particle_size = Vec2{16.0f, 16.0f},
 };
 
 class SandboxApplication : public IApplication {
@@ -80,9 +85,9 @@ public:
 
         /* update emitter */
         m_emitter.set_position(mouse_pos);
-        static float m_angle = 0.0f;
-        m_angle += delta * 6.0f;
-        m_emitter.set_rotation(m_angle);
+        // static float m_angle = 0.0f;
+        // m_angle += delta * 6.0f;
+        // m_emitter.set_rotation(m_angle);
 
         if (m_servers.input.is_mouse_button_just_released(Input::Mouse::Buttons::RIGHT)) {
             LOG_TRACE("Walked");
