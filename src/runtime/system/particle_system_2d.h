@@ -76,6 +76,8 @@ private:
         std::array<Vec2, PARTICLE_COUNT> vel;
         std::array<float, PARTICLE_COUNT> lifetime;
         std::array<float, PARTICLE_COUNT> lifetime_remaining;
+        std::array<Color, PARTICLE_COUNT> color_start;
+        std::array<Color, PARTICLE_COUNT> color_end;
         std::array<bool, PARTICLE_COUNT> alive{};
     };
 

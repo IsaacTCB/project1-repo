@@ -9,6 +9,15 @@
 #include <cstdint>
 #include <memory>
 
+static Color lerp_color(const Color &a, const Color &b, float t) {
+    return Color{
+        static_cast<uint8_t>(a.r + (int)(static_cast<float>(b.r - a.r) * t)),
+        static_cast<uint8_t>(a.g + (int)(static_cast<float>(b.g - a.g) * t)),
+        static_cast<uint8_t>(a.b + (int)(static_cast<float>(b.b - a.b) * t)),
+        static_cast<uint8_t>(a.a + (int)(static_cast<float>(b.a - a.a) * t)),
+    };
+}
+
 ParticleSystem2D::ParticleSystem2D() {
     m_particles = std::make_unique<ParticleStorage>();
 }
@@ -28,7 +37,8 @@ void ParticleSystem2D::render(RenderQueue &queue) {
                         m_particles->lifetime[i];
         percent = std::max(percent, 0.0f);
 
-        queue.draw_color(Color{255, 255, 255, (uint8_t)((float)120 * percent)}, Vec2i{m_particles->pos[i]}, Vec2i{Vec2{16.0f, 16.0f} * percent});
+        Color color = lerp_color(m_particles->color_end[i], m_particles->color_start[i], percent);
+        queue.draw_color(color, Vec2i{m_particles->pos[i]}, Vec2i{Vec2{16.0f, 16.0f} * percent});
     }
 }
 
@@ -83,6 +93,10 @@ void ParticleSystem2D::emit(EmitterPool::EmitterData &emitter) {
         std::sin(angle) * initial_speed,
     };
     m_particles->vel[m_index] = initial_velocity;
+
+    /* colors */
+    m_particles->color_start[m_index] = effect->color_start;
+    m_particles->color_end[m_index] = effect->color_end;
 
     /* apply emitter state */
     m_particles->pos[m_index] = emitter.position;
