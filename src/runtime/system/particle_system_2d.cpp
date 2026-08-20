@@ -2,6 +2,7 @@
 
 #include "core/math/random.h"
 #include "core/math/vec2.h"
+#include "renderer/api/render_handles.h"
 
 #include <algorithm>
 #include <cmath>
@@ -53,7 +54,12 @@ void ParticleSystem2D::render(RenderQueue &queue) {
         /* draw particle (centered) */
         Vec2 size = effect->particle_size * scale;
         Vec2 pos = m_particles->pos[p] - (size * 0.5f);
-        queue.draw_color(color, Vec2i{pos}, Vec2i{size});
+
+        if (TextureHandle texture = effect->particle_texture.get()) {
+            queue.draw_texture(texture, Vec2i{pos}, Vec2i{size});
+        } else {
+            queue.draw_color(color, Vec2i{pos}, Vec2i{size});
+        }
     });
 }
 

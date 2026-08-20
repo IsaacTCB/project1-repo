@@ -12,6 +12,7 @@
 #include "core/utils/handles.h"
 #include "renderer/api/render_queue.h"
 
+#include "../asset_service.h"
 #include "particle_emitter_2d.h"
 
 using EffectHandle = Handle;
@@ -35,9 +36,9 @@ struct ParticleEffect2D {
     float scale_end = 0.2f;
 
     /* particle props */
+    TextureRef particle_texture;
     Vec2 particle_size{16.0f, 16.0f};
     Vec2 particle_gravity{0.0f, 0.0f};
-    // TODO: add particle textures
 };
 
 class ParticleSystem2D {

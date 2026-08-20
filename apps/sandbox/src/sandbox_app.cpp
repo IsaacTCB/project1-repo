@@ -36,7 +36,7 @@ public:
         m_camera.zoom = 0.8f;
         m_camera.anchor = Camera2D::AnchorMode::CENTER;
 
-        auto handle = m_particles.create_effect(ParticleEffect2D{
+        m_emitter_effect = m_particles.create_effect(ParticleEffect2D{
             .lifetime_min = 0.25f,
             .lifetime_max = 1.0f,
 
@@ -56,10 +56,11 @@ public:
             .scale_end = 8.0f,
 
             /* misc. */
+            .particle_texture{},
             .particle_size = Vec2{10.0f, 10.0f},
             .particle_gravity = Vec2{0.0f, -8.0f},
         });
-        m_emitter = m_particles.create_emitter(handle);
+        m_emitter = m_particles.create_emitter(m_emitter_effect);
         m_emitter.set_emitting(true);
         m_emitter.set_rotation(2.0f);
     }
@@ -99,6 +100,12 @@ public:
 
         if (m_servers.input.is_key_just_pressed(Input::Key::Scancode::T)) {
             m_emitter.reset();
+
+            /* reset effect */
+            if (m_emitter_effect) {
+                m_particles.destroy_effect(m_emitter_effect);
+                m_emitter_effect = {};
+            }
         }
 
         Vec2 move{};
@@ -200,6 +207,13 @@ public:
 
     void on_close() override {
         LOG_INFO("Application ended!");
+
+        m_emitter.reset();
+
+        if (m_emitter_effect) {
+            m_particles.destroy_effect(m_emitter_effect);
+            m_emitter_effect = {};
+        }
     }
 
     [[nodiscard]]
@@ -217,6 +231,7 @@ private:
 
     ParticleSystem2D m_particles;
     ParticleEmitter2D m_emitter;
+    EffectHandle m_emitter_effect;
 };
 
 SET_APP(SandboxApplication);
