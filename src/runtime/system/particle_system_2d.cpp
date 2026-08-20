@@ -14,7 +14,7 @@
  * @param a color A
  * @param b color B
  * @param t amount to lerp to
- * @return A new color object interpolated between `a`` and `b` using `t`
+ * @return A new color object interpolated between `a` and `b` using `t`
  */
 static Color lerp_color(const Color &a, const Color &b, float t) {
     return Color{
@@ -35,14 +35,10 @@ void ParticleSystem2D::update(float delta) {
 }
 
 void ParticleSystem2D::render(RenderQueue &queue) {
-    for (size_t p{}; p < PARTICLE_COUNT; ++p) {
-        if (!m_particles->alive[p]) {
-            continue;
-        }
-
+    particle_foreach([&](size_t p) {
         const ParticleEffect2D *effect = m_effects.get(m_particles->effect[p]);
         if (!effect) {
-            continue;
+            return;
         }
 
         /* get lifetime percent */
@@ -58,7 +54,7 @@ void ParticleSystem2D::render(RenderQueue &queue) {
         Vec2 size = effect->particle_size * scale;
         Vec2 pos = m_particles->pos[p] - (size * 0.5f);
         queue.draw_color(color, Vec2i{pos}, Vec2i{size});
-    }
+    });
 }
 
 /* private */
@@ -74,15 +70,11 @@ void ParticleSystem2D::update_emitters(float delta) {
 }
 
 void ParticleSystem2D::update_particles(float delta) {
-    for (size_t p = 0; p < PARTICLE_COUNT; ++p) {
-        if (!m_particles->alive[p]) {
-            continue;
-        }
-
+    particle_foreach([&](size_t p) {
         const ParticleEffect2D *effect = m_effects.get(m_particles->effect[p]);
         if (!effect) {
             m_particles->alive[p] = false;
-            continue;
+            return;
         }
 
         /* apply gravity to velocity */
@@ -97,7 +89,7 @@ void ParticleSystem2D::update_particles(float delta) {
         if (m_particles->lifetime_remaining[p] <= 0.0f) {
             m_particles->alive[p] = false;
         }
-    }
+    });
 }
 
 void ParticleSystem2D::emit(EmitterPool::EmitterData &emitter) {

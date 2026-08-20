@@ -3,6 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <utility>
 
@@ -78,9 +79,18 @@ private:
     void update_particles(float delta);
     void emit(EmitterPool::EmitterData &emitter);
 
-private:
-    static constexpr size_t PARTICLE_COUNT = 4000;
+    template <typename Func>
+    void particle_foreach(Func &&func) {
+        for (size_t p{}; p < PARTICLE_COUNT; ++p) {
+            if (!m_particles->alive[p]) {
+                continue;
+            }
+            std::invoke(func, p);
+        }
+    }
 
+private:
+    static constexpr size_t PARTICLE_COUNT = 2000;
     struct ParticleStorage {
         std::array<Vec2, PARTICLE_COUNT> pos;
         std::array<Vec2, PARTICLE_COUNT> vel;
