@@ -20,25 +20,7 @@
 
 #include "entity.h"
 
-ParticleEffect2D s_particle{
-    .lifetime_min = 0.25f,
-    .lifetime_max = 1.0f,
-
-    .emission_rate = 400,
-
-    .speed_min = 50.0f,
-    .speed_max = 70.0f,
-
-    .spread = 3.1415926535f,
-
-    .color_start = Color{0xEB, 0xCF, 0x34, 0x40},
-    .color_end = Color{0xFF, 0x00, 0x00, 0x00},
-
-    .scale_start = 0.1f,
-    .scale_end = 8.0f,
-
-    .particle_size = Vec2{16.0f, 16.0f},
-};
+constexpr float PI = 3.1415926535f;
 
 class SandboxApplication : public IApplication {
     DECLARE_APP(SandboxApplication);
@@ -54,7 +36,29 @@ public:
         m_camera.zoom = 0.8f;
         m_camera.anchor = Camera2D::AnchorMode::CENTER;
 
-        auto handle = m_particles.create_effect(s_particle);
+        auto handle = m_particles.create_effect(ParticleEffect2D{
+            .lifetime_min = 0.25f,
+            .lifetime_max = 1.0f,
+
+            .emission_rate = 400,
+            .emission_spread = PI,
+
+            /* speed */
+            .speed_min = 50.0f,
+            .speed_max = 70.0f,
+
+            /* color */
+            .color_start = Color{0xEB, 0xCF, 0x34, 0x40},
+            .color_end = Color{0xFF, 0x00, 0x00, 0x00},
+
+            /* scale */
+            .scale_start = 0.1f,
+            .scale_end = 8.0f,
+
+            /* misc. */
+            .particle_size = Vec2{10.0f, 10.0f},
+            .particle_gravity = Vec2{0.0f, -8.0f},
+        });
         m_emitter = m_particles.create_emitter(handle);
         m_emitter.set_emitting(true);
         m_emitter.set_rotation(2.0f);

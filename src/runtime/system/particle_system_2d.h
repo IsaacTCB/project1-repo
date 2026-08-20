@@ -20,11 +20,10 @@ struct ParticleEffect2D {
 
     /* how many times per second this particle will get generated? */
     uint32_t emission_rate;
+    float emission_spread = 0.0f;
 
     float speed_min = 1.0f;
     float speed_max = 1.0f;
-
-    float spread = 0.0f;
 
     /* color transition state */
     Color color_start = Color::WHITE;
@@ -36,6 +35,7 @@ struct ParticleEffect2D {
 
     /* particle props */
     Vec2 particle_size{16.0f, 16.0f};
+    Vec2 particle_gravity{0.0f, 0.0f};
     // TODO: add particle textures
 };
 
@@ -79,7 +79,7 @@ private:
     void emit(EmitterPool::EmitterData &emitter);
 
 private:
-    static constexpr size_t PARTICLE_COUNT = 1000;
+    static constexpr size_t PARTICLE_COUNT = 4000;
 
     struct ParticleStorage {
         std::array<Vec2, PARTICLE_COUNT> pos;

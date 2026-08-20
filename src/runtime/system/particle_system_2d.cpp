@@ -40,7 +40,7 @@ void ParticleSystem2D::render(RenderQueue &queue) {
             continue;
         }
 
-        ParticleEffect2D *effect = m_effects.get(m_particles->effect[p]);
+        const ParticleEffect2D *effect = m_effects.get(m_particles->effect[p]);
         if (!effect) {
             continue;
         }
@@ -74,19 +74,28 @@ void ParticleSystem2D::update_emitters(float delta) {
 }
 
 void ParticleSystem2D::update_particles(float delta) {
-    for (size_t i = 0; i < PARTICLE_COUNT; ++i) {
-        if (!m_particles->alive[i]) {
+    for (size_t p = 0; p < PARTICLE_COUNT; ++p) {
+        if (!m_particles->alive[p]) {
             continue;
         }
 
-        /* update position */
-        Vec2 &pos = m_particles->pos[i];
-        pos += m_particles->vel[i] * delta;
+        const ParticleEffect2D *effect = m_effects.get(m_particles->effect[p]);
+        if (!effect) {
+            m_particles->alive[p] = false;
+            continue;
+        }
+
+        /* apply gravity to velocity */
+        Vec2 &vel = m_particles->vel[p];
+        vel += effect->particle_gravity;
+
+        /* update position from velocity */
+        m_particles->pos[p] += vel * delta;
 
         /* update lifetime */
-        m_particles->lifetime_remaining[i] -= delta;
-        if (m_particles->lifetime_remaining[i] <= 0.0f) {
-            m_particles->alive[i] = false;
+        m_particles->lifetime_remaining[p] -= delta;
+        if (m_particles->lifetime_remaining[p] <= 0.0f) {
+            m_particles->alive[p] = false;
         }
     }
 }
@@ -104,7 +113,7 @@ void ParticleSystem2D::emit(EmitterPool::EmitterData &emitter) {
         m_particles->lifetime[m_index] = total_lifetime;
 
     float angle = emitter.rotation +
-                  Random::randf_range(-effect->spread, effect->spread);
+                  Random::randf_range(-effect->emission_spread, effect->emission_spread);
 
     float initial_speed = Random::randf_range(effect->speed_min, effect->speed_max);
     Vec2 initial_velocity = Vec2{
