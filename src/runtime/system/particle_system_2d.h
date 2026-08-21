@@ -45,6 +45,7 @@ class ParticleSystem2D {
 public:
     ParticleSystem2D();
 
+    void seed(uint32_t seed = 0);
     void update(float delta);
     void render(RenderQueue &queue);
 
@@ -106,4 +107,6 @@ private:
 
     EmitterPool m_emitters;
     HandlePool<ParticleEffect2D> m_effects;
+
+    uint32_t m_seed;
 };

@@ -26,8 +26,23 @@ static Color lerp_color(const Color &a, const Color &b, float t) {
     };
 }
 
+/* xorshift32 pseudo-random number generator
+ * We use xorshift because it's fast, and
+ * we don't need a high-quality rng for this */
+static uint32_t xorshift32(uint32_t &state);
+static void xorshift32_seed(uint32_t &state, uint32_t seed = 0);
+static float xorshift32_randf(uint32_t &state);
+static float xorshift32_randf_range(uint32_t &state, float min, float max);
+
 ParticleSystem2D::ParticleSystem2D() {
     m_particles = std::make_unique<ParticleStorage>();
+
+    /* seed stuff */
+    seed();
+}
+
+void ParticleSystem2D::seed(uint32_t seed) {
+    xorshift32_seed(m_seed, seed);
 }
 
 void ParticleSystem2D::update(float delta) {
@@ -105,15 +120,15 @@ void ParticleSystem2D::emit(EmitterPool::EmitterData &emitter) {
     }
 
     /* set lifetime */
-    const float total_lifetime = Random::randf_range(
+    const float total_lifetime = xorshift32_randf_range(m_seed,
         effect->lifetime_min, effect->lifetime_max);
     m_particles->lifetime_remaining[m_index] =
         m_particles->lifetime[m_index] = total_lifetime;
 
     float angle = emitter.rotation +
-                  Random::randf_range(-effect->emission_spread, effect->emission_spread);
+                  xorshift32_randf_range(m_seed, -effect->emission_spread, effect->emission_spread);
 
-    float initial_speed = Random::randf_range(effect->speed_min, effect->speed_max);
+    float initial_speed = xorshift32_randf_range(m_seed, effect->speed_min, effect->speed_max);
     Vec2 initial_velocity = Vec2{
         std::cos(angle) * initial_speed,
         std::sin(angle) * initial_speed,
@@ -126,4 +141,38 @@ void ParticleSystem2D::emit(EmitterPool::EmitterData &emitter) {
     m_particles->alive[m_index] = true;
 
     m_index = (m_index + 1) % PARTICLE_COUNT;
+}
+
+/* ======================== */
+/*   xorshift32 algorithm   */
+/* ======================== */
+
+static void xorshift32_seed(uint32_t &state, uint32_t seed) {
+    state = seed;
+
+    /* initializes seed (seed must be non-zero,
+     * otherwise xorshift32 gets locked up) */
+    while (state == 0) {
+        state = Random::randi();
+    }
+
+    /* seed */
+    (void)(xorshift32(state));
+}
+
+static uint32_t xorshift32(uint32_t &state) {
+    uint32_t x = state;
+    x ^= x << 13;
+    x ^= x >> 17;
+    x ^= x << 5;
+    return state = x;
+}
+
+static float xorshift32_randf(uint32_t &state) {
+    return static_cast<float>(xorshift32(state) & 0x00FFFFFF) /
+           static_cast<float>(0x01000000);
+}
+
+static float xorshift32_randf_range(uint32_t &state, float min, float max) {
+    return min + ((max - min) * xorshift32_randf(state));
 }
