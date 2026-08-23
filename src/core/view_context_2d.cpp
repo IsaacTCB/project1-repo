@@ -9,7 +9,6 @@
 #include <cmath>
 
 inline static bool angle_is_rotated(float angle, float eps = EPSILON);
-inline static Vec2 camera_get_anchor_offset(const ViewContext2D &ctx);
 
 /* ================================ */
 /*  Screen <--> World conversions   */
@@ -34,7 +33,7 @@ Vec2 ViewContext2D::screen_to_view(const Vec2 &screen_coord) const {
 
     view -= Vec2(window_viewport.position);
     view *= view_size / Vec2(window_viewport.size);
-    view -= camera_get_anchor_offset(*this);
+    view -= get_anchor_offset();
 
     return {view.x, view.y};
 }
@@ -42,7 +41,7 @@ Vec2 ViewContext2D::screen_to_view(const Vec2 &screen_coord) const {
 Vec2 ViewContext2D::view_to_screen(const Vec2 &view_coord) const {
     Vec2 screen{view_coord};
 
-    screen += camera_get_anchor_offset(*this);
+    screen += get_anchor_offset();
     screen *= Vec2(window_viewport.size) / view_size;
     screen += Vec2(window_viewport.position);
 
@@ -115,8 +114,8 @@ Vec2 ViewContext2D::world_to_view(const Vec2 &world_coord) const {
 
 ViewContext2D::BoundRect ViewContext2D::get_bounds_aabb() const {
     /* get projection bounds */
-    Vec2 tl = -camera_get_anchor_offset(*this); // top-left coords
-    Vec2 br = tl + view_size;                   // bottom-right coords
+    Vec2 tl = -get_anchor_offset(); // top-left coords
+    Vec2 br = tl + view_size;       // bottom-right coords
 
     /* apply zoom */
     float zoom_factor = std::max(view_camera->zoom, EPSILON);
@@ -172,7 +171,7 @@ ViewContext2D::BoundRect ViewContext2D::get_ortho() const {
     float bottom = view_size.y;
 
     /* apply anchor offset */
-    auto anchor = camera_get_anchor_offset(*this);
+    auto anchor = get_anchor_offset();
     left -= anchor.x;
     right -= anchor.x;
     top -= anchor.y;
@@ -191,15 +190,15 @@ ViewContext2D::BoundRect ViewContext2D::get_ortho() const {
     };
 }
 
+Vec2 ViewContext2D::get_anchor_offset() const {
+    if (view_camera->anchor == Camera2D::AnchorMode::CENTER) {
+        return view_size * 0.5f;
+    }
+    return Vec2{};
+}
+
 inline static bool angle_is_rotated(float angle, float eps) {
     /* HACK: checking if non-zero is not ideal bc it won't detect
      * angles near 360deg such as (2 * PI - 0.00001) */
     return (std::fabs(angle) > eps);
-}
-
-inline static Vec2 camera_get_anchor_offset(const ViewContext2D &ctx) {
-    if (ctx.view_camera->anchor == Camera2D::AnchorMode::CENTER) {
-        return ctx.view_size * 0.5f;
-    }
-    return Vec2{};
 }
