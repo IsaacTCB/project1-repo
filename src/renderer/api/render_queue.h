@@ -4,12 +4,15 @@
 #include <vector>
 
 #include "core/math/color.h"
+#include "core/math/vec2.h"
 #include "core/math/vec2i.h"
+
 #include "render_handles.h"
 
 struct RenderCommandDraw {
     TextureHandle texture; /* handle is null = draw solid color */
-    float x, y, width, height;
+    Vec2 pos;
+    Vec2 size;
     Color color;
     // int zsort;
 };
@@ -31,28 +34,22 @@ public:
     }
 
 public:
-    void draw_texture(TextureHandle texture, const Vec2i &position, const Vec2i &size) {
+    void draw_texture_blended(TextureHandle texture, Color color, const Vec2i &position, const Vec2i &size) {
         m_queue.emplace_back(RenderCommandDraw{
             .texture = texture,
-            .x = static_cast<float>(position.x),
-            .y = static_cast<float>(position.y),
-            .width = static_cast<float>(size.x),
-            .height = static_cast<float>(size.y),
-            .color = Color::WHITE,
+            .pos = Vec2{position},
+            .size = Vec2{size},
+            .color = color,
             // .zsort = 0,
         });
     }
 
+    void draw_texture(TextureHandle texture, const Vec2i &position, const Vec2i &size) {
+        draw_texture_blended(texture, Color::WHITE, position, size);
+    }
+
     void draw_color(Color color, const Vec2i &position, const Vec2i &size) {
-        m_queue.emplace_back(RenderCommandDraw{
-            .texture = Handle{},
-            .x = static_cast<float>(position.x),
-            .y = static_cast<float>(position.y),
-            .width = static_cast<float>(size.x),
-            .height = static_cast<float>(size.y),
-            .color = color,
-            // .zsort = 0,
-        });
+        draw_texture_blended(Handle{}, color, position, size);
     }
 
 private:

@@ -108,10 +108,10 @@ void SDL3Renderer::destroy_texture(TextureHandle handle) {
 
 void SDL3Renderer::command(const RenderCommandDraw &command) {
     SDL_FRect dest{
-        .x = static_cast<float>(command.x),
-        .y = static_cast<float>(command.y),
-        .w = static_cast<float>(command.width),
-        .h = static_cast<float>(command.height),
+        .x = static_cast<float>(command.pos.x),
+        .y = static_cast<float>(command.pos.y),
+        .w = static_cast<float>(command.size.x),
+        .h = static_cast<float>(command.size.y),
     };
 
     auto r = command.color.r;
