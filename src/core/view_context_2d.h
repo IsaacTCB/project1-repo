@@ -67,4 +67,7 @@ public:
 
     [[nodiscard]]
     BoundRect get_ortho() const;
+
+    [[nodiscard]]
+    Vec2 get_anchor_offset() const;
 };
