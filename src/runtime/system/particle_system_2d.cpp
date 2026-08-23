@@ -71,7 +71,7 @@ void ParticleSystem2D::render(RenderQueue &queue) {
         Vec2 pos = m_particles->pos[p] - (size * 0.5f);
 
         if (TextureHandle texture = effect->particle_texture.get()) {
-            queue.draw_texture(texture, Vec2i{pos}, Vec2i{size});
+            queue.draw_texture_blended(texture, color, Vec2i{pos}, Vec2i{size});
         } else {
             queue.draw_color(color, Vec2i{pos}, Vec2i{size});
         }
