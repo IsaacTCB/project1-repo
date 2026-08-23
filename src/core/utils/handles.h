@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <format>
+#include <functional>
 #include <limits>
 #include <optional>
 #include <queue>
@@ -256,6 +257,17 @@ public:
         m_pool.clear();
         while (!m_available_slots.empty()) {
             m_available_slots.pop();
+        }
+    }
+
+    template <typename Func>
+    void foreach (Func &&func) {
+        for (Slot &slot : m_pool) {
+            if (!slot.data.has_value()) {
+                continue;
+            }
+
+            std::invoke(func, *slot.data);
         }
     }
 

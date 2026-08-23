@@ -234,8 +234,8 @@ void GLRenderer::command(const RenderCommandDraw &command) {
     };
 
     m_impl->batch.draw_rect(
-        command.x, command.y,
-        command.width, command.height,
+        command.pos.x, command.pos.y,
+        command.size.x, command.size.y,
         color, *texture, *m_impl->shader);
 }
 
