@@ -19,6 +19,12 @@ public:
     constexpr explicit Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xFF)
         : r(r), g(g), b(b), a(a) {}
 
+    constexpr explicit Color(uint32_t rgba32)
+        : r((rgba32 >> 24) & 0xFF),
+          g((rgba32 >> 16) & 0xFF),
+          b((rgba32 >> 8) & 0xFF),
+          a(rgba32 & 0xFF) {}
+
     [[nodiscard]]
     std::tuple<float, float, float, float> normalized() const {
         /* TODO: replace tuple with vec4 once that gets implemented */
