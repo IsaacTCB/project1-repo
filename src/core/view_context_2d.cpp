@@ -8,7 +8,7 @@
 #include <array>
 #include <cmath>
 
-inline static bool angle_is_rotated(float angle, float eps = EPSILON);
+inline static bool angle_is_rotated(float angle);
 
 /* ================================ */
 /*  Screen <--> World conversions   */
@@ -197,8 +197,8 @@ Vec2 ViewContext2D::get_anchor_offset() const {
     return Vec2{};
 }
 
-inline static bool angle_is_rotated(float angle, float eps) {
+inline static bool angle_is_rotated(float angle) {
     /* HACK: checking if non-zero is not ideal bc it won't detect
      * angles near 360deg such as (2 * PI - 0.00001) */
-    return (std::fabs(angle) > eps);
+    return !is_zero_approx(angle);
 }
