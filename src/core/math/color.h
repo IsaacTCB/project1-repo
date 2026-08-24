@@ -5,8 +5,8 @@
 #include <string>
 #include <tuple>
 
-/* TODO: this class is still missing uint32 hex rgba conversion.
- * also hue functionality would be nice. */
+/* TODO: this class is still missing hue functionality
+ * and proper normalized() function with vec4. */
 class Color {
 public:
     uint8_t r{0xFF};
