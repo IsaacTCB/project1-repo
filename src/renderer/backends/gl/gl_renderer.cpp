@@ -1,4 +1,5 @@
 #include "gl_renderer.h"
+
 #include "gl_batch_builder.h"
 #include "gl_context.h"
 #include "gl_shader.h"
@@ -47,6 +48,8 @@ GLRenderer::GLRenderer(DisplayWindowHandle &window_data)
         if (!success) {
             LOG_CRITICAL("gl: Glad failed to load OpenGL.");
         }
+
+        print_info();
     }
 
     /* This allows gl to load images whose
@@ -155,7 +158,6 @@ void GLRenderer::render_pass(const ViewContext2D &view, const RenderQueue &queue
     m_impl->context.bind();
     apply_viewport(view.window_viewport);
 
-    glm::vec2 view_size{view.view_size.x, view.view_size.y};
     glm::mat4 proj_matrix = get_camera_projection(view);
     glm::mat4 view_matrix = get_camera_view_matrix(view.view_camera);
     m_impl->proj = proj_matrix * glm::inverse(view_matrix);
@@ -237,6 +239,20 @@ void GLRenderer::command(const RenderCommandDraw &command) {
         command.pos.x, command.pos.y,
         command.size.x, command.size.y,
         color, *texture, *m_impl->shader);
+}
+
+void GLRenderer::print_info() {
+    const char *vendor = (const char *)glGetString(GL_VENDOR);
+    LOG_INFO("gl: GPU Vendor: {}", vendor);
+
+    const char *renderer = (const char *)glGetString(GL_RENDERER);
+    LOG_INFO("gl: GPU Renderer: {}", renderer);
+
+    const char *version = (const char *)glGetString(GL_VERSION);
+    LOG_INFO("gl: OpenGL Version: {}", version);
+
+    const char *glsl_version = (const char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
+    LOG_INFO("gl: GLSL Version: {}", glsl_version);
 }
 
 void GLRenderer::apply_viewport(const Viewport &viewport) {

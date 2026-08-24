@@ -27,6 +27,7 @@ private:
     void command(T &) = delete;
     void command(const RenderCommandDraw &command);
 
+    void print_info();
     void apply_viewport(const Viewport &viewport);
 
 private:
