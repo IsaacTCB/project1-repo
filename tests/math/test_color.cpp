@@ -28,6 +28,12 @@ TEST(ColorConstructorTest, DefaultConstructorIsWhiteAndOpaque) {
     color_eq(color, Color::WHITE);
 }
 
+TEST(ColorConstructorTest, FromHexRGBA32) {
+    Color a{0x24, 0x32, 0x90, 0x20};
+    Color b{0x24329020};
+    color_eq(a, b);
+}
+
 TEST(ColorConstructorTest, ValueConstructor) {
     Color color{0xFF, 0x00, 0x20, 0x20};
     color_eq(color, Color{0xFF, 0x00, 0x20, 0x20});
