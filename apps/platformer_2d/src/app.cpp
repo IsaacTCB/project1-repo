@@ -23,6 +23,8 @@
 #include <entt/entity/registry.hpp>
 
 #include "components.h"
+#include "runtime/system/particle_emitter_2d.h"
+#include "runtime/system/particle_system_2d.h"
 #include "utils/gridmap.h"
 #include "utils/input.h"
 
@@ -143,6 +145,35 @@ public:
         auto &rect = m_registry.emplace<CanvasRectComponent>(m_player_entity);
         rect.size = Vec2i{32, 32};
         rect.color = Color{70, 50, 160};
+
+        m_particles.seed();
+        m_particle_fx = m_particles.create_effect(ParticleEffect2D{
+            .lifetime_min = 0.2f,
+            .lifetime_max = 0.5f,
+
+            /* how many times per second this particle will get generated? */
+            .emission_rate = 40,
+            .emission_spread = 0.2f,
+
+            .speed_min = 60.0f,
+            .speed_max = 100.0f,
+
+            /* color transition state */
+            .color_start = Color{0xFFFFFFFF},
+            .color_end = Color{0xFFFFFF00},
+
+            /* size scale */
+            .scale_start = 0.7f,
+            .scale_end = 0.2f,
+
+            /* particle props */
+            .particle_texture{},
+            .particle_size{16.0f, 16.0f},
+            .particle_gravity{0.0f, -2.0f},
+        });
+
+        m_emitter = m_particles.create_emitter(m_particle_fx);
+        m_emitter.set_emitting(false);
     }
 
     void on_update(UpdateContext &ctx) override {
@@ -177,7 +208,18 @@ public:
                 float acc = 20.0f;
                 if (vel.velocity.length() > 0.1f) {
                     float dot = vel.velocity.normalized().dot(dir);
-                    acc = dot < -0.8f ? 40.0f : acc;
+                    if (dot < -0.8f) {
+                        acc = 40.0f;
+
+                        auto &transform = m_registry.get<TransformComponent>(entity);
+                        m_emitter.set_position(transform.position + Vec2{0.0f, 12.0f});
+                        m_emitter.set_emitting(true);
+
+                        float angl = 3.1415f - std::atan2(vel.velocity.y, vel.velocity.x);
+                        m_emitter.set_rotation(angl);
+                    } else {
+                        m_emitter.set_emitting(false);
+                    }
                 }
 
                 vel.velocity += dir * acc * delta;
@@ -208,6 +250,8 @@ public:
             auto &transform = m_registry.get<TransformComponent>(m_player_entity);
             m_camera.position += (transform.position - m_camera.position) * delta * 2.0f;
         }
+
+        m_particles.update(delta);
     }
 
     void on_draw(RenderContext &ctx) override {
@@ -249,14 +293,17 @@ public:
 
         /* draw vignette */
         auto bounds = ctx.view_context->get_bounds_aabb();
-        ctx.queue.draw_texture(
+        ctx.queue.draw_texture_blended(
             m_vignette_texture.get(),
+            Color{0xFFFFFFE0},
             Vec2i{bounds.tl} - Vec2i{1, 1},
             Vec2i{(int)bounds.width() + 4, (int)bounds.height() + 4});
 
         /* draw cursor pointer */
         Vec2 mouse_pos = get_mouse_coords();
         ctx.queue.draw_color(Color{255, 0, 0, 255}, Vec2i{mouse_pos}, Vec2i{8, 8});
+
+        m_particles.render(ctx.queue);
     }
 
     void draw_checker_background(RenderContext &ctx) const {
@@ -291,7 +338,10 @@ public:
         }
     }
 
-    void on_close() override {}
+    void on_close() override {
+        m_particles.destroy_effect(m_particle_fx);
+        m_emitter.reset();
+    }
 
     [[nodiscard]]
     Vec2 get_mouse_coords() {
@@ -309,6 +359,10 @@ private:
     entt::entity m_player_entity;
 
     InputActionSystem<InputAction> m_input_action;
+
+    EffectHandle m_particle_fx;
+    ParticleEmitter2D m_emitter;
+    ParticleSystem2D m_particles;
 };
 
 SET_APP(Platformer2D);
