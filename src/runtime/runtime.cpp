@@ -74,16 +74,16 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
         .renderer{
             .load_texture = [](ImageData &image, void *userdata) -> TextureHandle {
                 ASSERT(userdata);
-                auto &renderer = *static_cast<std::unique_ptr<Renderer> *>(userdata);
+                auto *renderer = static_cast<Renderer *>(userdata);
                 return renderer->load_texture(image);
             },
             .unload_texture = [](TextureHandle texture, void *userdata) {
                 ASSERT(userdata);
-                auto &renderer = *static_cast<std::unique_ptr<Renderer> *>(userdata);
+                auto *renderer = static_cast<Renderer *>(userdata);
                 renderer->destroy_texture(texture);
                 // this comment fixes clang-format. do not remove it
             },
-            .userdata = &m_renderer,
+            .userdata = &(*m_renderer),
         },
     });
     /* poll window size */
