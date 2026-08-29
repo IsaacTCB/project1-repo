@@ -5,7 +5,8 @@
 #include "core/math/color.h"
 #include "core/view_context_2d.h"
 #include "core/viewport.h"
-#include "renderer/api/render_queue.h"
+
+#include "runtime/renderer/render_queue.h"
 
 struct FrameContext {
     /**

@@ -15,7 +15,7 @@ function(engine_add_renderer target name)
 
     # Add renderer subdirectory
     add_subdirectory(
-        ${PROJECT_SOURCE_DIR}/src/renderer/backends/${name}
+        ${PROJECT_SOURCE_DIR}/src/graphics/backends/${name}
         ${CMAKE_CURRENT_BINARY_DIR}/${renderer_target}
     )
 
@@ -29,6 +29,6 @@ function(engine_add_renderer target name)
     message(STATUS "Linked renderer ${name} to ${target}")
 
     if(ARGN)
-        target_sources(${renderer_target} PRIVATE ${ARGN}) # Hacky, I guess.
+        target_sources(${target} PRIVATE ${ARGN}) # Hacky, I guess.
     endif()
 endfunction()

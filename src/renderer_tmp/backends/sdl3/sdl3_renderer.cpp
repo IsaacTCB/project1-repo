@@ -8,7 +8,7 @@
 #include "core/logger.h"
 #include "core/math/vec2i.h"
 #include "core/utils/handles.h"
-#include "renderer/api/render_handles.h"
+#include "renderer2/api/render_handles.h"
 
 struct SDL3Renderer::Impl {
     SDL_Window *window;

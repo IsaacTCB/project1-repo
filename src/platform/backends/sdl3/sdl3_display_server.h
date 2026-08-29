@@ -1,9 +1,14 @@
 #pragma once
 
+#include "runtime/renderer/renderer_apis.h"
 #include "runtime/server/display_server.h"
+
+#include <memory>
 
 #include "core/assertion.h"
 #include "core/logger.h"
+
+#include "sdl3_gl_context.h"
 
 #include <SDL3/SDL.h>
 
@@ -49,6 +54,17 @@ class SDL3_DisplayServer final : public IDisplayServer {
         Vec2i size{};
         SDL_GetWindowSize(window, &size.x, &size.y);
         return size;
+    }
+
+    [[nodiscard]]
+    std::unique_ptr<IRenderDeviceFactory> get_factory(DisplayWindowHandle handle) override {
+        if (handle.props.api == RendererAPI::OpenGL) {
+            return std::unique_ptr<IRenderDeviceFactory>(new SDL3_GL_RenderDeviceFactory(
+                static_cast<SDL_Window *>(handle.raw_window_handle)));
+        }
+
+        /* api not found, no factory to return */
+        return std::unique_ptr<IRenderDeviceFactory>{};
     }
 
 private:

@@ -5,13 +5,8 @@ set(RUNTIME_SOURCES
     asset_service.cpp
     input_service.cpp
     image/decoder.cpp
+    renderer/renderer.cpp
     runtime.cpp
-)
-
-# TODO: Somehow remove renderer.cpp from here!
-# or refactor its whole architecture!
-list(APPEND RUNTIME_SOURCES
-    ${PROJECT_SOURCE_DIR}/src/renderer/api/renderer.cpp
 )
 
 add_library(runtime STATIC ${RUNTIME_SOURCES})

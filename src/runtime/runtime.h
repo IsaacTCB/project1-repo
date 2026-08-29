@@ -1,16 +1,15 @@
 #pragma once
 
-#include <memory>
 #include <optional>
 
-#include "renderer/api/render_queue.h"
-#include "renderer/api/renderer.h"
+#include "renderer/renderer.h"
 
 #include "app/application_handler.h"
 #include "asset_service.h"
 #include "input_service.h"
 #include "platform_services.h"
 #include "runtime/app/context/frame_context.h"
+#include "runtime/server/display_server.h"
 
 class EngineRuntime {
 public:
@@ -48,7 +47,7 @@ private:
 private:
     FrameContext m_frame_ctx;
     DisplayWindowHandle m_window;
-    std::unique_ptr<Renderer> m_renderer;
+    std::optional<Renderer> m_renderer;
     RenderQueue m_queue;
 
     uint32_t m_fps, m_fps_accum;

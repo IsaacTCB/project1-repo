@@ -1,9 +1,12 @@
 #pragma once
 
+#include <memory>
 #include <string>
 
 #include "core/math/vec2i.h"
-#include "renderer/api/renderer_apis.h"
+
+#include "graphics/api/render_device_factory.h"
+#include "runtime/renderer/renderer_apis.h"
 
 #include "server_macros.inl"
 
@@ -55,4 +58,7 @@ public:
      */
     [[nodiscard]]
     virtual Vec2i get_size(const DisplayWindowHandle &handle) const = 0;
+
+    [[nodiscard]]
+    virtual std::unique_ptr<IRenderDeviceFactory> get_factory(DisplayWindowHandle handle) = 0;
 };

@@ -260,7 +260,7 @@ void GLRenderer::apply_viewport(const Viewport &viewport) {
         static_cast<GLint>(viewport.position.x),
         static_cast<GLint>(
             /* flips the Y axis cuz gl... */
-            m_screen_viewport.size.y - (viewport.position.y + viewport.size.y)),
+            viewport.size.y - (viewport.position.y + viewport.size.y)),
         static_cast<GLint>(viewport.size.x),
         static_cast<GLint>(viewport.size.y));
 }

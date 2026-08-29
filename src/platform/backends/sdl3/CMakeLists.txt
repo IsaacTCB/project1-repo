@@ -25,7 +25,7 @@ target_compile_definitions(sdl3_platform_runtime PRIVATE SDL_MAIN_USE_CALLBACKS)
 
 engine_add_platform(sdl3_platform_runtime)
 
-engine_add_renderer(sdl3_platform_runtime sdl3)
+# engine_add_renderer(sdl3_platform_runtime sdl3)
 engine_add_renderer(sdl3_platform_runtime gl ${CMAKE_CURRENT_SOURCE_DIR}/sdl3_gl_context.cpp)
 
 target_link_libraries(sdl3_platform_runtime

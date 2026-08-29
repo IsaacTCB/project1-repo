@@ -1,50 +1,42 @@
-#include "renderer/backends/gl/gl_context.h"
+#include "sdl3_gl_context.h"
 
-#include <SDL3/SDL_video.h>
-
-#include <memory>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_opengl.h>
 
 #include "core/logger.h"
 
-struct GLContext::Impl {
-    SDL_Window *window;
-    SDL_GLContext context;
-};
-
-GLContext::GLContext()
-    : load_func{SDL_GL_GetProcAddress} {}
-
-GLContext::~GLContext() {
-    close();
-}
-
-void GLContext::init(void *native_window) {
-    m_impl = std::make_unique<GLContext::Impl>();
-    m_impl->window = reinterpret_cast<SDL_Window *>(native_window);
-    m_impl->context = SDL_GL_CreateContext(m_impl->window);
-
+SDL3_GL_Context::SDL3_GL_Context(SDL_Window *window)
+    : m_window(window) {
+    m_context = SDL_GL_CreateContext(m_window);
     LOG_TRACE("Started SDL3 + OpenGL context");
 }
 
-void GLContext::close() {
-    if (m_impl) {
-        LOG_TRACE("Destroyed SDL3 + OpenGL context");
-        SDL_GL_DestroyContext(m_impl->context);
-        m_impl.reset(nullptr);
-    }
+SDL3_GL_Context::~SDL3_GL_Context() {
+    LOG_TRACE("Destroyed SDL3 + OpenGL context");
+    SDL_GL_DestroyContext(m_context);
 }
 
-void GLContext::bind() {
-    if (m_impl->context != SDL_GL_GetCurrentContext()) {
+void SDL3_GL_Context::bind() {
+    if (m_context != SDL_GL_GetCurrentContext()) {
         LOG_TRACE("Swapping contexts");
-        SDL_GL_MakeCurrent(m_impl->window, m_impl->context);
+        SDL_GL_MakeCurrent(m_window, m_context);
     }
 }
 
-void GLContext::swap_buffers() {
-    SDL_GL_SwapWindow(m_impl->window);
+SDL3_GL_Context::FnLoad SDL3_GL_Context::get_load_proc() {
+    return SDL_GL_GetProcAddress;
 }
 
-void GLContext::set_swap_interval(int interval) {
+void SDL3_GL_Context::swap_buffers() {
+    SDL_GL_SwapWindow(m_window);
+}
+
+void SDL3_GL_Context::set_swap_interval(int interval) {
     SDL_GL_SetSwapInterval(interval);
+}
+
+Vec2i SDL3_GL_Context::get_screen_size() {
+    int w = 0, h = 0;
+    SDL_GetWindowSize(m_window, &w, &h);
+    return Vec2i{w, h};
 }

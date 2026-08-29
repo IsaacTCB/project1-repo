@@ -3,7 +3,7 @@
 #include <memory>
 #include <string_view>
 
-#include "renderer/api/render_handles.h"
+#include "runtime/renderer/render_handles.h"
 
 #include "asset_ref.h"
 

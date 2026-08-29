@@ -13,9 +13,9 @@
 #include "core/math/color.h"
 #include "platform/api/event_server.h"
 
-#include "renderer/api/render_handles.h"
-#include "renderer/api/render_queue.h"
-#include "renderer/api/renderer.h"
+#include "renderer/render_handles.h"
+#include "renderer/render_queue.h"
+#include "renderer/renderer.h"
 
 #include "app/application_handler.h"
 #include "asset_service.h"
@@ -43,6 +43,9 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     LOG_INFO("platform: {}", os.get_platform());
     LOG_INFO("os: {}", os.get_os());
 
+    /* construct renderer (not fully initialized yet!) */
+    m_renderer.emplace();
+
     /* create main window/screen */
     auto &display = m_platform.display;
     DisplayWindowProps props{};
@@ -55,11 +58,15 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
         exit(-1);
     }
 
-    /* initialize renderer */
-    m_renderer = Renderer::create(m_window);
-    if (!m_renderer) {
-        LOG_CRITICAL("EngineRuntime::init(): Failed to create renderer");
-        exit(-1);
+    /* get render device factory, attach it into renderer to initialize it */
+    std::unique_ptr<IRenderDeviceFactory> factory = display.get_factory(m_window);
+    if (!factory) {
+        LOG_CRITICAL("EngineRuntime::init(): Unsupported graphics API (display didn't return a valid factory)");
+        exit(-2);
+    }
+    if (!m_renderer->build_device(std::move(factory))) {
+        LOG_CRITICAL("EngineRuntime::init(): Failed to start graphics API");
+        exit(-3);
     }
 
     /* initialize asset service */
@@ -172,10 +179,8 @@ void EngineRuntime::render() {
 }
 
 void EngineRuntime::render_frame(RenderContext &ctx) {
-    m_renderer->clear(ctx.clear_color);
     ASSERT(ctx.view_context, "View context must be built every frame!");
-    m_renderer->render_pass(*ctx.view_context, ctx.queue);
-    m_renderer->swap_buffers();
+    m_renderer->render_pass(ctx);
 }
 
 void EngineRuntime::close() {
