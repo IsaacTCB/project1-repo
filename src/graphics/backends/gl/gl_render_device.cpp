@@ -3,6 +3,7 @@
 #include "core/logger.h"
 #include "core/viewport.h"
 #include "gl_context.h"
+#include "runtime/renderer/render_handles.h"
 
 #include <SDL3/SDL_video.h>
 #include <glad/gl.h>
@@ -47,6 +48,23 @@ void GL_RenderDevice::begin_frame() {}
 
 void GL_RenderDevice::end_frame() {
     m_ctx->swap_buffers();
+}
+
+/* ================= *
+ *      Texture      *
+ * ================= */
+
+TextureHandle GL_RenderDevice::load_texture([[maybe_unused]] const ImageData &data) {
+    return TextureHandle{};
+}
+
+void GL_RenderDevice::destroy_texture([[maybe_unused]] TextureHandle texture) {
+    /* do not do anything */
+}
+
+bool GL_RenderDevice::has_texture([[maybe_unused]] TextureHandle texture) {
+    /* do not do anything */
+    return false;
 }
 
 /* ================= *

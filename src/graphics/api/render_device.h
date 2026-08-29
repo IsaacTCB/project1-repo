@@ -1,9 +1,12 @@
 #pragma once
 
+#include "core/image/image.h"
 #include "core/math/color.h"
 #include "core/math/vec2.h"
 #include "core/math/vec2i.h"
 #include "core/viewport.h"
+
+#include "runtime/renderer/render_handles.h"
 
 class IRenderDevice {
 public:
@@ -15,6 +18,11 @@ protected:
 
     virtual void begin_frame() = 0;
     virtual void end_frame() = 0;
+
+    /* texture actions */
+    virtual TextureHandle load_texture(const ImageData &data) = 0;
+    virtual void destroy_texture(TextureHandle texture) = 0;
+    virtual bool has_texture(TextureHandle texture) = 0;
 
     virtual void clear(const Color &color) = 0;
 

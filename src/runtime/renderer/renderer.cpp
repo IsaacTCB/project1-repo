@@ -8,6 +8,8 @@
 Renderer::Renderer() = default;
 Renderer::~Renderer() = default;
 
+#define ASSERT_DEVICE_READY() ASSERT(m_rd, "Called renderer function without having render device initialized")
+
 bool Renderer::build_device(std::unique_ptr<IRenderDeviceFactory> factory) {
     m_rd = (*factory)();
     if (m_rd) {
@@ -20,14 +22,14 @@ bool Renderer::build_device(std::unique_ptr<IRenderDeviceFactory> factory) {
 }
 
 void Renderer::close_device() {
-    ASSERT(m_rd, "Attempted to close a render device while not having one attached")
+    ASSERT_DEVICE_READY();
     m_rd.reset();
 }
 
 /* render pass */
 
 void Renderer::render_pass(const RenderContext &ctx) {
-    ASSERT(m_rd, "Called renderer function without having render device initialized")
+    ASSERT_DEVICE_READY();
 
     /* start a new frame */
     m_rd->begin_frame();
@@ -40,8 +42,22 @@ void Renderer::render_pass(const RenderContext &ctx) {
     m_rd->end_frame();
 }
 
+/* texture actions */
+
+TextureHandle Renderer::load_texture(ImageData &data) {
+    ASSERT_DEVICE_READY();
+    return m_rd->load_texture(data);
+}
+
+void Renderer::destroy_texture(TextureHandle texture) {
+    ASSERT_DEVICE_READY();
+    m_rd->destroy_texture(texture);
+}
+
+/* other */
+
 void Renderer::on_screen_resized(const Vec2i &screen_size) {
-    ASSERT(m_rd, "Called renderer function without having render device initialized")
+    ASSERT_DEVICE_READY();
     ASSERT(screen_size.x > 0 && screen_size.y > 0, "Width & height must not be 0.");
     m_screen_viewport = m_rd->build_viewport(screen_size);
 }

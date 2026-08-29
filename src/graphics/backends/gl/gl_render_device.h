@@ -19,7 +19,13 @@ protected:
     void begin_frame() override;
     void end_frame() override;
 
+    /* texture actions */
+    TextureHandle load_texture(const ImageData &data) override;
+    void destroy_texture(TextureHandle texture) override;
+    bool has_texture(TextureHandle texture) override;
+
     void clear(const Color &color) override;
+
     Viewport build_viewport(const Vec2i &size) override;
     void apply_viewport(const Viewport &screen_viewport, const Viewport &window_viewport) override;
 

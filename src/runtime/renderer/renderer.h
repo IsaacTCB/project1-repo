@@ -25,8 +25,8 @@ public:
 public:
     void render_pass(const RenderContext &ctx);
 
-    TextureHandle load_texture([[maybe_unused]] ImageData &data) { return TextureHandle{}; }
-    void destroy_texture([[maybe_unused]] TextureHandle texture) {}
+    TextureHandle load_texture(ImageData &data);
+    void destroy_texture(TextureHandle texture);
 
     [[nodiscard]]
     const Viewport &get_viewport() const { return m_screen_viewport; };
