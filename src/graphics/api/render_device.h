@@ -45,7 +45,7 @@ struct BufferInitDesc {
     BufferType type;
     BufferUsage usage;
     size_t size;
-    void *ptr = nullptr;
+    const void *ptr = nullptr;
 };
 
 class IRenderDevice {
