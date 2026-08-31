@@ -12,6 +12,7 @@
 
 #include "gl_context.h"
 #include "gl_shader.h"
+#include "runtime/renderer/render_handles.h"
 
 #include <glad/gl.h>
 
@@ -41,6 +42,18 @@ struct GL_BufferStorage {
     GLsizeiptr size;
 };
 
+struct GL_TextureStorage {
+    GLuint texture;
+
+    /* format stuff */
+    GLenum internal_format;
+    GLenum data_format;
+};
+
+struct GL_SamplerStorage {
+    GLuint sampler;
+};
+
 class GL_RenderDevice final : public IRenderDevice {
 public:
     GL_RenderDevice() = delete;
@@ -56,6 +69,9 @@ protected:
     void destroy_texture(TextureHandle texture) override;
     bool has_texture(TextureHandle texture) override;
 
+    SamplerHandle create_sampler(const SamplerInitDesc &sampler_desc) override;
+    void destroy_sampler(SamplerHandle sampler) override;
+
     /* pipeline operations */
     PipelineHandle create_pipeline(const PipelineDesc &pipeline_desc) override;
     void destroy_pipeline(PipelineHandle pipeline) override;
@@ -70,6 +86,7 @@ protected:
     void set_pipeline(PipelineHandle pipeline) override;
     void set_vertex_buffer(BufferHandle vertex_buffer) override;
     void set_index_buffer(BufferHandle index_buffer) override;
+    void set_texture(uint32_t slot, TextureHandle texture, SamplerHandle sampler) override;
     void draw_elements(size_t index_count, size_t index_offset) override;
 
     Viewport build_viewport(const Vec2i &size) override;
@@ -88,7 +105,11 @@ private:
     PipelineHandle m_bound_pipeline;
     BufferHandle m_bound_vbo;
     BufferHandle m_bound_ibo;
+    TextureHandle m_bound_texture;
+    SamplerHandle m_bound_sampler;
 
+    HandlePool<GL_TextureStorage> m_textures;
+    HandlePool<GL_SamplerStorage> m_samplers;
     HandlePool<GL_PipelineStorage> m_pipelines;
     HandlePool<GL_BufferStorage> m_buffers;
 };

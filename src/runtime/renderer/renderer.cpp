@@ -10,6 +10,7 @@
 #include "graphics/api/render_device.h"
 #include "graphics/api/render_device_factory.h"
 #include "graphics/api/vertex_layout.h"
+#include "runtime/renderer/render_handles.h"
 
 #define ASSERT_DEVICE_READY() \
     ASSERT(m_rd, "Renderer: Called renderer method without having render device initialized with 'build_device()'")
@@ -19,6 +20,9 @@ struct Vertex2D {
     uint32_t color;
     Vec3 position;
 };
+
+/* HACK: this is only for testing, remove asap! */
+static TextureHandle s_last_texture{};
 
 Renderer::Renderer() = default;
 Renderer::~Renderer() {
@@ -93,6 +97,30 @@ bool Renderer::init_device() {
     });
     m_rd->update_buffer(m_index_buffer, sizeof(indices), indices, 0);
 
+    /* initialize samplers */
+    m_samplers = {
+        .nearest = m_rd->create_sampler({
+            .filter = {
+                .mag = TextureFilter::NEAREST,
+                .min = TextureFilter::NEAREST,
+            },
+            .wrap = {
+                .u = TextureWrap::REPEATED,
+                .v = TextureWrap::REPEATED,
+            },
+        }),
+        .linear = m_rd->create_sampler({
+            .filter = {
+                .mag = TextureFilter::LINEAR,
+                .min = TextureFilter::LINEAR,
+            },
+            .wrap = {
+                .u = TextureWrap::REPEATED,
+                .v = TextureWrap::REPEATED,
+            },
+        }),
+    };
+
     /* initialize screen size */
     const Vec2i initial_size = m_rd->get_screen_size();
     on_screen_resized(initial_size);
@@ -125,6 +153,7 @@ void Renderer::render_pass(const RenderContext &ctx) {
     m_rd->set_pipeline(m_pipeline);
     m_rd->set_vertex_buffer(m_vertex_buffer);
     m_rd->set_index_buffer(m_index_buffer);
+    m_rd->set_texture(0, s_last_texture, m_samplers.nearest);
 
     m_rd->draw_elements(6);
 
@@ -139,7 +168,10 @@ void Renderer::render_pass(const RenderContext &ctx) {
 
 TextureHandle Renderer::load_texture(ImageData &data) {
     ASSERT_DEVICE_READY();
-    return m_rd->load_texture(data);
+
+    /* HACK: this is only for testing with the static quad, remove asap! */
+    s_last_texture = m_rd->load_texture(data);
+    return s_last_texture;
 }
 
 void Renderer::destroy_texture(TextureHandle texture) {

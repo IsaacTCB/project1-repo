@@ -38,10 +38,10 @@ in vec4 v_color;
 
 out vec4 color;
 
-// uniform sampler2D u_texture;
+uniform sampler2D u_texture;
 
 void main() {
-    color = v_color; // * texture(u_texture, v_uv);
+    color = v_color * texture(u_texture, v_uv);
 }
 
 )";

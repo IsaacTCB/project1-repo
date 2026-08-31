@@ -132,6 +132,20 @@ static void bind_vertex_layout(const VertexLayout &layout) {
     }
 }
 
+static GLenum get_index_format(IndexFormat index) {
+    switch (index) {
+        case IndexFormat::UINT8:
+            return GL_UNSIGNED_BYTE;
+        case IndexFormat::UINT16:
+            return GL_UNSIGNED_SHORT;
+        case IndexFormat::UINT32:
+            return GL_UNSIGNED_INT;
+        default:
+            /* unsupported */
+            return 0;
+    }
+}
+
 PipelineHandle GL_RenderDevice::create_pipeline(const PipelineDesc &pipeline_desc) {
     GL_PipelineStorage storage{};
 
@@ -148,28 +162,19 @@ PipelineHandle GL_RenderDevice::create_pipeline(const PipelineDesc &pipeline_des
         pipeline_desc.vertex_layout.attributes.end());
     storage.stride = pipeline_desc.vertex_layout.stride;
 
-    bind_vertex_layout(pipeline_desc.vertex_layout);
-
     /* HACK: lazy-loading the shader is stupid */
     if (!m_global_shader.has_value()) {
         LOG_TRACE("gl: loading default shader...");
         m_global_shader.emplace(g_vertex_shader_source, g_fragment_shader_source);
+        m_global_shader->set_int("u_texture", 0);
     }
 
-    switch (pipeline_desc.index_format) {
-        case IndexFormat::UINT8:
-            storage.index_format = GL_UNSIGNED_BYTE;
-            break;
-        case IndexFormat::UINT16:
-            storage.index_format = GL_UNSIGNED_SHORT;
-            break;
-        case IndexFormat::UINT32:
-            storage.index_format = GL_UNSIGNED_INT;
-            break;
-        default:
-            ASSERT(false, "gl: Unsupported index format!");
-            return PipelineHandle{};
+    storage.index_format = get_index_format(pipeline_desc.index_format);
+    if (!storage.index_format) {
+        ASSERT(false, "gl: Unsupported index format!");
+        return PipelineHandle{};
     }
+
     storage.shader = &(*m_global_shader);
 
     glBindVertexArray(0);
@@ -245,17 +250,96 @@ void GL_RenderDevice::destroy_buffer(BufferHandle buffer) {
  *      Texture      *
  * ================= */
 
-TextureHandle GL_RenderDevice::load_texture([[maybe_unused]] const ImageData &data) {
-    return TextureHandle{};
+TextureHandle GL_RenderDevice::load_texture(const ImageData &data) {
+    GL_TextureStorage storage{};
+
+    switch (data.channels) {
+        case 3:
+            storage.internal_format = GL_RGB8;
+            storage.data_format = GL_RGB;
+            break;
+        case 4:
+            storage.internal_format = GL_RGBA8;
+            storage.data_format = GL_RGBA;
+            break;
+        default:
+            ASSERT(false, "Unsupported bpp");
+            return TextureHandle{};
+    }
+
+    glGenTextures(1, &storage.texture);
+    if (storage.texture == 0) {
+        return TextureHandle{};
+    }
+
+    glBindTexture(GL_TEXTURE_2D, storage.texture);
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, storage.internal_format,
+        static_cast<GLsizei>(data.width),
+        static_cast<GLsizei>(data.height),
+        0, storage.data_format, GL_UNSIGNED_BYTE,
+        data.pixels.data());
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    return m_textures.emplace(storage);
 }
 
-void GL_RenderDevice::destroy_texture([[maybe_unused]] TextureHandle texture) {
-    /* do not do anything */
+void GL_RenderDevice::destroy_texture(TextureHandle texture) {
+    auto storage = m_textures.get_and_destroy(texture);
+    glDeleteTextures(1, &storage->texture);
 }
 
-bool GL_RenderDevice::has_texture([[maybe_unused]] TextureHandle texture) {
-    /* do not do anything */
-    return false;
+bool GL_RenderDevice::has_texture(TextureHandle texture) {
+    return m_textures.has(texture);
+}
+
+static GLenum get_filter_value(TextureFilter filter) {
+    switch (filter) {
+        case TextureFilter::LINEAR:
+            return GL_LINEAR;
+        case TextureFilter::NEAREST:
+            return GL_NEAREST;
+        default:
+            return 0;
+    }
+}
+
+static GLenum get_wrap_value(TextureWrap wrap) {
+    switch (wrap) {
+        case TextureWrap::REPEATED:
+            return GL_REPEAT;
+        case TextureWrap::CLAMP:
+            return GL_CLAMP_TO_EDGE;
+        case TextureWrap::MIRRORED_REPEAT:
+            return GL_MIRRORED_REPEAT;
+        default:
+            return 0;
+    }
+}
+
+SamplerHandle GL_RenderDevice::create_sampler(const SamplerInitDesc &sampler_desc) {
+    GL_SamplerStorage storage{};
+
+    glGenSamplers(1, &storage.sampler);
+    if (storage.sampler == 0) {
+        return SamplerHandle{};
+    }
+
+    /* set scale filter parameters */
+    glSamplerParameteri(storage.sampler, GL_TEXTURE_MIN_FILTER, get_filter_value(sampler_desc.filter.min));
+    glSamplerParameteri(storage.sampler, GL_TEXTURE_MAG_FILTER, get_filter_value(sampler_desc.filter.mag));
+
+    /* set wrap parameters */
+    glSamplerParameteri(storage.sampler, GL_TEXTURE_WRAP_S, get_wrap_value(sampler_desc.wrap.u));
+    glSamplerParameteri(storage.sampler, GL_TEXTURE_WRAP_T, get_wrap_value(sampler_desc.wrap.v));
+
+    return m_samplers.emplace(storage);
+}
+
+void GL_RenderDevice::destroy_sampler(SamplerHandle sampler) {
+    auto storage = m_samplers.get_and_destroy(sampler);
+    glDeleteSamplers(1, &storage->sampler);
 }
 
 /* ================= *
@@ -362,6 +446,21 @@ static void bind_pipeline_and_buffers(GL_PipelineStorage *pipeline, const GL_Buf
     }
 }
 
+static void bind_texture_and_sampler([[maybe_unused]] GL_PipelineStorage *pipeline, uint32_t slot, const GL_TextureStorage *texture, const GL_SamplerStorage *sampler) {
+    /* TODO: cache this! (e.g. do not call these functions if they aren't needed) */
+    glActiveTexture(GL_TEXTURE0 + slot);
+    glBindTexture(GL_TEXTURE_2D, texture->texture);
+    glBindSampler(slot, sampler->sampler);
+}
+
+void GL_RenderDevice::set_texture(uint32_t slot, TextureHandle texture, SamplerHandle sampler) {
+    /* TODO: do not force 0 as the only slot */
+    if (slot == 0) {
+        m_bound_texture = texture;
+        m_bound_sampler = sampler;
+    }
+}
+
 void GL_RenderDevice::draw_elements(size_t index_count, size_t index_offset) {
     /* fetch everything */
     auto *pipeline = m_pipelines.get(m_bound_pipeline);
@@ -371,7 +470,16 @@ void GL_RenderDevice::draw_elements(size_t index_count, size_t index_offset) {
         return;
     }
 
+    const auto *texture = m_textures.get(m_bound_texture);
+    const auto *sampler = m_samplers.get(m_bound_sampler);
+    if (!texture || !sampler) {
+        return;
+    }
+
     bind_pipeline_and_buffers(pipeline, vertex_buffer, index_buffer);
+
+    /* TODO: do not hardcode 0 here. */
+    bind_texture_and_sampler(pipeline, 0, texture, sampler);
 
     const auto count = static_cast<GLsizei>(index_count);
     const auto *indices = reinterpret_cast<void *>(index_offset);

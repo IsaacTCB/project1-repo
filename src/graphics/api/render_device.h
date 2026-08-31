@@ -12,6 +12,7 @@
 
 #include "vertex_layout.h"
 
+using SamplerHandle = Handle;
 using PipelineHandle = Handle;
 using BufferHandle = Handle;
 
@@ -48,6 +49,29 @@ struct PipelineDesc {
     VertexLayout vertex_layout;
 };
 
+enum class TextureFilter {
+    LINEAR,
+    NEAREST,
+};
+
+enum class TextureWrap {
+    REPEATED,
+    CLAMP,
+    MIRRORED_REPEAT,
+};
+
+struct SamplerInitDesc {
+    struct FilterProps {
+        TextureFilter mag = TextureFilter::LINEAR;
+        TextureFilter min = TextureFilter::LINEAR;
+    } filter;
+
+    struct WrapProps {
+        TextureWrap u = TextureWrap::REPEATED;
+        TextureWrap v = TextureWrap::REPEATED;
+    } wrap;
+};
+
 struct BufferInitDesc {
     BufferType type;
     BufferUsage usage;
@@ -71,6 +95,9 @@ protected:
     virtual void destroy_texture(TextureHandle texture) = 0;
     virtual bool has_texture(TextureHandle texture) = 0;
 
+    virtual SamplerHandle create_sampler(const SamplerInitDesc &sampler_desc) = 0;
+    virtual void destroy_sampler(SamplerHandle sampler) = 0;
+
     /* pipeline operations */
     virtual PipelineHandle create_pipeline(const PipelineDesc &pipeline_desc) = 0;
     virtual void destroy_pipeline(PipelineHandle pipeline) = 0;
@@ -86,6 +113,7 @@ protected:
     virtual void set_pipeline(PipelineHandle pipeline) = 0;
     virtual void set_vertex_buffer(BufferHandle vertex_buffer) = 0;
     virtual void set_index_buffer(BufferHandle index_buffer) = 0;
+    virtual void set_texture(uint32_t slot, TextureHandle texture, SamplerHandle sampler) = 0;
     virtual void draw_elements(size_t index_count, size_t index_offset = 0) = 0;
 
     virtual Viewport build_viewport(const Vec2i &size) = 0;

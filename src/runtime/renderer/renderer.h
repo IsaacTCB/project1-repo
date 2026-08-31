@@ -46,6 +46,11 @@ private:
     void close_device();
 
 private:
+    struct Samplers {
+        SamplerHandle nearest;
+        SamplerHandle linear;
+    } m_samplers;
+
     std::unique_ptr<IRenderDevice> m_rd;
     Viewport m_screen_viewport;
 
