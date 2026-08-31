@@ -18,7 +18,7 @@
  */
 static GLuint compile_shader(const char *shader_source, GLenum shader_type);
 
-GLShader::GLShader(std::string_view vertex_source, std::string_view fragment_source) {
+GL_Shader::GL_Shader(std::string_view vertex_source, std::string_view fragment_source) {
     m_program = glCreateProgram();
     ASSERT(m_program != 0);
 
@@ -43,12 +43,12 @@ GLShader::GLShader(std::string_view vertex_source, std::string_view fragment_sou
     }
 }
 
-GLShader::~GLShader() {
+GL_Shader::~GL_Shader() {
     ASSERT(m_program != 0);
     glDeleteProgram(m_program);
 }
 
-GLint GLShader::get_uniform(std::string_view uniform_name) {
+GLint GL_Shader::get_uniform(std::string_view uniform_name) {
     std::string temp(uniform_name);
 
     GLint uniform{};
@@ -68,32 +68,32 @@ GLint GLShader::get_uniform(std::string_view uniform_name) {
     return uniform;
 }
 
-void GLShader::set_int(std::string_view uniform_name, int value) {
+void GL_Shader::set_int(std::string_view uniform_name, int value) {
     GLint uniform = get_uniform(uniform_name);
     glUniform1i(uniform, value);
 }
 
-void GLShader::set_float(std::string_view uniform_name, float value) {
+void GL_Shader::set_float(std::string_view uniform_name, float value) {
     GLint uniform = get_uniform(uniform_name);
     glUniform1f(uniform, value);
 }
 
-void GLShader::set_float2(std::string_view uniform_name, const glm::vec2 &vec) {
+void GL_Shader::set_float2(std::string_view uniform_name, const glm::vec2 &vec) {
     GLint uniform = get_uniform(uniform_name);
     glUniform2fv(uniform, 1, glm::value_ptr(vec));
 }
 
-void GLShader::set_float3(std::string_view uniform_name, const glm::vec3 &vec) {
+void GL_Shader::set_float3(std::string_view uniform_name, const glm::vec3 &vec) {
     GLint uniform = get_uniform(uniform_name);
     glUniform3fv(uniform, 1, glm::value_ptr(vec));
 }
 
-void GLShader::set_float4(std::string_view uniform_name, const glm::vec4 &vec) {
+void GL_Shader::set_float4(std::string_view uniform_name, const glm::vec4 &vec) {
     GLint uniform = get_uniform(uniform_name);
     glUniform4fv(uniform, 1, glm::value_ptr(vec));
 }
 
-void GLShader::set_mat4(std::string_view uniform_name, const glm::mat4 &mat4) {
+void GL_Shader::set_mat4(std::string_view uniform_name, const glm::mat4 &mat4) {
     GLint uniform = get_uniform(uniform_name);
     glUniformMatrix4fv(uniform, 1, GL_FALSE, glm::value_ptr(mat4));
 }

@@ -8,14 +8,14 @@
 #include <unordered_map>
 
 enum class ShaderType : uint8_t {
-    Vertex,
-    Fragment,
+    VERTEX,
+    FRAGMENT,
 };
 
-class GLShader {
+class GL_Shader {
 public:
-    GLShader(std::string_view vertex_source, std::string_view fragment_source);
-    ~GLShader();
+    GL_Shader(std::string_view vertex_source, std::string_view fragment_source);
+    ~GL_Shader();
 
     [[nodiscard]]
     GLint get_uniform(std::string_view uniform_name);
