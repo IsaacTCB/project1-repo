@@ -94,8 +94,8 @@ bool Renderer::init_device() {
         .type = BufferType::INDEX,
         .usage = BufferUsage::DYNAMIC,
         .size = sizeof(indices),
+        .ptr = indices,
     });
-    m_rd->update_buffer(m_index_buffer, sizeof(indices), indices, 0);
 
     /* initialize samplers */
     m_samplers = {
@@ -104,19 +104,11 @@ bool Renderer::init_device() {
                 .mag = TextureFilter::NEAREST,
                 .min = TextureFilter::NEAREST,
             },
-            .wrap = {
-                .u = TextureWrap::REPEATED,
-                .v = TextureWrap::REPEATED,
-            },
         }),
         .linear = m_rd->create_sampler({
             .filter = {
                 .mag = TextureFilter::LINEAR,
                 .min = TextureFilter::LINEAR,
-            },
-            .wrap = {
-                .u = TextureWrap::REPEATED,
-                .v = TextureWrap::REPEATED,
             },
         }),
     };
@@ -131,8 +123,15 @@ bool Renderer::init_device() {
 void Renderer::close_device() {
     ASSERT_DEVICE_READY();
 
+    /* delete samplers */
+    m_rd->destroy_sampler(m_samplers.linear);
+    m_rd->destroy_sampler(m_samplers.nearest);
+
+    /* clear buffers */
     m_rd->destroy_buffer(m_vertex_buffer);
     m_rd->destroy_buffer(m_index_buffer);
+
+    /* clear pipeline */
     m_rd->destroy_pipeline(m_pipeline);
 
     m_rd.reset();
