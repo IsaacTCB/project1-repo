@@ -67,6 +67,24 @@ void GL_RenderDevice::end_frame() {
 
 std::tuple<GLenum, GLint> get_gl_attrib_type(VertexAttribute::Format format) {
     switch (format) {
+        case VertexAttribute::Format::INT:
+            return {GL_BYTE, 1};
+        case VertexAttribute::Format::INT16:
+            return {GL_SHORT, 1};
+        case VertexAttribute::Format::INT32:
+            return {GL_INT, 1};
+
+        case VertexAttribute::Format::UINT8:
+            return {GL_UNSIGNED_BYTE, 1};
+        case VertexAttribute::Format::UINT16:
+        case VertexAttribute::Format::RGB5551:
+        case VertexAttribute::Format::RGB565:
+        case VertexAttribute::Format::RGBA4444:
+            return {GL_UNSIGNED_SHORT, 1};
+        case VertexAttribute::Format::UINT32:
+        case VertexAttribute::Format::RGBA8888:
+            return {GL_UNSIGNED_INT, 1};
+
         case VertexAttribute::Format::FLOAT:
             return {GL_FLOAT, 1};
         case VertexAttribute::Format::FLOAT2:
@@ -96,7 +114,18 @@ static void bind_vertex_layout(const VertexLayout &layout) {
         /* apply attribute */
         const auto *offset = reinterpret_cast<void *>(attrib.offset);
 
-        glVertexAttribPointer(idx, size, type, GL_FALSE, stride, offset);
+        switch (attrib.format) {
+            case VertexAttribute::Format::RGB5551:
+            case VertexAttribute::Format::RGB565:
+            case VertexAttribute::Format::RGBA4444:
+            case VertexAttribute::Format::RGBA8888:
+                glVertexAttribIPointer(idx, size, type, stride, offset);
+                break;
+            default:
+                glVertexAttribPointer(idx, size, type, GL_FALSE, stride, offset);
+                break;
+        }
+
         glEnableVertexAttribArray(idx);
 
         idx++;

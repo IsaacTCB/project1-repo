@@ -15,12 +15,27 @@ struct VertexAttribute {
     } semantic = Semantic::UNKNOWN;
 
     enum class Format : uint8_t {
+        /* signed ints */
+        INT,
+        INT16,
+        INT32,
+
+        /* unsigned ints */
+        UINT8,
+        UINT16,
+        UINT32,
 
         /* floats */
         FLOAT,
         FLOAT2,
         FLOAT3,
         FLOAT4,
+
+        /* colors */
+        RGB5551,
+        RGB565,
+        RGBA4444,
+        RGBA8888,
 
     } format;
 

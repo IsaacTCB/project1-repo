@@ -16,6 +16,7 @@
 
 struct Vertex2D {
     Vec2 uv;
+    uint32_t color;
     Vec3 position;
 };
 
@@ -36,27 +37,32 @@ bool Renderer::build_device(std::unique_ptr<IRenderDeviceFactory> factory) {
 }
 
 bool Renderer::init_device() {
-    const std::array<VertexAttribute, 2> attrib{{
-        {.semantic = VertexAttribute::Semantic::TEXCOORD, .format = VertexAttribute::Format::FLOAT2, .offset = offsetof(Vertex2D, uv)},
+    const std::array<VertexAttribute, 3> attrib{{
         {.semantic = VertexAttribute::Semantic::POSITION, .format = VertexAttribute::Format::FLOAT3, .offset = offsetof(Vertex2D, position)},
+        {.semantic = VertexAttribute::Semantic::TEXCOORD, .format = VertexAttribute::Format::FLOAT2, .offset = offsetof(Vertex2D, uv)},
+        {.semantic = VertexAttribute::Semantic::COLOR, .format = VertexAttribute::Format::RGBA8888, .offset = offsetof(Vertex2D, color)},
     }};
 
     Vertex2D vertices[] = {
         {
             .uv = Vec2{0.0f, 0.0f},
-            .position = Vec3{0.0f, 0.0f, 0.0f},
+            .color = 0xFF0000FF,
+            .position = Vec3{-0.9f, -0.9f, 0.0f},
         },
         {
             .uv = Vec2{1.0f, 0.0f},
-            .position = Vec3{1.0f, 0.0f, 0.0f},
+            .color = 0x00FF00FF,
+            .position = Vec3{0.9f, -0.9f, 0.0f},
         },
         {
             .uv = Vec2{1.0f, 1.0f},
-            .position = Vec3{1.0f, 1.0f, 0.0f},
+            .color = 0x0000FFFF,
+            .position = Vec3{0.9f, 0.9f, 0.0f},
         },
         {
             .uv = Vec2{0.0f, 1.0f},
-            .position = Vec3{0.0f, 1.0f, 0.0f},
+            .color = 0xFFFF00FF,
+            .position = Vec3{-0.9f, 0.9f, 0.0f},
         },
     };
 
