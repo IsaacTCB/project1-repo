@@ -15,6 +15,7 @@ public:
      */
     virtual void bind() = 0;
 
+    [[nodiscard]]
     virtual FnLoad get_load_proc() = 0;
 
     /**

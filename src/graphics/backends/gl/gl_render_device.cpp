@@ -5,6 +5,7 @@
 
 #include "core/assertion.h"
 #include "core/logger.h"
+#include "core/utils/inline.h"
 #include "core/viewport.h"
 #include "graphics/api/render_device.h"
 #include "graphics/api/vertex_layout.h"
@@ -25,8 +26,7 @@ static bool init_glad(GLADloadfunc func) {
 
 GL_RenderDevice::GL_RenderDevice(std::unique_ptr<GL_IContext> &&context)
     : m_ctx(std::move(context)) {
-    m_ctx->get_load_proc();
-
+    m_ctx->bind();
     if (!s_glad_loaded) {
         s_glad_loaded = true;
         bool success = init_glad(
@@ -86,7 +86,7 @@ static void bind_vertex_layout(const VertexLayout &layout) {
 
     GLuint idx = 0;
     for (const VertexAttribute &attrib : layout.attributes) {
-        const auto [size, type] = get_gl_attrib_type(attrib.format);
+        const auto [type, size] = get_gl_attrib_type(attrib.format);
 
         /* unrecognized format, skip */
         if (size == 0) {
@@ -95,6 +95,7 @@ static void bind_vertex_layout(const VertexLayout &layout) {
 
         /* apply attribute */
         const auto *offset = reinterpret_cast<void *>(attrib.offset);
+
         glVertexAttribPointer(idx, size, type, GL_FALSE, stride, offset);
         glEnableVertexAttribArray(idx);
 
@@ -111,16 +112,23 @@ PipelineHandle GL_RenderDevice::create_pipeline(const PipelineDesc &pipeline_des
     }
 
     glBindVertexArray(storage.vertex_array);
+
+    /* copy layout */
+    storage.attributes = std::vector<VertexAttribute>(
+        pipeline_desc.vertex_layout.attributes.begin(),
+        pipeline_desc.vertex_layout.attributes.end());
+    storage.stride = pipeline_desc.vertex_layout.stride;
+
     bind_vertex_layout(pipeline_desc.vertex_layout);
 
     /* HACK: lazy-loading the shader is stupid */
     if (!m_global_shader.has_value()) {
+        LOG_TRACE("gl: loading default shader...");
         m_global_shader.emplace(g_vertex_shader_source, g_fragment_shader_source);
     }
-
     storage.shader = &(*m_global_shader);
-    glUseProgram(storage.shader->get_program());
 
+    glBindVertexArray(0);
     return m_pipelines.emplace(storage);
 };
 
@@ -236,6 +244,96 @@ void GL_RenderDevice::apply_viewport(const Viewport &screen_viewport, const View
 
 Vec2i GL_RenderDevice::get_screen_size() {
     return m_ctx->get_screen_size();
+}
+
+/* drawing */
+
+void GL_RenderDevice::set_pipeline(PipelineHandle pipeline_handle) {
+    auto *pipeline = m_pipelines.get(pipeline_handle);
+    glBindVertexArray(pipeline->vertex_array);
+    glUseProgram(pipeline->shader->get_program());
+    m_bound_pipeline = pipeline_handle;
+}
+
+void GL_RenderDevice::set_vertex_buffer(BufferHandle vertex_buffer) {
+    m_bound_vbo = vertex_buffer;
+}
+
+void GL_RenderDevice::set_index_buffer(BufferHandle index_buffer) {
+    m_bound_ibo = index_buffer;
+}
+
+/**
+ * @brief Binds a buffer storage instance with a GL buffer
+ *
+ * Acts the same as glBindBuffer, except that it asserts
+ * if the buffer format stored in the buffer storage is
+ * not actually the same as the specified buffer format.
+ *
+ * @param buffer Buffer storage to bind
+ * @param format Buffer destination
+ */
+FORCE_INLINE void bind_buffer(const GL_BufferStorage &buffer, GLenum format) {
+    ASSERT(buffer.format == format, "Buffer handle must reference an vertex buffer");
+    glBindBuffer(format, buffer.buffer);
+}
+
+/**
+ * @brief Binds a pipeline and buffers all at once.
+ *
+ * This function uses a dumb VAO cache system to
+ * minimize driver overhead.
+ *
+ * All pointers are non-owning.
+ *
+ * @param pipeline PipelineStorage to bind
+ * @param vertex_buffer BufferStorage of a vertex buffer
+ * @param index_buffer BufferStorage of an index buffer
+ */
+static void bind_pipeline_and_buffers(GL_PipelineStorage *pipeline, const GL_BufferStorage *vertex_buffer, const GL_BufferStorage *index_buffer) {
+    glBindVertexArray(pipeline->vertex_array);
+
+    /* TODO: maybe reconsider using a hashmap here? */
+    if (pipeline->last_used_vbo != vertex_buffer->buffer) {
+        bind_buffer(*vertex_buffer, GL_ARRAY_BUFFER);
+
+        /* reconfigure layout for this vbo */
+        bind_vertex_layout({
+            .attributes = pipeline->attributes,
+            .stride = pipeline->stride,
+        });
+
+        pipeline->last_used_vbo = vertex_buffer->buffer;
+    }
+
+    if (pipeline->last_used_ibo != index_buffer->buffer) {
+        bind_buffer(*index_buffer, GL_ELEMENT_ARRAY_BUFFER);
+        pipeline->last_used_ibo = index_buffer->buffer;
+    }
+
+    if (pipeline->last_used_shader != pipeline->shader->get_program()) {
+        GLuint program = pipeline->shader->get_program();
+        glUseProgram(program);
+        pipeline->last_used_shader = program;
+    }
+}
+
+void GL_RenderDevice::draw_elements(size_t index_count, size_t index_offset) {
+    /* fetch everything */
+    auto *pipeline = m_pipelines.get(m_bound_pipeline);
+    const auto *vertex_buffer = m_buffers.get(m_bound_vbo);
+    const auto *index_buffer = m_buffers.get(m_bound_ibo);
+    if (!pipeline || !vertex_buffer || !index_buffer) {
+        return;
+    }
+
+    bind_pipeline_and_buffers(pipeline, vertex_buffer, index_buffer);
+
+    const auto count = static_cast<GLsizei>(index_count);
+    const auto *indices = reinterpret_cast<void *>(index_offset);
+    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, indices);
+
+    glBindVertexArray(0);
 }
 
 /* ================= *

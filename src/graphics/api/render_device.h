@@ -15,6 +15,7 @@
 using PipelineHandle = Handle;
 using BufferHandle = Handle;
 
+/* TODO: add index data type */
 struct PipelineDesc {
     /* BlendState blend{}; */
 
@@ -72,7 +73,13 @@ protected:
     virtual void update_buffer(BufferHandle buffer, size_t size, void *data, size_t offset = 0) = 0;
     virtual void destroy_buffer(BufferHandle buffer) = 0;
 
+    /* draw */
     virtual void clear(const Color &color) = 0;
+
+    virtual void set_pipeline(PipelineHandle pipeline) = 0;
+    virtual void set_vertex_buffer(BufferHandle vertex_buffer) = 0;
+    virtual void set_index_buffer(BufferHandle index_buffer) = 0;
+    virtual void draw_elements(size_t index_count, size_t index_offset = 0) = 0;
 
     virtual Viewport build_viewport(const Vec2i &size) = 0;
     virtual void apply_viewport(const Viewport &screen_viewport, const Viewport &window_viewport) = 0;

@@ -8,6 +8,7 @@
 #include "core/viewport.h"
 #include "graphics/api/render_device.h"
 #include "graphics/api/render_device_factory.h"
+#include "graphics/api/vertex_layout.h"
 
 #include "gl_context.h"
 #include "gl_shader.h"
@@ -15,8 +16,16 @@
 #include <glad/gl.h>
 
 struct GL_PipelineStorage {
-    GLuint vertex_array;
-    GL_Shader *shader; /* temporary */
+    GLuint vertex_array{};
+
+    GLuint last_used_vbo{};
+    GLuint last_used_ibo{};
+    GLuint last_used_shader{};
+
+    std::vector<VertexAttribute> attributes;
+    size_t stride;
+
+    GL_Shader *shader; /* TODO: replace this with a shader handle */
 };
 
 struct GL_BufferStorage {
@@ -52,6 +61,11 @@ protected:
 
     void clear(const Color &color) override;
 
+    void set_pipeline(PipelineHandle pipeline) override;
+    void set_vertex_buffer(BufferHandle vertex_buffer) override;
+    void set_index_buffer(BufferHandle index_buffer) override;
+    void draw_elements(size_t index_count, size_t index_offset) override;
+
     Viewport build_viewport(const Vec2i &size) override;
     void apply_viewport(const Viewport &screen_viewport, const Viewport &window_viewport) override;
 
@@ -64,6 +78,11 @@ private:
     std::unique_ptr<GL_IContext> m_ctx;
 
     std::optional<GL_Shader> m_global_shader;
+
+    PipelineHandle m_bound_pipeline;
+    BufferHandle m_bound_vbo;
+    BufferHandle m_bound_ibo;
+
     HandlePool<GL_PipelineStorage> m_pipelines;
     HandlePool<GL_BufferStorage> m_buffers;
 };
