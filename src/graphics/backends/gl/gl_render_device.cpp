@@ -155,6 +155,21 @@ PipelineHandle GL_RenderDevice::create_pipeline(const PipelineDesc &pipeline_des
         LOG_TRACE("gl: loading default shader...");
         m_global_shader.emplace(g_vertex_shader_source, g_fragment_shader_source);
     }
+
+    switch (pipeline_desc.index_format) {
+        case IndexFormat::UINT8:
+            storage.index_format = GL_UNSIGNED_BYTE;
+            break;
+        case IndexFormat::UINT16:
+            storage.index_format = GL_UNSIGNED_SHORT;
+            break;
+        case IndexFormat::UINT32:
+            storage.index_format = GL_UNSIGNED_INT;
+            break;
+        default:
+            ASSERT(false, "gl: Unsupported index format!");
+            return PipelineHandle{};
+    }
     storage.shader = &(*m_global_shader);
 
     glBindVertexArray(0);
@@ -205,7 +220,7 @@ BufferHandle GL_RenderDevice::create_buffer(const BufferInitDesc &buffer_desc) {
     return m_buffers.emplace(storage);
 }
 
-void GL_RenderDevice::update_buffer(BufferHandle buffer, size_t size, void *data, size_t offset) {
+void GL_RenderDevice::update_buffer(BufferHandle buffer, size_t size, const void *data, size_t offset) {
     const GL_BufferStorage *storage = m_buffers.get(buffer);
     if (!storage) {
         return;
@@ -216,7 +231,7 @@ void GL_RenderDevice::update_buffer(BufferHandle buffer, size_t size, void *data
     glBindBuffer(storage->format, storage->buffer);
     glBufferSubData(
         storage->format,
-        static_cast<GLsizeiptr>(offset),
+        static_cast<GLintptr>(offset),
         static_cast<GLsizeiptr>(size),
         data);
 }
@@ -360,7 +375,7 @@ void GL_RenderDevice::draw_elements(size_t index_count, size_t index_offset) {
 
     const auto count = static_cast<GLsizei>(index_count);
     const auto *indices = reinterpret_cast<void *>(index_offset);
-    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, indices);
+    glDrawElements(GL_TRIANGLES, count, pipeline->index_format, indices);
 
     glBindVertexArray(0);
 }

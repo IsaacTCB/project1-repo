@@ -15,19 +15,10 @@
 using PipelineHandle = Handle;
 using BufferHandle = Handle;
 
-/* TODO: add index data type */
-struct PipelineDesc {
-    /* BlendState blend{}; */
-
-    struct DepthProps {
-        bool test = false;
-        bool write = false;
-        /* TODO: operation */
-    } depth{};
-
-    bool cull_backface = false;
-
-    VertexLayout vertex_layout;
+enum class IndexFormat {
+    UINT32,
+    UINT16,
+    UINT8,
 };
 
 enum class BufferType {
@@ -39,6 +30,22 @@ enum class BufferUsage {
     STATIC,
     DYNAMIC,
     STREAMED,
+};
+
+/* TODO: add index data type */
+struct PipelineDesc {
+    /* BlendState blend{}; */
+
+    struct DepthProps {
+        bool test = false;
+        bool write = false;
+        /* TODO: operation */
+    } depth{};
+
+    bool cull_backface = false;
+    IndexFormat index_format = IndexFormat::UINT32;
+
+    VertexLayout vertex_layout;
 };
 
 struct BufferInitDesc {
@@ -70,7 +77,7 @@ protected:
 
     /* buffer operations */
     virtual BufferHandle create_buffer(const BufferInitDesc &buffer_desc) = 0;
-    virtual void update_buffer(BufferHandle buffer, size_t size, void *data, size_t offset = 0) = 0;
+    virtual void update_buffer(BufferHandle buffer, size_t size, const void *data, size_t offset = 0) = 0;
     virtual void destroy_buffer(BufferHandle buffer) = 0;
 
     /* draw */

@@ -66,10 +66,11 @@ bool Renderer::init_device() {
         },
     };
 
-    uint32_t indices[] = {0, 1, 2, 2, 3, 0};
+    uint16_t indices[] = {0, 1, 2, 2, 3, 0};
 
     LOG_TRACE("create pipeline buffer");
     m_pipeline = m_rd->create_pipeline({
+        .index_format = IndexFormat::UINT16,
         .vertex_layout = {
             .attributes = attrib,
             .stride = sizeof(Vertex2D),
@@ -87,10 +88,10 @@ bool Renderer::init_device() {
     LOG_TRACE("create index buffer");
     m_index_buffer = m_rd->create_buffer({
         .type = BufferType::INDEX,
-        .usage = BufferUsage::STATIC,
+        .usage = BufferUsage::DYNAMIC,
         .size = sizeof(indices),
-        .ptr = indices,
     });
+    m_rd->update_buffer(m_index_buffer, sizeof(indices), indices, 0);
 
     /* initialize screen size */
     const Vec2i initial_size = m_rd->get_screen_size();
@@ -125,7 +126,6 @@ void Renderer::render_pass(const RenderContext &ctx) {
     m_rd->set_vertex_buffer(m_vertex_buffer);
     m_rd->set_index_buffer(m_index_buffer);
 
-    /* crashes here! */
     m_rd->draw_elements(6);
 
     /* TODO: process commands here */

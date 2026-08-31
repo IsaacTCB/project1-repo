@@ -18,13 +18,19 @@
 struct GL_PipelineStorage {
     GLuint vertex_array{};
 
+    /* settings */
+    GLenum index_format;
+
+    /* cache */
     GLuint last_used_vbo{};
     GLuint last_used_ibo{};
     GLuint last_used_shader{};
 
+    /* layout */
     std::vector<VertexAttribute> attributes;
     size_t stride;
 
+    /* bound objects */
     GL_Shader *shader; /* TODO: replace this with a shader handle */
 };
 
@@ -56,7 +62,7 @@ protected:
 
     /* buffer operations */
     BufferHandle create_buffer(const BufferInitDesc &buffer_desc) override;
-    void update_buffer(BufferHandle buffer, size_t size, void *data, size_t offset) override;
+    void update_buffer(BufferHandle buffer, size_t size, const void *data, size_t offset) override;
     void destroy_buffer(BufferHandle buffer) override;
 
     void clear(const Color &color) override;
