@@ -18,7 +18,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    list(APPEND ENGINE_COMPILE_DEFINITIONS ENABLE_ASSERTS=1)
+    list(APPEND ENGINE_COMPILE_DEFINITIONS ENABLE_ASSERTS=1 DEBUG)
     if(MSVC)
         list(APPEND ENGINE_COMPILE_OPTIONS
             /W4)
@@ -30,6 +30,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             -Wconversion
             -Wno-sign-conversion)
     endif()
+else()
+    list(APPEND ENGINE_COMPILE_DEFINITIONS NDEBUG)
 endif()
 
 set(DEFAULTS_LOADED_ TRUE)

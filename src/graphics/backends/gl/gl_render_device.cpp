@@ -24,6 +24,109 @@ static bool init_glad(GLADloadfunc func) {
     return (version != 0);
 }
 
+static void gl_debug_callback(
+    GLenum source,
+    GLenum type,
+    GLuint id,
+    GLenum severity,
+    GLsizei length,
+    const GLchar *message,
+    const void *userParam) {
+    /* fixes annoying unused variable warnings  */
+    (void)(id);
+    (void)(length);
+    (void)(userParam);
+
+    /* convert source enum to string */
+    const char *source_str = "unk";
+    switch (source) {
+        case GL_DEBUG_SOURCE_API:
+            source_str = "api";
+            break;
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+            source_str = "window";
+            break;
+        case GL_DEBUG_SOURCE_SHADER_COMPILER:
+            source_str = "shader";
+            break;
+        case GL_DEBUG_SOURCE_THIRD_PARTY:
+            source_str = "external";
+            break;
+        case GL_DEBUG_SOURCE_APPLICATION:
+            source_str = "app";
+            break;
+        case GL_DEBUG_SOURCE_OTHER:
+            source_str = "other";
+            break;
+    }
+
+    /* convert type enum to string */
+    const char *type_str = "unk";
+    switch (type) {
+        case GL_DEBUG_TYPE_ERROR:
+            type_str = "error";
+            break;
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+            type_str = "deprecated";
+            break;
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+            type_str = "undefined behavior";
+            break;
+        case GL_DEBUG_TYPE_PORTABILITY:
+            type_str = "portability";
+            break;
+        case GL_DEBUG_TYPE_PERFORMANCE:
+            type_str = "performance";
+            break;
+        case GL_DEBUG_TYPE_MARKER:
+            type_str = "marker";
+            break;
+        case GL_DEBUG_TYPE_PUSH_GROUP:
+            type_str = "push group";
+            break;
+        case GL_DEBUG_TYPE_POP_GROUP:
+            type_str = "pop group";
+            break;
+        case GL_DEBUG_TYPE_OTHER:
+            type_str = "other";
+            break;
+    }
+
+    std::string formatted = std::format("gl: [{}/{}]: {}",
+        source_str, type_str, message);
+    switch (severity) {
+        case GL_DEBUG_SEVERITY_HIGH:
+            LOG_ERROR(formatted);
+            break;
+
+        case GL_DEBUG_SEVERITY_MEDIUM:
+            LOG_WARN(formatted);
+            break;
+
+        case GL_DEBUG_SEVERITY_LOW:
+            LOG_INFO(formatted);
+            break;
+
+        case GL_DEBUG_SEVERITY_NOTIFICATION:
+            LOG_TRACE(formatted);
+            break;
+    }
+}
+
+static void init_debug() {
+    GLint flags;
+    glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+    if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+
+        if (glDebugMessageCallback) {
+            glDebugMessageCallback(gl_debug_callback, nullptr);
+            glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+        }
+    }
+}
+
 GL_RenderDevice::GL_RenderDevice(std::unique_ptr<GL_IContext> &&context)
     : m_ctx(std::move(context)) {
     m_ctx->bind();
@@ -35,6 +138,7 @@ GL_RenderDevice::GL_RenderDevice(std::unique_ptr<GL_IContext> &&context)
             LOG_CRITICAL("gl: Glad failed to load OpenGL.");
         }
 
+        init_debug();
         print_info();
     }
 

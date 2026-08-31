@@ -64,12 +64,12 @@ struct SamplerInitDesc {
     struct FilterProps {
         TextureFilter mag = TextureFilter::LINEAR;
         TextureFilter min = TextureFilter::LINEAR;
-    } filter;
+    } filter{};
 
     struct WrapProps {
         TextureWrap u = TextureWrap::REPEATED;
         TextureWrap v = TextureWrap::REPEATED;
-    } wrap;
+    } wrap{};
 };
 
 struct BufferInitDesc {

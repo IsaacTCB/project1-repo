@@ -21,6 +21,12 @@ class SDL3_DisplayServer final : public IDisplayServer {
                 break;
             case RendererAPI::OpenGL:
                 flags |= SDL_WINDOW_OPENGL;
+
+#if defined(DEBUG)
+                SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+#endif
+
+                /* Set OpenGL version */
                 SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
                 SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
                 SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
