@@ -33,9 +33,18 @@ static void gl_debug_callback(
     const GLchar *message,
     const void *userParam) {
     /* fixes annoying unused variable warnings  */
-    (void)(id);
     (void)(length);
     (void)(userParam);
+
+    /* list of annoying driver warnings to be suppressed */
+    constexpr std::array<GLuint, 1> IGNORED_IDS{{
+        131185, /* [api/other] buffer will use video memory... */
+    }};
+    for (auto ignored : IGNORED_IDS) {
+        if (id == ignored) {
+            return;
+        }
+    }
 
     /* convert source enum to string */
     const char *source_str = "unk";
