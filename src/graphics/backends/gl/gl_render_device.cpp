@@ -9,6 +9,7 @@
 #include "core/logger.h"
 #include "core/utils/inline.h"
 #include "core/viewport.h"
+#include "glm/ext/matrix_clip_space.hpp"
 #include "graphics/api/render_device.h"
 #include "graphics/api/vertex_layout.h"
 #include "runtime/renderer/render_handles.h"
@@ -381,6 +382,30 @@ void GL_RenderDevice::destroy_buffer(BufferHandle buffer) {
 }
 
 /* ================= *
+ *      Matrix       *
+ * ================= */
+
+MatrixHandle GL_RenderDevice::create_matrix() {
+    return m_matrices.emplace(GL_MatrixStorage{
+        .matrix = glm::identity<glm::mat4>(),
+    });
+}
+
+void GL_RenderDevice::destroy_matrix(MatrixHandle matrix) {
+    m_matrices.get_and_destroy(matrix);
+}
+
+void GL_RenderDevice::matrix_load_identity(MatrixHandle matrix) {
+    auto *storage = m_matrices.get(matrix);
+    storage->matrix = glm::identity<glm::mat4>();
+}
+
+void GL_RenderDevice::matrix_ortho(MatrixHandle matrix, float left, float right, float top, float bottom, float near, float far) {
+    auto *storage = m_matrices.get(matrix);
+    storage->matrix = glm::ortho(left, right, bottom, top, near, far);
+}
+
+/* ================= *
  *      Texture      *
  * ================= */
 
@@ -512,15 +537,6 @@ void GL_RenderDevice::apply_viewport(const Viewport &screen_viewport, const View
             screen_viewport.size.y - (window_viewport.position.y + window_viewport.size.y)),
         static_cast<GLint>(window_viewport.size.x),
         static_cast<GLint>(window_viewport.size.y));
-
-    glm::mat4 ortho = glm::ortho(
-        0.0f,
-        (float)window_viewport.size.x,
-        0.0f,
-        (float)window_viewport.size.y, -1.0f, 1.0f);
-
-    glUseProgram(m_global_shader->get_program());
-    m_global_shader->set_mat4("u_view_proj", ortho);
 }
 
 Vec2i GL_RenderDevice::get_screen_size() {
@@ -534,6 +550,14 @@ void GL_RenderDevice::set_pipeline(PipelineHandle pipeline_handle) {
     glBindVertexArray(pipeline->vertex_array);
     glUseProgram(pipeline->shader->get_program());
     m_bound_pipeline = pipeline_handle;
+}
+
+void GL_RenderDevice::set_mvp_matrix(const MatrixApplyDesc &matrix_desc) {
+    m_bound_matrices = {
+        .projection = matrix_desc.projection,
+        .view = matrix_desc.view,
+        .model = matrix_desc.model,
+    };
 }
 
 void GL_RenderDevice::set_vertex_buffer(BufferHandle vertex_buffer) {
@@ -629,10 +653,24 @@ void GL_RenderDevice::draw_elements(size_t index_count, size_t index_offset) {
         return;
     }
 
+    const glm::mat4 view_matrix = m_bound_matrices.view
+                                    ? m_matrices.get(m_bound_matrices.view)->matrix
+                                    : glm::identity<glm::mat4>();
+
+    const glm::mat4 proj_matrix = m_bound_matrices.projection
+                                    ? m_matrices.get(m_bound_matrices.projection)->matrix
+                                    : glm::identity<glm::mat4>();
+
+    // const glm::mat4 model_matrix = m_bound_matrices.model
+    //                                  ? m_matrices.get(m_bound_matrices.model)->matrix
+    //                                  : glm::identity<glm::mat4>();
+
     bind_pipeline_and_buffers(pipeline, vertex_buffer, index_buffer);
 
     /* TODO: do not hardcode 0 here. */
     bind_texture_and_sampler(pipeline, 0, texture, sampler);
+
+    m_global_shader->set_mat4("u_view_proj", proj_matrix * view_matrix);
 
     const auto count = static_cast<GLsizei>(index_count);
     const auto *indices = reinterpret_cast<void *>(index_offset);

@@ -15,6 +15,7 @@
 using SamplerHandle = Handle;
 using PipelineHandle = Handle;
 using BufferHandle = Handle;
+using MatrixHandle = Handle;
 
 enum class IndexFormat {
     UINT32,
@@ -79,6 +80,12 @@ struct BufferInitDesc {
     const void *ptr = nullptr;
 };
 
+struct MatrixApplyDesc {
+    MatrixHandle projection{};
+    MatrixHandle view{};
+    MatrixHandle model{};
+};
+
 class IRenderDevice {
 public:
     virtual ~IRenderDevice() = default;
@@ -108,10 +115,18 @@ public:
     virtual void update_buffer(BufferHandle buffer, size_t size, const void *data, size_t offset = 0) = 0;
     virtual void destroy_buffer(BufferHandle buffer) = 0;
 
+    /* matrix operations */
+    virtual MatrixHandle create_matrix() = 0;
+    virtual void destroy_matrix(MatrixHandle matrix) = 0;
+
+    virtual void matrix_load_identity(MatrixHandle matrix) = 0;
+    virtual void matrix_ortho(MatrixHandle matrix, float left, float right, float top, float bottom, float near = -1.0f, float far = 1.0f) = 0;
+
     /* draw */
     virtual void clear(const Color &color) = 0;
 
     virtual void set_pipeline(PipelineHandle pipeline) = 0;
+    virtual void set_mvp_matrix(const MatrixApplyDesc &matrix_desc) = 0;
     virtual void set_vertex_buffer(BufferHandle vertex_buffer) = 0;
     virtual void set_index_buffer(BufferHandle index_buffer) = 0;
     virtual void set_texture(uint32_t slot, TextureHandle texture, SamplerHandle sampler) = 0;

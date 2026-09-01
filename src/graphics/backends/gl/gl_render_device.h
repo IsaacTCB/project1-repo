@@ -15,6 +15,7 @@
 #include "runtime/renderer/render_handles.h"
 
 #include <glad/gl.h>
+#include <glm/glm.hpp>
 
 struct GL_PipelineStorage {
     GLuint vertex_array{};
@@ -54,6 +55,10 @@ struct GL_SamplerStorage {
     GLuint sampler;
 };
 
+struct GL_MatrixStorage {
+    glm::mat4 matrix;
+};
+
 class GL_RenderDevice final : public IRenderDevice {
 public:
     GL_RenderDevice() = delete;
@@ -81,9 +86,17 @@ public:
     void update_buffer(BufferHandle buffer, size_t size, const void *data, size_t offset) override;
     void destroy_buffer(BufferHandle buffer) override;
 
+    /* matrix operations */
+    MatrixHandle create_matrix() override;
+    void destroy_matrix(MatrixHandle matrix) override;
+
+    void matrix_load_identity(MatrixHandle matrix) override;
+    void matrix_ortho(MatrixHandle matrix, float left, float right, float top, float bottom, float near = -1.0f, float far = 1.0f) override;
+
     void clear(const Color &color) override;
 
     void set_pipeline(PipelineHandle pipeline) override;
+    void set_mvp_matrix(const MatrixApplyDesc &matrix_desc) override;
     void set_vertex_buffer(BufferHandle vertex_buffer) override;
     void set_index_buffer(BufferHandle index_buffer) override;
     void set_texture(uint32_t slot, TextureHandle texture, SamplerHandle sampler) override;
@@ -109,10 +122,17 @@ private:
     TextureHandle m_bound_texture;
     SamplerHandle m_bound_sampler;
 
+    struct MatrixState {
+        MatrixHandle projection;
+        MatrixHandle view;
+        MatrixHandle model;
+    } m_bound_matrices;
+
     HandlePool<GL_TextureStorage> m_textures;
     HandlePool<GL_SamplerStorage> m_samplers;
     HandlePool<GL_PipelineStorage> m_pipelines;
     HandlePool<GL_BufferStorage> m_buffers;
+    HandlePool<GL_MatrixStorage> m_matrices;
 };
 
 class GL_IRenderDeviceFactory : public IRenderDeviceFactory {
