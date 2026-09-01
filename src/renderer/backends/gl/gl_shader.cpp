@@ -3,49 +3,44 @@
 #include <core/assertion.h>
 #include <core/logger.h>
 
+#include <initializer_list>
 #include <string_view>
 #include <vector>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+struct GLShaderSourceEntry {
+    GLenum type;
+    std::string_view source;
+};
+
 /**
- * @brief Compiles GLSL sources into a shader object
+ * @brief Compiles and link a shader program from source entries.
  *
- * @param shader_source The specific shader source
- * @param shader_type What kind of shader is this? (GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, etc.)
- * @return The glShader object number or 0 on fail.
+ * program = build_shader_program({
+ *      {.type = GL_VERTEX_SHADER, .source = vertex_source},
+ *      {.type = GL_FRAGMENT_SHADER, .source = fragment_source},
+ *  });
+ *
+ * @param sources List of shader sources to compile and link from.
+ * @return A usable gl shader program or 0 on failure.
  */
-static GLuint compile_shader(const char *shader_source, GLenum shader_type);
+static GLuint build_shader_program(std::span<const GLShaderSourceEntry> shaders);
+static GLuint build_shader_program(std::initializer_list<const GLShaderSourceEntry> list);
 
 GLShader::GLShader(std::string_view vertex_source, std::string_view fragment_source) {
-    m_program = glCreateProgram();
-    ASSERT(m_program != 0);
-
-    auto vertex_shader = compile_shader(vertex_source.data(), GL_VERTEX_SHADER);
-    glAttachShader(m_program, vertex_shader);
-    auto fragment_shader = compile_shader(fragment_source.data(), GL_FRAGMENT_SHADER);
-    glAttachShader(m_program, fragment_shader);
-    glLinkProgram(m_program);
-
-    glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);
-
-    int success = 0;
-    glGetProgramiv(m_program, GL_LINK_STATUS, &success);
-    if (!success) {
-        int length = 0;
-        glGetProgramiv(m_program, GL_INFO_LOG_LENGTH, &length);
-        std::vector<char> error_msg(length);
-        glGetProgramInfoLog(m_program, length, nullptr, error_msg.data());
-        LOG_ERROR("gl: SHADER LINK ERROR: {0}", error_msg.data());
-        ASSERT(false);
-    }
+    m_program = build_shader_program({
+        {.type = GL_VERTEX_SHADER, .source = vertex_source},
+        {.type = GL_FRAGMENT_SHADER, .source = fragment_source},
+    });
+    ASSERT(m_program != 0, "Failed to build shader program");
 }
 
 GLShader::~GLShader() {
-    ASSERT(m_program != 0);
-    glDeleteProgram(m_program);
+    if (m_program) {
+        glDeleteProgram(m_program);
+    }
 }
 
 GLint GLShader::get_uniform(std::string_view uniform_name) {
@@ -109,15 +104,28 @@ static std::string_view get_shader_type(GLenum shader_type) {
     }
 }
 
+/* ================= *
+ *       Shader      *
+ * ================= */
+
+/**
+ * @brief Compiles GLSL sources into a shader object
+ *
+ * @param shader_source The specific shader source
+ * @param shader_type What kind of shader is this? (GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, etc.)
+ * @return The glShader object number or 0 on fail.
+ */
 static GLuint compile_shader(const char *shader_source, GLenum shader_type) {
-    GLint shader;
-    shader = glCreateShader(shader_type);
+    GLint shader = glCreateShader(shader_type);
+
     glShaderSource(shader, 1, &shader_source, nullptr);
     glCompileShader(shader);
 
     int success = 0;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+
     if (!success) {
+        /* print error log */
         int length = 0;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
         std::vector<char> error_msg(length);
@@ -125,8 +133,56 @@ static GLuint compile_shader(const char *shader_source, GLenum shader_type) {
         LOG_ERROR("gl: {0} SHADER COMPILE ERROR: {1}",
             get_shader_type(shader_type),
             error_msg.data());
-        ASSERT(false);
+
+        /* free up shader if an error happened */
+        glDeleteShader(shader);
         return 0;
     }
+
     return shader;
+}
+
+static GLuint build_shader_program(const std::span<const GLShaderSourceEntry> shaders) {
+    GLuint program = glCreateProgram();
+    if (!program) {
+        return 0;
+    }
+
+    /* compile every shader source */
+    for (const auto &shd : shaders) {
+        auto shader = compile_shader(shd.source.data(), shd.type);
+
+        /* fail-safe: if compilation has failed, then return */
+        if (!shader) {
+            glDeleteProgram(program);
+            return 0;
+        }
+
+        glAttachShader(program, shader);
+        glDeleteShader(shader);
+    }
+
+    glLinkProgram(program);
+
+    int success = 0;
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+
+    if (!success) {
+        /* print error log */
+        int length = 0;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+        std::vector<char> error_msg(length);
+        glGetProgramInfoLog(program, length, nullptr, error_msg.data());
+        LOG_ERROR("gl: SHADER LINK ERROR: {0}", error_msg.data());
+
+        /* free program on failure to avoid memleaks */
+        glDeleteProgram(program);
+        return 0;
+    }
+
+    return program;
+}
+
+static GLuint build_shader_program(const std::initializer_list<const GLShaderSourceEntry> list) {
+    return build_shader_program(std::span<const GLShaderSourceEntry>{list.begin(), list.end()});
 }
