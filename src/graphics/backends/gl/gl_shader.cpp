@@ -93,20 +93,22 @@ void GL_Shader::set_mat4(std::string_view uniform_name, const glm::mat4 &mat4) {
     glUniformMatrix4fv(uniform, 1, GL_FALSE, glm::value_ptr(mat4));
 }
 
-static std::string_view get_shader_type(GLenum shader_type) {
+/* ================= *
+ *       Shader      *
+ * ================= */
+
+static std::string_view get_shader_type_name(GLenum shader_type) {
     switch (shader_type) {
         case GL_VERTEX_SHADER:
             return "VERTEX";
         case GL_FRAGMENT_SHADER:
             return "FRAGMENT";
+        case GL_GEOMETRY_SHADER:
+            return "GEOMETRY";
         default:
             return "UNKNOWN";
     }
 }
-
-/* ================= *
- *       Shader      *
- * ================= */
 
 /**
  * @brief Compiles GLSL sources into a shader object
@@ -115,23 +117,29 @@ static std::string_view get_shader_type(GLenum shader_type) {
  * @param shader_type What kind of shader is this? (GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, etc.)
  * @return The glShader object number or 0 on fail.
  */
-static GLuint compile_shader(const char *shader_source, GLenum shader_type) {
+static GLuint compile_shader(std::string_view shader_source, GLenum shader_type) {
     GLint shader = glCreateShader(shader_type);
+    if (!shader) {
+        LOG_ERROR("gl: failed to create shader object");
+        return 0;
+    }
 
-    glShaderSource(shader, 1, &shader_source, nullptr);
+    const char *source_string = shader_source.data();
+    const auto source_length = static_cast<GLint>(shader_source.size());
+    glShaderSource(shader, 1, &source_string, &source_length);
     glCompileShader(shader);
 
-    int success = 0;
+    GLint success = 0;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
     if (!success) {
         /* print error log */
-        int length = 0;
+        GLint length = 0;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
         std::vector<char> error_msg(length);
         glGetShaderInfoLog(shader, length, nullptr, error_msg.data());
         LOG_ERROR("gl: {0} SHADER COMPILE ERROR: {1}",
-            get_shader_type(shader_type),
+            get_shader_type_name(shader_type),
             error_msg.data());
 
         /* free up shader if an error happened */
@@ -145,12 +153,13 @@ static GLuint compile_shader(const char *shader_source, GLenum shader_type) {
 static GLuint build_shader_program(const std::span<const GL_ShaderSourceEntry> shaders) {
     GLuint program = glCreateProgram();
     if (!program) {
+        LOG_ERROR("gl: failed to create shader program object");
         return 0;
     }
 
     /* compile every shader source */
     for (const auto &shd : shaders) {
-        auto shader = compile_shader(shd.source.data(), shd.type);
+        auto shader = compile_shader(shd.source, shd.type);
 
         /* fail-safe: if compilation has failed, then return */
         if (!shader) {
@@ -164,12 +173,12 @@ static GLuint build_shader_program(const std::span<const GL_ShaderSourceEntry> s
 
     glLinkProgram(program);
 
-    int success = 0;
+    GLint success = 0;
     glGetProgramiv(program, GL_LINK_STATUS, &success);
 
     if (!success) {
         /* print error log */
-        int length = 0;
+        GLint length = 0;
         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
         std::vector<char> error_msg(length);
         glGetProgramInfoLog(program, length, nullptr, error_msg.data());
