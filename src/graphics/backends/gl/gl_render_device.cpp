@@ -414,7 +414,10 @@ static std::optional<GL_TextureStorage> build_texture(const ImageData &data) {
         0, storage.data_format, GL_UNSIGNED_BYTE,
         data.pixels.data());
 
-    glBindTexture(GL_TEXTURE_2D, 0);
+    /* fixes an opengl message about this texture not having mipmaps */
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
     return storage;
 }
 
@@ -511,9 +514,9 @@ void GL_RenderDevice::apply_viewport(const Viewport &screen_viewport, const View
         static_cast<GLint>(window_viewport.size.y));
 
     glm::mat4 ortho = glm::ortho(
-        (float)0.0f,
+        0.0f,
         (float)window_viewport.size.x,
-        (float)0.0f,
+        0.0f,
         (float)window_viewport.size.y, -1.0f, 1.0f);
 
     glUseProgram(m_global_shader->get_program());
@@ -634,8 +637,6 @@ void GL_RenderDevice::draw_elements(size_t index_count, size_t index_offset) {
     const auto count = static_cast<GLsizei>(index_count);
     const auto *indices = reinterpret_cast<void *>(index_offset);
     glDrawElements(GL_TRIANGLES, count, pipeline->index_format, indices);
-
-    glBindVertexArray(0);
 }
 
 /* ================= *
