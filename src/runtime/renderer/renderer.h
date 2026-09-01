@@ -7,9 +7,10 @@
 #include "core/viewport.h"
 
 #include "graphics/api/render_device.h"
-#include "render_handles.h"
-
 #include "runtime/app/context/frame_context.h"
+
+#include "batch_builder.h"
+#include "render_handles.h"
 
 class IRenderDevice;
 class IRenderDeviceFactory;
@@ -46,14 +47,7 @@ private:
     void close_device();
 
 private:
-    struct Samplers {
-        SamplerHandle nearest;
-        SamplerHandle linear;
-    } m_samplers;
-
+    std::optional<BatchBuilder> m_batch;
     std::unique_ptr<IRenderDevice> m_rd;
     Viewport m_screen_viewport;
-
-    PipelineHandle m_pipeline;
-    BufferHandle m_vertex_buffer, m_index_buffer;
 };

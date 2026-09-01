@@ -87,6 +87,7 @@ protected:
     IRenderDevice() = default;
     friend class Renderer;
 
+public:
     virtual void begin_frame() = 0;
     virtual void end_frame() = 0;
 

@@ -6,6 +6,7 @@ set(RUNTIME_SOURCES
     input_service.cpp
     image/decoder.cpp
     renderer/renderer.cpp
+    renderer/batch_builder.cpp
     runtime.cpp
 )
 

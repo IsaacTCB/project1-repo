@@ -34,7 +34,6 @@ GL_Shader::GL_Shader(std::string_view vertex_source, std::string_view fragment_s
         {.type = GL_VERTEX_SHADER, .source = vertex_source},
         {.type = GL_FRAGMENT_SHADER, .source = fragment_source},
     });
-    ASSERT(m_program != 0, "Failed to build shader program");
 }
 
 GL_Shader::~GL_Shader() {

@@ -17,6 +17,9 @@ public:
     GL_Shader(std::string_view vertex_source, std::string_view fragment_source);
     ~GL_Shader();
 
+    bool valid() const { return m_program != 0; }
+    operator bool() const { return valid(); }
+
     [[nodiscard]]
     GLint get_uniform(std::string_view uniform_name);
 

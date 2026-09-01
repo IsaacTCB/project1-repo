@@ -60,7 +60,7 @@ public:
     GL_RenderDevice(std::unique_ptr<GL_IContext> &&context);
     ~GL_RenderDevice() override;
 
-protected:
+public:
     void begin_frame() override;
     void end_frame() override;
 
@@ -101,6 +101,7 @@ private:
     std::unique_ptr<GL_IContext> m_ctx;
 
     std::optional<GL_Shader> m_global_shader;
+    GL_TextureStorage m_white_texture;
 
     PipelineHandle m_bound_pipeline;
     BufferHandle m_bound_vbo;

@@ -1,9 +1,11 @@
 #include "gl_render_device.h"
 
 #include <cstddef>
+#include <optional>
 #include <tuple>
 
 #include "core/assertion.h"
+#include "core/image/image.h"
 #include "core/logger.h"
 #include "core/utils/inline.h"
 #include "core/viewport.h"
@@ -16,6 +18,8 @@
 
 #include <SDL3/SDL_video.h>
 #include <glad/gl.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 static bool s_glad_loaded = false;
 
@@ -23,6 +27,8 @@ static bool init_glad(GLADloadfunc func) {
     int version = gladLoadGL(func);
     return (version != 0);
 }
+
+static std::optional<GL_TextureStorage> build_texture(const ImageData &data);
 
 static void gl_debug_callback(
     GLenum source,
@@ -151,6 +157,18 @@ GL_RenderDevice::GL_RenderDevice(std::unique_ptr<GL_IContext> &&context)
         print_info();
     }
 
+    m_white_texture = *build_texture(ImageData{
+        .pixels = {
+            // clang-format off
+            0xFF, 0xFF, 0xFF, 0xFF,  0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF,  0xFF, 0xFF, 0xFF, 0xFF,
+            // clang-format on
+        },
+        .width = 2,
+        .height = 2,
+        .channels = 4,
+    });
+
     /* This allows gl to load images whose
      * data size are not a multiple of 4. */
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -278,7 +296,10 @@ PipelineHandle GL_RenderDevice::create_pipeline(const PipelineDesc &pipeline_des
     /* HACK: lazy-loading the shader is stupid */
     if (!m_global_shader.has_value()) {
         LOG_TRACE("gl: loading default shader...");
+
         m_global_shader.emplace(g_vertex_shader_source, g_fragment_shader_source);
+        ASSERT(m_global_shader->valid(), "gl: failed to load global shader");
+
         m_global_shader->set_int("u_texture", 0);
     }
 
@@ -363,7 +384,7 @@ void GL_RenderDevice::destroy_buffer(BufferHandle buffer) {
  *      Texture      *
  * ================= */
 
-TextureHandle GL_RenderDevice::load_texture(const ImageData &data) {
+static std::optional<GL_TextureStorage> build_texture(const ImageData &data) {
     GL_TextureStorage storage{};
 
     switch (data.channels) {
@@ -377,12 +398,12 @@ TextureHandle GL_RenderDevice::load_texture(const ImageData &data) {
             break;
         default:
             ASSERT(false, "Unsupported bpp");
-            return TextureHandle{};
+            return std::nullopt;
     }
 
     glGenTextures(1, &storage.texture);
     if (storage.texture == 0) {
-        return TextureHandle{};
+        return std::nullopt;
     }
 
     glBindTexture(GL_TEXTURE_2D, storage.texture);
@@ -394,8 +415,15 @@ TextureHandle GL_RenderDevice::load_texture(const ImageData &data) {
         data.pixels.data());
 
     glBindTexture(GL_TEXTURE_2D, 0);
+    return storage;
+}
 
-    return m_textures.emplace(storage);
+TextureHandle GL_RenderDevice::load_texture(const ImageData &data) {
+    auto storage = build_texture(data);
+    if (!storage.has_value()) {
+        return TextureHandle{};
+    }
+    return m_textures.emplace(*storage);
 }
 
 void GL_RenderDevice::destroy_texture(TextureHandle texture) {
@@ -481,6 +509,15 @@ void GL_RenderDevice::apply_viewport(const Viewport &screen_viewport, const View
             screen_viewport.size.y - (window_viewport.position.y + window_viewport.size.y)),
         static_cast<GLint>(window_viewport.size.x),
         static_cast<GLint>(window_viewport.size.y));
+
+    glm::mat4 ortho = glm::ortho(
+        (float)0.0f,
+        (float)window_viewport.size.x,
+        (float)0.0f,
+        (float)window_viewport.size.y, -1.0f, 1.0f);
+
+    glUseProgram(m_global_shader->get_program());
+    m_global_shader->set_mat4("u_view_proj", ortho);
 }
 
 Vec2i GL_RenderDevice::get_screen_size() {
@@ -583,7 +620,7 @@ void GL_RenderDevice::draw_elements(size_t index_count, size_t index_offset) {
         return;
     }
 
-    const auto *texture = m_textures.get(m_bound_texture);
+    const auto *texture = m_bound_texture ? m_textures.get(m_bound_texture) : &m_white_texture;
     const auto *sampler = m_samplers.get(m_bound_sampler);
     if (!texture || !sampler) {
         return;
