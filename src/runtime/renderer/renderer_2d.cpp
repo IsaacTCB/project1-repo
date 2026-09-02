@@ -21,7 +21,7 @@ Renderer2D::~Renderer2D() {
     }
 }
 
-bool Renderer2D::build_device(std::unique_ptr<IRenderDeviceFactory> factory) {
+bool Renderer2D::attach_device(std::unique_ptr<IRenderDeviceFactory> factory) {
     m_rd = (*factory)();
     if (m_rd) {
         return init_device();
@@ -89,7 +89,7 @@ void Renderer2D::update_view_projection(const ViewContext2D &view) {
         {view.view_camera->offset.x, view.view_camera->offset.y, 0.0f});
 }
 
-void Renderer2D::render_pass(const RenderContext &ctx) {
+void Renderer2D::render_frame(const RenderContext &ctx) {
     ASSERT_DEVICE_READY();
 
     m_rd->begin_frame();

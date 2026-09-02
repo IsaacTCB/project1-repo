@@ -64,24 +64,23 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
         LOG_CRITICAL("EngineRuntime::init(): Unsupported graphics API (display didn't return a valid factory)");
         exit(-2);
     }
-    if (!m_renderer->build_device(std::move(factory))) {
+    if (!m_renderer->attach_device(std::move(factory))) {
         LOG_CRITICAL("EngineRuntime::init(): Failed to start graphics API");
         exit(-3);
     }
 
     /* initialize asset service */
     m_asset_service.emplace(::AssetService::Provider{
-        .renderer{
+        .renderer = {
             .load_texture = [](ImageData &image, void *userdata) -> TextureHandle {
                 ASSERT(userdata);
                 auto *renderer = static_cast<Renderer2D *>(userdata);
                 return renderer->load_texture(image);
             },
-            .unload_texture = [](TextureHandle texture, void *userdata) {
+            .unload_texture = [](TextureHandle texture, void *userdata) -> void {
                 ASSERT(userdata);
                 auto *renderer = static_cast<Renderer2D *>(userdata);
                 renderer->destroy_texture(texture);
-                // this comment fixes clang-format. do not remove it
             },
             .userdata = &(*m_renderer),
         },
@@ -180,7 +179,7 @@ void EngineRuntime::render() {
 
 void EngineRuntime::render_frame(RenderContext &ctx) {
     ASSERT(ctx.view_context, "View context must be built every frame!");
-    m_renderer->render_pass(ctx);
+    m_renderer->render_frame(ctx);
 }
 
 void EngineRuntime::close() {

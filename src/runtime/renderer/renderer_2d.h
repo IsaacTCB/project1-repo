@@ -22,14 +22,14 @@ public:
     ~Renderer2D();
 
 public:
-    bool build_device(std::unique_ptr<IRenderDeviceFactory> factory);
+    bool attach_device(std::unique_ptr<IRenderDeviceFactory> factory);
 
 public:
     /* ================== *
      *  Frame rendering   *
      * ================== */
 
-    void render_pass(const RenderContext &ctx);
+    void render_frame(const RenderContext &ctx);
 
     /* ================== *
      *  Texture Actions   *
