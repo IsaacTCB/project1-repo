@@ -35,19 +35,20 @@ enum class BufferUsage {
     STREAMED,
 };
 
-/* TODO: add index data type */
 struct PipelineDesc {
-    /* BlendState blend{}; */
+    /* TODO: implement these attributes */
+    /*
+     * BlendState blend{};
+     *
+     * struct DepthProps {
+     *     bool test = false;
+     *     bool write = false;
+     * } depth{};
+     *
+     * bool cull_backface = false;
+     */
 
-    struct DepthProps {
-        bool test = false;
-        bool write = false;
-        /* TODO: operation */
-    } depth{};
-
-    bool cull_backface = false;
     IndexFormat index_format = IndexFormat::UINT32;
-
     VertexLayout vertex_layout;
 };
 
