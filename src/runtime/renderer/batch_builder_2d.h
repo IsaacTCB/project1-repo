@@ -12,9 +12,9 @@
 #include "graphics/api/render_device.h"
 #include "runtime/renderer/render_handles.h"
 
-class BatchBuilder {
+class BatchBuilder2D {
 public:
-    BatchBuilder(IRenderDevice *rd)
+    BatchBuilder2D(IRenderDevice *rd)
         : m_rd(rd) {};
 
     void init(size_t quad_count = 1000);

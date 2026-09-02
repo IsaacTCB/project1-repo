@@ -10,16 +10,16 @@
 #include "graphics/api/render_device.h"
 #include "runtime/app/context/frame_context.h"
 
-#include "batch_builder.h"
+#include "batch_builder_2d.h"
 #include "render_handles.h"
 
 class IRenderDevice;
 class IRenderDeviceFactory;
 
-class Renderer {
+class Renderer2D {
 public:
-    Renderer();
-    ~Renderer();
+    Renderer2D();
+    ~Renderer2D();
 
 public:
     bool build_device(std::unique_ptr<IRenderDeviceFactory> factory);
@@ -55,7 +55,7 @@ private:
         MatrixHandle view{};
     } m_matrices{};
 
-    std::optional<BatchBuilder> m_batch;
+    std::optional<BatchBuilder2D> m_batch;
     std::unique_ptr<IRenderDevice> m_rd;
     Viewport m_screen_viewport;
 };

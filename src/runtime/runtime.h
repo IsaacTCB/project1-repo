@@ -2,7 +2,7 @@
 
 #include <optional>
 
-#include "renderer/renderer.h"
+#include "renderer/renderer_2d.h"
 
 #include "app/application_handler.h"
 #include "asset_service.h"
@@ -47,7 +47,7 @@ private:
 private:
     FrameContext m_frame_ctx;
     DisplayWindowHandle m_window;
-    std::optional<Renderer> m_renderer;
+    std::optional<Renderer2D> m_renderer;
     RenderQueue m_queue;
 
     uint32_t m_fps, m_fps_accum;

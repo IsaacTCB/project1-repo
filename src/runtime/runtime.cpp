@@ -15,7 +15,7 @@
 
 #include "renderer/render_handles.h"
 #include "renderer/render_queue.h"
-#include "renderer/renderer.h"
+#include "renderer/renderer_2d.h"
 
 #include "app/application_handler.h"
 #include "asset_service.h"
@@ -74,12 +74,12 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
         .renderer{
             .load_texture = [](ImageData &image, void *userdata) -> TextureHandle {
                 ASSERT(userdata);
-                auto *renderer = static_cast<Renderer *>(userdata);
+                auto *renderer = static_cast<Renderer2D *>(userdata);
                 return renderer->load_texture(image);
             },
             .unload_texture = [](TextureHandle texture, void *userdata) {
                 ASSERT(userdata);
-                auto *renderer = static_cast<Renderer *>(userdata);
+                auto *renderer = static_cast<Renderer2D *>(userdata);
                 renderer->destroy_texture(texture);
                 // this comment fixes clang-format. do not remove it
             },

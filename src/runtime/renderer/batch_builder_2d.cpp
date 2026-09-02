@@ -1,7 +1,6 @@
-#include "batch_builder.h"
+#include "batch_builder_2d.h"
 
 #include <cstddef>
-#include <cstdint>
 
 // #include <glm/glm.hpp>
 
@@ -13,7 +12,7 @@
 constexpr size_t QUAD_VERTEX_COUNT = 4;
 constexpr size_t QUAD_INDEX_COUNT = 6;
 
-void BatchBuilder::init(size_t quad_count) {
+void BatchBuilder2D::init(size_t quad_count) {
     const std::array<VertexAttribute, 3> attrib{{
         {.semantic = VertexAttribute::Semantic::POSITION, .format = VertexAttribute::Format::FLOAT3, .offset = offsetof(BatchVertex2D, position)},
         {.semantic = VertexAttribute::Semantic::TEXCOORD, .format = VertexAttribute::Format::FLOAT2, .offset = offsetof(BatchVertex2D, uv)},
@@ -62,7 +61,7 @@ void BatchBuilder::init(size_t quad_count) {
     });
 }
 
-void BatchBuilder::close() {
+void BatchBuilder2D::close() {
     /* cleanup buffers */
     m_rd->destroy_buffer(m_state.index_buffer);
     m_rd->destroy_buffer(m_state.vertex_buffer);
@@ -77,12 +76,12 @@ void BatchBuilder::close() {
     m_indices.clear();
 }
 
-bool BatchBuilder::can_fit_quad() const {
+bool BatchBuilder2D::can_fit_quad() const {
     return m_vertices.size() <= m_vertices.capacity() - QUAD_VERTEX_COUNT &&
            m_indices.size() <= m_indices.capacity() - QUAD_INDEX_COUNT;
 }
 
-void BatchBuilder::set_batch_key(const BatchKey &key) {
+void BatchBuilder2D::set_batch_key(const BatchKey &key) {
     /* if the no key has been set, just set it and skip */
     if (!m_current_key.has_value()) {
         m_current_key.emplace(key);
@@ -99,7 +98,7 @@ void BatchBuilder::set_batch_key(const BatchKey &key) {
     m_current_key.emplace(key);
 }
 
-void BatchBuilder::draw_rect(const Vec2 &pos, const Vec2 &size, Color color, TextureHandle texture) {
+void BatchBuilder2D::draw_rect(const Vec2 &pos, const Vec2 &size, Color color, TextureHandle texture) {
     if (!can_fit_quad()) {
         flush();
     }
@@ -145,7 +144,7 @@ void BatchBuilder::draw_rect(const Vec2 &pos, const Vec2 &size, Color color, Tex
     }
 }
 
-void BatchBuilder::flush() {
+void BatchBuilder2D::flush() {
     /* fail-safe: nothing was drawn, don't flush. */
     if (m_vertices.size() == 0) {
         m_current_key.reset();

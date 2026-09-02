@@ -1,4 +1,4 @@
-#include "renderer.h"
+#include "renderer_2d.h"
 
 #include <variant>
 
@@ -14,14 +14,14 @@
 #define ASSERT_DEVICE_READY() \
     ASSERT(m_rd, "Renderer: Called renderer method without having render device initialized with 'build_device()'")
 
-Renderer::Renderer() = default;
-Renderer::~Renderer() {
+Renderer2D::Renderer2D() = default;
+Renderer2D::~Renderer2D() {
     if (m_rd) {
         close_device();
     }
 }
 
-bool Renderer::build_device(std::unique_ptr<IRenderDeviceFactory> factory) {
+bool Renderer2D::build_device(std::unique_ptr<IRenderDeviceFactory> factory) {
     m_rd = (*factory)();
     if (m_rd) {
         return init_device();
@@ -30,7 +30,7 @@ bool Renderer::build_device(std::unique_ptr<IRenderDeviceFactory> factory) {
     return false;
 }
 
-bool Renderer::init_device() {
+bool Renderer2D::init_device() {
     /* create projection & view */
     m_matrices.projection = m_rd->create_matrix();
     m_matrices.view = m_rd->create_matrix();
@@ -46,7 +46,7 @@ bool Renderer::init_device() {
     return true;
 }
 
-void Renderer::close_device() {
+void Renderer2D::close_device() {
     ASSERT_DEVICE_READY();
 
     m_batch.reset();
@@ -67,7 +67,7 @@ struct Overload : Ts... {
     using Ts::operator()...;
 };
 
-void Renderer::update_view_projection(const ViewContext2D &view) {
+void Renderer2D::update_view_projection(const ViewContext2D &view) {
     /* update projection */
     auto ortho = view.get_ortho();
     m_rd->matrix_ortho(m_matrices.projection,
@@ -89,7 +89,7 @@ void Renderer::update_view_projection(const ViewContext2D &view) {
         {view.view_camera->offset.x, view.view_camera->offset.y, 0.0f});
 }
 
-void Renderer::render_pass(const RenderContext &ctx) {
+void Renderer2D::render_pass(const RenderContext &ctx) {
     ASSERT_DEVICE_READY();
 
     m_rd->begin_frame();
@@ -125,13 +125,13 @@ void Renderer::render_pass(const RenderContext &ctx) {
  *  Texture Actions   *
  * ================== */
 
-TextureHandle Renderer::load_texture(ImageData &data) {
+TextureHandle Renderer2D::load_texture(ImageData &data) {
     ASSERT_DEVICE_READY();
     /* TODO: use a stable pointer instead */
     return m_rd->load_texture(data);
 }
 
-void Renderer::destroy_texture(TextureHandle texture) {
+void Renderer2D::destroy_texture(TextureHandle texture) {
     ASSERT_DEVICE_READY();
     m_rd->destroy_texture(texture);
 }
@@ -140,7 +140,7 @@ void Renderer::destroy_texture(TextureHandle texture) {
  *       Other        *
  * ================== */
 
-void Renderer::on_screen_resized(const Vec2i &screen_size) {
+void Renderer2D::on_screen_resized(const Vec2i &screen_size) {
     ASSERT_DEVICE_READY();
     ASSERT(screen_size.x > 0 && screen_size.y > 0, "Width & height must not be 0.");
     m_screen_viewport = m_rd->build_viewport(screen_size);

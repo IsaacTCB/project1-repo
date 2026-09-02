@@ -5,8 +5,8 @@ set(RUNTIME_SOURCES
     asset_service.cpp
     input_service.cpp
     image/decoder.cpp
-    renderer/renderer.cpp
-    renderer/batch_builder.cpp
+    renderer/renderer_2d.cpp
+    renderer/batch_builder_2d.cpp
     runtime.cpp
 )
 
