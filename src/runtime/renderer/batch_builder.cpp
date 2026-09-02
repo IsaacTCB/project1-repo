@@ -106,7 +106,7 @@ void BatchBuilder::draw_rect(const Vec2 &pos, const Vec2 &size, Color color, Tex
 
     set_batch_key({
         .texture = texture,
-        .sampler = m_state.samplers.nearest,
+        .sampler = m_state.samplers.linear,
     });
 
     const auto index_base =
