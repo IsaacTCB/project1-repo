@@ -9,8 +9,8 @@
 #include "core/events/platform_events.h"
 #include "core/events/window_events.h"
 #include "core/logger.h"
-
 #include "core/math/color.h"
+
 #include "platform/api/event_server.h"
 
 #include "renderer/render_handles.h"

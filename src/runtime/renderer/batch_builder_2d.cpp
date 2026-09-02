@@ -2,12 +2,8 @@
 
 #include <cstddef>
 
-// #include <glm/glm.hpp>
-
 #include "core/assertion.h"
-
 #include "graphics/api/render_device.h"
-#include "runtime/renderer/render_handles.h"
 
 constexpr size_t QUAD_VERTEX_COUNT = 4;
 constexpr size_t QUAD_INDEX_COUNT = 6;
