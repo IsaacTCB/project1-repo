@@ -63,8 +63,14 @@ void BatchBuilder::init(size_t quad_count) {
 }
 
 void BatchBuilder::close() {
+    /* cleanup buffers */
     m_rd->destroy_buffer(m_state.index_buffer);
     m_rd->destroy_buffer(m_state.vertex_buffer);
+
+    /* delete sampler */
+    m_rd->destroy_sampler(m_state.samplers.linear);
+    m_rd->destroy_sampler(m_state.samplers.nearest);
+
     m_rd->destroy_pipeline(m_state.pipeline);
 
     m_vertices.clear();
