@@ -2,6 +2,8 @@
 
 #include "core/math/vec2i.h"
 
+#include <string_view>
+
 class GL_IContext {
 public:
     using FnProcAddr = void (*)();
@@ -29,6 +31,14 @@ public:
      * @param interval Typical values are 0 to disable, 1 for vsync.
      */
     virtual void set_swap_interval(int interval) = 0;
+
+    /**
+     * @brief Checks if an extension is supported
+     *
+     * @param extension_name What extension to check
+     * @return Returns true if supported, false if not.
+     */
+    virtual bool is_extension_supported(std::string_view extension_name) = 0;
 
     virtual Vec2i get_screen_size() = 0;
 

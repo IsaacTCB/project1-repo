@@ -17,10 +17,15 @@
 #include "gl_context.h"
 #include "gl_shader_sources.h"
 
-#include <SDL3/SDL_video.h>
 #include <glad/gl.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
+#if defined(DEBUG) && defined(GL_KHR_debug)
+#define ENABLE_DEBUG_MESSAGES 1
+#else
+#define ENABLE_DEBUG_MESSAGES 0
+#endif
 
 static bool s_glad_loaded = false;
 
@@ -30,6 +35,8 @@ static bool init_glad(GLADloadfunc func) {
 }
 
 static std::optional<GL_TextureStorage> build_texture(const ImageData &data);
+
+#if ENABLE_DEBUG_MESSAGES
 
 static void gl_debug_callback(
     GLenum source,
@@ -108,7 +115,7 @@ static void gl_debug_callback(
             break;
     }
 
-    std::string formatted = std::format("gl: [{}/{}]: {}",
+    std::string formatted = std::format("gl(debug): [{}/{}]: {}",
         source_str, type_str, message);
     switch (severity) {
         case GL_DEBUG_SEVERITY_HIGH:
@@ -129,19 +136,29 @@ static void gl_debug_callback(
     }
 }
 
-static void init_debug() {
+static void init_debug(GL_IContext *context) {
     GLint flags;
     glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
-    if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
+
+    const bool debug_messages =
+        (flags & GL_CONTEXT_FLAG_DEBUG_BIT) &&
+        (context->is_extension_supported("GL_KHR_debug")) &&
+        (glDebugMessageCallback && glDebugMessageControl);
+
+    if (debug_messages) {
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
-        if (glDebugMessageCallback) {
-            glDebugMessageCallback(gl_debug_callback, nullptr);
-            glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-        }
+        glDebugMessageCallback(gl_debug_callback, nullptr);
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+
+        LOG_INFO("gl(debug): enabled debug messages");
+    } else {
+        LOG_INFO("gl(debug): failed to enable debug messages.");
     }
 }
+
+#endif // ENABLE_DEBUG_MESSAGES
 
 GL_RenderDevice::GL_RenderDevice(std::unique_ptr<GL_IContext> &&context)
     : m_ctx(std::move(context)) {
@@ -154,7 +171,9 @@ GL_RenderDevice::GL_RenderDevice(std::unique_ptr<GL_IContext> &&context)
             LOG_CRITICAL("gl: Glad failed to load OpenGL.");
         }
 
-        init_debug();
+#if ENABLE_DEBUG_MESSAGES
+        init_debug(m_ctx.get());
+#endif
         print_info();
     }
 

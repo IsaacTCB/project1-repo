@@ -40,3 +40,7 @@ Vec2i SDL3_GL_Context::get_screen_size() {
     SDL_GetWindowSize(m_window, &w, &h);
     return Vec2i{w, h};
 }
+
+bool SDL3_GL_Context::is_extension_supported(std::string_view extension_name) {
+    return SDL_GL_ExtensionSupported(extension_name.data());
+}

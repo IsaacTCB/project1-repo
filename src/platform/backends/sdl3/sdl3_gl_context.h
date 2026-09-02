@@ -20,6 +20,7 @@ public:
     void swap_buffers() override;
     void set_swap_interval(int interval) override;
     Vec2i get_screen_size() override;
+    bool is_extension_supported(std::string_view extension_name) override;
 
 private:
     SDL_Window *m_window;
