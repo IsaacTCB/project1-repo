@@ -51,12 +51,6 @@ void BatchBuilder::init(size_t quad_count) {
         .size = m_vertices.capacity() * sizeof(BatchVertex2D),
     });
 
-    m_state.vertex_buffer = m_rd->create_buffer({
-        .type = BufferType::VERTEX,
-        .usage = BufferUsage::STREAMED,
-        .size = m_vertices.capacity() * sizeof(BatchVertex2D),
-    });
-
     /* NOTE: this batcher is currently only used for quads. In the future we might
      * want to add other primitive shapes, like triangles and shader-less circles.
      * That's why we are building the index buffer dynamically per-frame. */
