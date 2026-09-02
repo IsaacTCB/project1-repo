@@ -4,6 +4,7 @@
 #include <optional>
 
 #include "core/math/vec2i.h"
+#include "core/math/vec3.h"
 #include "core/utils/handles.h"
 #include "core/viewport.h"
 #include "graphics/api/render_device.h"
@@ -92,6 +93,7 @@ public:
 
     void matrix_load_identity(MatrixHandle matrix) override;
     void matrix_ortho(MatrixHandle matrix, float left, float right, float top, float bottom, float near = -1.0f, float far = 1.0f) override;
+    void matrix_translate_rotate_scale(MatrixHandle matrix, const Vec3 &translate, float rotate, const Vec3 &rotate_axis, const Vec3 &scale, const Vec3 &offset) override;
 
     void clear(const Color &color) override;
 
@@ -123,10 +125,10 @@ private:
     SamplerHandle m_bound_sampler;
 
     struct MatrixState {
-        MatrixHandle projection;
-        MatrixHandle view;
-        MatrixHandle model;
-    } m_bound_matrices;
+        MatrixHandle projection{};
+        MatrixHandle view{};
+        MatrixHandle model{};
+    } m_bound_matrices{};
 
     HandlePool<GL_TextureStorage> m_textures;
     HandlePool<GL_SamplerStorage> m_samplers;

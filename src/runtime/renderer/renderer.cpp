@@ -5,6 +5,7 @@
 #include "core/assertion.h"
 #include "core/math/vec2.h"
 #include "core/math/vec2i.h"
+#include "core/view_context_2d.h"
 #include "graphics/api/render_device.h"
 #include "graphics/api/render_device_factory.h"
 #include "runtime/renderer/render_handles.h"
@@ -30,6 +31,10 @@ bool Renderer::build_device(std::unique_ptr<IRenderDeviceFactory> factory) {
 }
 
 bool Renderer::init_device() {
+    /* create projection & view */
+    m_matrices.projection = m_rd->create_matrix();
+    m_matrices.view = m_rd->create_matrix();
+
     /* initialize batching */
     m_batch.emplace(m_rd.get());
     m_batch->init();
@@ -43,7 +48,13 @@ bool Renderer::init_device() {
 
 void Renderer::close_device() {
     ASSERT_DEVICE_READY();
+
     m_batch.reset();
+
+    /* remove projection & view */
+    m_rd->destroy_matrix(m_matrices.projection);
+    m_rd->destroy_matrix(m_matrices.view);
+
     m_rd.reset();
 }
 
@@ -56,6 +67,28 @@ struct Overload : Ts... {
     using Ts::operator()...;
 };
 
+void Renderer::update_view_projection(const ViewContext2D &view) {
+    /* update projection */
+    auto ortho = view.get_ortho();
+    m_rd->matrix_ortho(m_matrices.projection,
+        ortho.tl.x, ortho.br.x, ortho.br.y, ortho.tl.y, -1.0f, 1.0f);
+
+    /* update view matrix */
+    m_rd->matrix_translate_rotate_scale(m_matrices.view,
+        /* position */
+        {view.view_camera->position.x, view.view_camera->position.y, 0.0f},
+
+        /* rotation */
+        view.view_camera->rotation,
+        {0.0f, 0.0f, 1.0f},
+
+        /* scale */
+        {1.0f, 1.0f, 1.0f},
+
+        /* offset */
+        {view.view_camera->offset.x, view.view_camera->offset.y, 0.0f});
+}
+
 void Renderer::render_pass(const RenderContext &ctx) {
     ASSERT_DEVICE_READY();
 
@@ -63,6 +96,12 @@ void Renderer::render_pass(const RenderContext &ctx) {
 
     m_rd->clear(ctx.clear_color);
     m_rd->apply_viewport(m_screen_viewport, ctx.frame.viewport);
+
+    update_view_projection(*ctx.view_context);
+    m_rd->set_mvp_matrix({
+        .projection = m_matrices.projection,
+        .view = m_matrices.view,
+    });
 
     for (const RenderCommand &command : ctx.queue.get()) {
         std::visit(

@@ -4,6 +4,7 @@
 
 #include "core/image/image.h"
 #include "core/math/vec2i.h"
+#include "core/view_context_2d.h"
 #include "core/viewport.h"
 
 #include "graphics/api/render_device.h"
@@ -46,7 +47,14 @@ private:
     bool init_device();
     void close_device();
 
+    void update_view_projection(const ViewContext2D &view);
+
 private:
+    struct MatrixMVP {
+        MatrixHandle projection{};
+        MatrixHandle view{};
+    } m_matrices{};
+
     std::optional<BatchBuilder> m_batch;
     std::unique_ptr<IRenderDevice> m_rd;
     Viewport m_screen_viewport;

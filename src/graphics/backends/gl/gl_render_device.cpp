@@ -402,7 +402,21 @@ void GL_RenderDevice::matrix_load_identity(MatrixHandle matrix) {
 
 void GL_RenderDevice::matrix_ortho(MatrixHandle matrix, float left, float right, float top, float bottom, float near, float far) {
     auto *storage = m_matrices.get(matrix);
-    storage->matrix = glm::ortho(left, right, bottom, top, near, far);
+
+    /* This ortho is top-left origin, but OpenGL uses
+     * bottom-left origin. As a result, that unflips
+     * everything so that Y+ means down again. */
+    storage->matrix = glm::ortho(left, right, top, bottom, near, far);
+}
+
+void GL_RenderDevice::matrix_translate_rotate_scale(MatrixHandle matrix, const Vec3 &translate, float rotate, const Vec3 &rotate_axis, const Vec3 &scale, const Vec3 &offset) {
+    auto *storage = m_matrices.get(matrix);
+    auto i = glm::identity<glm::mat4>();
+    storage->matrix =
+        glm::translate(i, {translate.x, translate.y, translate.z}) *
+        glm::rotate(i, rotate, {rotate_axis.x, rotate_axis.y, rotate_axis.z}) *
+        glm::scale(i, {scale.x, scale.y, scale.z}) *
+        glm::translate(i, {offset.x, offset.y, offset.z});
 }
 
 /* ================= *
@@ -670,7 +684,7 @@ void GL_RenderDevice::draw_elements(size_t index_count, size_t index_offset) {
     /* TODO: do not hardcode 0 here. */
     bind_texture_and_sampler(pipeline, 0, texture, sampler);
 
-    m_global_shader->set_mat4("u_view_proj", proj_matrix * view_matrix);
+    m_global_shader->set_mat4("u_view_proj", proj_matrix * glm::inverse(view_matrix));
 
     const auto count = static_cast<GLsizei>(index_count);
     const auto *indices = reinterpret_cast<void *>(index_offset);

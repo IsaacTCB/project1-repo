@@ -6,6 +6,7 @@
 #include "core/math/color.h"
 #include "core/math/vec2.h"
 #include "core/math/vec2i.h"
+#include "core/math/vec3.h"
 #include "core/utils/handles.h"
 #include "core/viewport.h"
 #include "runtime/renderer/render_handles.h"
@@ -121,6 +122,8 @@ public:
 
     virtual void matrix_load_identity(MatrixHandle matrix) = 0;
     virtual void matrix_ortho(MatrixHandle matrix, float left, float right, float top, float bottom, float near = -1.0f, float far = 1.0f) = 0;
+    /* TODO: replace this with a matrix operation queue/list */
+    virtual void matrix_translate_rotate_scale(MatrixHandle matrix, const Vec3 &translate, float rotate, const Vec3 &rotate_axis, const Vec3 &scale, const Vec3 &offset) = 0;
 
     /* draw */
     virtual void clear(const Color &color) = 0;
