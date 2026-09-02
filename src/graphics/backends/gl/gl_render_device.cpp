@@ -145,17 +145,20 @@ static void init_debug(GL_IContext *context) {
         (context->is_extension_supported("GL_KHR_debug")) &&
         (glDebugMessageCallback && glDebugMessageControl);
 
-    if (debug_messages) {
-        glEnable(GL_DEBUG_OUTPUT);
-        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-
-        glDebugMessageCallback(gl_debug_callback, nullptr);
-        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-
-        LOG_INFO("gl(debug): enabled debug messages");
-    } else {
+    if (!debug_messages) {
         LOG_INFO("gl(debug): failed to enable debug messages.");
+        return;
     }
+
+    /* turn on output */
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+
+    /* enable debug message callback & mode */
+    glDebugMessageCallback(gl_debug_callback, nullptr);
+    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+
+    LOG_INFO("gl(debug): enabled debug messages");
 }
 
 #endif // ENABLE_DEBUG_MESSAGES
