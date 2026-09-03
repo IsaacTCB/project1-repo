@@ -1,8 +1,10 @@
 #include "batch_builder_2d.h"
 
+#include <cmath>
 #include <cstddef>
 
 #include "core/assertion.h"
+#include "core/math/base.h"
 #include "graphics/api/render_device.h"
 
 constexpr size_t QUAD_VERTEX_COUNT = 4;
@@ -94,7 +96,7 @@ void BatchBuilder2D::set_batch_key(const BatchKey &key) {
     m_current_key.emplace(key);
 }
 
-void BatchBuilder2D::draw_rect(const Vec2 &pos, const Vec2 &size, Color color, TextureHandle texture) {
+void BatchBuilder2D::draw_rect(const Vec2 &pos, const Vec2 &size, const Vec2 &anchor, float rotation, Color color, TextureHandle texture) {
     if (!can_fit_quad()) {
         flush();
     }
@@ -107,26 +109,43 @@ void BatchBuilder2D::draw_rect(const Vec2 &pos, const Vec2 &size, Color color, T
     const auto index_base =
         static_cast<std::uint32_t>(m_vertices.size());
 
-    m_vertices.emplace_back(BatchVertex2D{
-        .uv{0.0f, 0.0f},
-        .color = color,
-        .position{pos.x, pos.y, 0.0f},
-    });
-    m_vertices.emplace_back(BatchVertex2D{
-        .uv{1.0f, 0.0f},
-        .color = color,
-        .position{pos.x + size.x, pos.y, 0.0f},
-    });
-    m_vertices.emplace_back(BatchVertex2D{
-        .uv{1.0f, 1.0f},
-        .color = color,
-        .position{pos.x + size.x, pos.y + size.y, 0.0f},
-    });
-    m_vertices.emplace_back(BatchVertex2D{
-        .uv{0.0f, 1.0f},
-        .color = color,
-        .position{pos.x, pos.y + size.y, 0.0f},
-    });
+    constexpr std::array<Vec2, 4> CORNERS{{
+        {0.0f, 0.0f},
+        {1.0f, 0.0f},
+        {1.0f, 1.0f},
+        {0.0f, 1.0f},
+    }};
+
+    if (is_zero_approx(rotation)) [[likely]] {
+        /* not rotated, skip slow path */
+        const Vec2 offset = pos - anchor * size;
+        for (const auto &corner : CORNERS) {
+            Vec2 position = offset + corner * size;
+            m_vertices.emplace_back(BatchVertex2D{
+                .uv = corner,
+                .color = color,
+                .position = {position.x, position.y, 0.0f},
+            });
+        }
+    } else {
+        const float c = std::cos(rotation);
+        const float s = std::sin(rotation);
+
+        const Vec2 anchor_offset = anchor * size;
+        for (const auto &corner : CORNERS) {
+            const Vec2 local = (corner * size) - anchor_offset;
+            const Vec2 position{
+                pos.x + ((local.x * c) - (local.y * s)),
+                pos.y + ((local.x * s) + (local.y * c)),
+            };
+
+            m_vertices.emplace_back(BatchVertex2D{
+                .uv = corner,
+                .color = color,
+                .position = {position.x, position.y, 0.0f},
+            });
+        }
+    }
 
     /* load index buffer offsets */
     constexpr std::array<std::uint32_t, 6> INDEX_OFFSETS{{

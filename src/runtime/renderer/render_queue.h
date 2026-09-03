@@ -13,6 +13,8 @@ struct RenderCommandDraw {
     TextureHandle texture; /* handle is null = draw solid color */
     Vec2 pos;
     Vec2 size;
+    Vec2 anchor;
+    float rotation;
     Color color;
     // int zsort;
 };
@@ -34,14 +36,20 @@ public:
     }
 
 public:
-    void draw_texture_blended(TextureHandle texture, Color color, const Vec2i &position, const Vec2i &size) {
+    void draw_texture_ex(TextureHandle texture, Color color, const Vec2i &position, const Vec2i &size, const Vec2 &anchor, float rotation) {
         m_queue.emplace_back(RenderCommandDraw{
             .texture = texture,
             .pos = Vec2{position},
             .size = Vec2{size},
+            .anchor = anchor,
+            .rotation = rotation,
             .color = color,
             // .zsort = 0,
         });
+    }
+
+    void draw_texture_blended(TextureHandle texture, Color color, const Vec2i &position, const Vec2i &size) {
+        draw_texture_ex(texture, color, position, size, {0.0f, 0.0f}, 0.0f);
     }
 
     void draw_texture(TextureHandle texture, const Vec2i &position, const Vec2i &size) {

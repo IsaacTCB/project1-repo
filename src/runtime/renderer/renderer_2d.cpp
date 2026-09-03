@@ -110,7 +110,7 @@ void Renderer2D::render_frame(const RenderContext &ctx) {
                 /* draw 2D rect command */
                 [&](const RenderCommandDraw &draw) {
                     /* TODO: solve texture handle */
-                    m_batch->draw_rect(draw.pos, draw.size, draw.color, draw.texture);
+                    m_batch->draw_rect(draw.pos, draw.size, draw.anchor, draw.rotation, draw.color, draw.texture);
                 },
             },
             command);

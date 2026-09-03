@@ -2,6 +2,7 @@
 #include <vector>
 
 #include "core/camera.h"
+#include "core/input/keyboard.h"
 #include "core/logger.h"
 #include "core/math/random.h"
 #include "core/math/vec2.h"
@@ -109,8 +110,8 @@ public:
             entity.pos.y += ((move.x * cam_sin) + (cam_cos * move.y)) * (PLAYER_SPEED * delta) * entity.speed_scale;
         }
 
-        m_camera.position.x = std::floor(m_entities[0].pos.x + 100.0f);
-        m_camera.position.y = std::floor(m_entities[0].pos.y + 100.0f);
+        m_camera.position.x = std::floor(m_entities[0].pos.x);
+        m_camera.position.y = std::floor(m_entities[0].pos.y);
     }
 
     void on_draw(RenderContext &ctx) override {
@@ -128,7 +129,13 @@ public:
             float scale_factor = entity.speed_scale;
             scale_factor *= scale_factor * scale_factor;
 
-            ctx.queue.draw_texture(m_texture.get(), draw_pos, Vec2i(scale * scale_factor));
+            ctx.queue.draw_texture_ex(
+                m_texture.get(),
+                Color::WHITE,
+                draw_pos,
+                Vec2i(scale * scale_factor),
+                {0.5f, 0.5f},
+                0.0f);
         }
 
         Vec2i mouse_pos{m_servers.input.get_mouse_pos()};
