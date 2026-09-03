@@ -12,6 +12,7 @@ set(SDL3_SOURCES
     sdl3_common.cpp
     sdl3_gamepad.cpp
     sdl3_platform.cpp
+    sdl3_registry.cpp
     sdl3_main.cpp
 )
 

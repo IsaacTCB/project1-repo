@@ -23,6 +23,7 @@ public:
 
 public:
     bool attach_device(std::unique_ptr<IRenderDeviceFactory> factory);
+    void init();
 
 public:
     /* ================== *

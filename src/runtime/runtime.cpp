@@ -43,30 +43,11 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     LOG_INFO("platform: {}", os.get_platform());
     LOG_INFO("os: {}", os.get_os());
 
-    /* construct renderer (not fully initialized yet!) */
-    m_renderer.emplace();
-
     /* create main window/screen */
-    auto &display = m_platform.display;
     DisplayWindowProps props{};
     props.size = {800, 600};
-    props.api = RendererAPI::OpenGL;
-
-    m_window = display.init_display(props);
-    if (!m_window) {
-        LOG_CRITICAL("EngineRuntime::init(): Failed to create main window");
+    if (!init_display_and_renderer(props)) {
         exit(-1);
-    }
-
-    /* get render device factory, attach it into renderer to initialize it */
-    std::unique_ptr<IRenderDeviceFactory> factory = display.get_factory(m_window);
-    if (!factory) {
-        LOG_CRITICAL("EngineRuntime::init(): Unsupported graphics API (display didn't return a valid factory)");
-        exit(-2);
-    }
-    if (!m_renderer->attach_device(std::move(factory))) {
-        LOG_CRITICAL("EngineRuntime::init(): Failed to start graphics API");
-        exit(-3);
     }
 
     /* initialize asset service */
@@ -86,6 +67,7 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
         },
     });
     /* poll window size */
+    auto &display = m_platform.display;
     Vec2i display_size = display.get_size(m_window);
     LOG_INFO("display size: {0}", display_size);
     m_input_service.init();
@@ -96,6 +78,83 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
         .asset = m_asset_service.value(),
     };
     m_app_handler->init(app_servers, m_platform);
+}
+
+bool EngineRuntime::try_init_backend(const std::string &backend, const DisplayWindowProps &props) {
+    DisplayWindowProps backend_props = props;
+    backend_props.api = backend;
+
+    auto window = m_platform.display.init_display(backend_props);
+    if (!window) {
+        LOG_TRACE("EngineRuntime::init_display_and_renderer(): Failed to open main window with backend '{}'", backend);
+        return false;
+    }
+
+    /* get render device factory, attach it into renderer to initialize it */
+    std::unique_ptr<IRenderDeviceFactory> factory = m_platform.display.get_render_factory(window);
+    if (!factory) {
+        LOG_TRACE("EngineRuntime::init_display_and_renderer(): Failed to obtain a valid render device factory from '{}'", backend);
+        m_platform.display.close_display(window);
+        return false;
+    }
+
+    /* reset renderer, just in case... */
+    if (m_renderer) {
+        m_renderer.reset();
+    }
+
+    /* TODO: make this a temporary value that
+     * gets moved/copied into m_renderer on success */
+    m_renderer.emplace();
+
+    if (!m_renderer->attach_device(std::move(factory))) {
+        LOG_TRACE("EngineRuntime::init_display_and_renderer(): Failed to start graphics backend '{}'", backend);
+        m_platform.display.close_display(window);
+        return false;
+    }
+
+    /* commit window and init renderer */
+    m_renderer->init();
+    m_window = window;
+
+    return true;
+}
+
+bool EngineRuntime::init_display_and_renderer(const DisplayWindowProps &props) {
+    /* TODO: support explicit backend request */
+    const auto supported_backends = m_platform.display.get_render_backends();
+    if (supported_backends.empty()) {
+        ASSERT(false, "EngineRuntime::init_display_and_renderer(): "
+                      "Platform does not provide any graphics backend.");
+        return false;
+    }
+
+    for (size_t i = 0; i < supported_backends.size(); ++i) {
+        const auto &backend = supported_backends[i];
+
+        if (i > 0) {
+            const auto &previous_backend = supported_backends[i - 1];
+            LOG_WARN(
+                "RenderDevice backend '{}' failed, falling back to '{}'...",
+                previous_backend,
+                backend);
+        }
+
+        if (try_init_backend(backend, props)) {
+            LOG_INFO("Using '{}' as render device backend", backend);
+            return true;
+        }
+    }
+
+    if (m_renderer.has_value()) {
+        m_renderer.reset();
+    }
+
+    LOG_CRITICAL(
+        "Failed to start render device: unable to initialize"
+        "any of the available graphics backend.");
+
+    return false;
 }
 
 bool EngineRuntime::count_fps(float delta) {

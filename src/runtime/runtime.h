@@ -22,6 +22,34 @@ public:
 
 private:
     /**
+     * @brief Initializes the main window and renderer.
+     *
+     * This function runs through the supported graphics
+     * backend from the platform until one works.
+     *
+     * @note props.api is currently ignored.
+     *
+     * @param props The display props for instantiating
+     * the window. `props.api` is ignored.
+     * @return True if the display and renderer were
+     * initialized successfully, false otherwise
+     */
+    bool init_display_and_renderer(const DisplayWindowProps &props);
+
+    /**
+     * @brief Tries to initialize window + renderer from the
+     * display server.
+     *
+     * Used by init_display_and_renderer.
+     *
+     * @param backend Specifies what render device backend to use.
+     * @param props The display props for instantiating
+     * the window. `props.api` gets overwritten by backend.
+     * @return True if the operation was successful, false otherwise.
+     */
+    bool try_init_backend(const std::string &backend, const DisplayWindowProps &props);
+
+    /**
      * @brief Builds a new frame context and updates
      * m_frame_ctx.
      *

@@ -4,9 +4,7 @@
 #include <string>
 
 #include "core/math/vec2i.h"
-
 #include "graphics/api/render_device_factory.h"
-#include "runtime/renderer/renderer_apis.h"
 
 #include "server_macros.inl"
 
@@ -16,7 +14,7 @@
 struct DisplayWindowProps {
     std::string caption = "Window";
     Vec2i size{800, 600};
-    RendererAPI api = get_default_api();
+    std::string api;
     bool resizable = false;
 };
 
@@ -60,5 +58,8 @@ public:
     virtual Vec2i get_size(const DisplayWindowHandle &handle) const = 0;
 
     [[nodiscard]]
-    virtual std::unique_ptr<IRenderDeviceFactory> get_factory(DisplayWindowHandle handle) = 0;
+    virtual std::vector<std::string> get_render_backends() = 0;
+
+    [[nodiscard]]
+    virtual std::unique_ptr<IRenderDeviceFactory> get_render_factory(DisplayWindowHandle handle) = 0;
 };

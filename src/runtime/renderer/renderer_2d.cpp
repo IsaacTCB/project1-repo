@@ -23,11 +23,12 @@ Renderer2D::~Renderer2D() {
 
 bool Renderer2D::attach_device(std::unique_ptr<IRenderDeviceFactory> factory) {
     m_rd = (*factory)();
-    if (m_rd) {
-        return init_device();
-    }
+    return m_rd != nullptr;
+}
 
-    return false;
+void Renderer2D::init() {
+    ASSERT_DEVICE_READY();
+    init_device();
 }
 
 bool Renderer2D::init_device() {
