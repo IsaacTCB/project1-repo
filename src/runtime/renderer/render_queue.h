@@ -56,8 +56,12 @@ public:
         draw_texture_blended(texture, Color::WHITE, position, size);
     }
 
+    void draw_color_ex(Color color, const Vec2i &position, const Vec2i &size, const Vec2 &anchor, float rotation) {
+        draw_texture_ex(Handle{}, color, position, size, anchor, rotation);
+    }
+
     void draw_color(Color color, const Vec2i &position, const Vec2i &size) {
-        draw_texture_blended(Handle{}, color, position, size);
+        draw_color_ex(color, position, size, Vec2{0.0f, 0.0f}, 0.0f);
     }
 
 private:

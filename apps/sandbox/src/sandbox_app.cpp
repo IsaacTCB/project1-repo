@@ -145,10 +145,8 @@ public:
         Vec2 mouse_alt = m_view_context.world_to_screen(world_1);
         Vec2 world_2 = m_view_context.screen_to_world(mouse_alt);
 
-        world_2.x -= 4;
-        world_2.y -= 4;
-        ctx.queue.draw_color(Color{0xFF, 0x00, 0x00, 0x60}, Vec2i{world_2}, {16, 16});
-        ctx.queue.draw_color(Color{0xFF, 0x00, 0xFF, 0xFF}, Vec2i{world_1}, {8, 8});
+        ctx.queue.draw_color_ex(Color{0xFF, 0x00, 0x00, 0x60}, Vec2i{world_2}, {16, 16}, {0.5f, 0.5f}, 0.0f);
+        ctx.queue.draw_color_ex(Color{0xFF, 0x00, 0xFF, 0xFF}, Vec2i{world_1}, {8, 8}, {0.5f, 0.5f}, 0.0f);
 
         auto bounds = m_view_context.get_bounds_aabb();
         ctx.queue.draw_color(
