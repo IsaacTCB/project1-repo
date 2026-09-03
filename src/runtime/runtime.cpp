@@ -98,24 +98,18 @@ bool EngineRuntime::try_init_backend(const std::string &backend, const DisplayWi
         return false;
     }
 
-    /* reset renderer, just in case... */
-    if (m_renderer) {
-        m_renderer.reset();
-    }
-
-    /* TODO: make this a temporary value that
-     * gets moved/copied into m_renderer on success */
-    m_renderer.emplace();
-
-    if (!m_renderer->attach_device(std::move(factory))) {
+    /* init renderer */
+    Renderer2D renderer{};
+    if (!renderer.attach_device(std::move(factory))) {
         LOG_TRACE("EngineRuntime::init_display_and_renderer(): Failed to start graphics backend '{}'", backend);
         m_platform.display.close_display(window);
         return false;
     }
+    renderer.init();
 
-    /* commit window and init renderer */
-    m_renderer->init();
-    m_window = window;
+    /* commit window and renderer */
+    m_renderer = std::move(renderer);
+    m_window = std::move(window);
 
     return true;
 }

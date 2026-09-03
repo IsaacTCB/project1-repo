@@ -21,6 +21,11 @@ public:
     Renderer2D();
     ~Renderer2D();
 
+    Renderer2D(const Renderer2D &rhs) = delete;
+    Renderer2D &operator=(const Renderer2D &rhs) = delete;
+    Renderer2D(Renderer2D &&rhs) noexcept = default;
+    Renderer2D &operator=(Renderer2D &&rhs) noexcept = default;
+
 public:
     bool attach_device(std::unique_ptr<IRenderDeviceFactory> factory);
     void init();
