@@ -24,6 +24,9 @@ public:
     void flush();
 
 private:
+    void push_quad_indices(size_t index_base);
+
+private:
     struct BatchKey {
         TextureHandle texture;
         SamplerHandle sampler;

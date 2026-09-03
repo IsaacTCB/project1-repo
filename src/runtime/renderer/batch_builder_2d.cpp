@@ -147,16 +147,7 @@ void BatchBuilder2D::draw_rect(const Vec2 &pos, const Vec2 &size, const Vec2 &an
         }
     }
 
-    /* load index buffer offsets */
-    constexpr std::array<std::uint32_t, 6> INDEX_OFFSETS{{
-        // clang-format off
-        0, 1, 2,
-        2, 3, 0,
-        // clang-format on
-    }};
-    for (const auto offset : INDEX_OFFSETS) {
-        m_indices.emplace_back(index_base + offset);
-    }
+    push_quad_indices(index_base);
 }
 
 void BatchBuilder2D::flush() {
@@ -189,4 +180,17 @@ void BatchBuilder2D::flush() {
     m_vertices.clear();
     m_indices.clear();
     m_current_key.reset();
+}
+
+void BatchBuilder2D::push_quad_indices(size_t index_base) {
+    /* load index buffer offsets */
+    constexpr std::array<std::uint32_t, 6> INDEX_OFFSETS{{
+        // clang-format off
+        0, 1, 2,
+        2, 3, 0,
+        // clang-format on
+    }};
+    for (const auto offset : INDEX_OFFSETS) {
+        m_indices.emplace_back(index_base + offset);
+    }
 }
