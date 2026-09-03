@@ -86,14 +86,20 @@ bool EngineRuntime::try_init_backend(const std::string &backend, const DisplayWi
 
     auto window = m_platform.display.init_display(backend_props);
     if (!window) {
-        LOG_TRACE("EngineRuntime::init_display_and_renderer(): Failed to open main window with backend '{}'", backend);
+        LOG_TRACE(
+            "EngineRuntime::init_display_and_renderer(): "
+            "Failed to open main window with backend '{}'",
+            backend);
         return false;
     }
 
     /* get render device factory, attach it into renderer to initialize it */
     std::unique_ptr<IRenderDeviceFactory> factory = m_platform.display.get_render_factory(window);
     if (!factory) {
-        LOG_TRACE("EngineRuntime::init_display_and_renderer(): Failed to obtain a valid render device factory from '{}'", backend);
+        LOG_TRACE(
+            "EngineRuntime::init_display_and_renderer(): Failed"
+            "to obtain a valid render device factory from '{}'",
+            backend);
         m_platform.display.close_display(window);
         return false;
     }
@@ -101,7 +107,10 @@ bool EngineRuntime::try_init_backend(const std::string &backend, const DisplayWi
     /* init renderer */
     Renderer2D renderer{};
     if (!renderer.attach_device(std::move(factory))) {
-        LOG_TRACE("EngineRuntime::init_display_and_renderer(): Failed to start graphics backend '{}'", backend);
+        LOG_TRACE(
+            "EngineRuntime::init_display_and_renderer(): "
+            "Failed to start graphics backend '{}'",
+            backend);
         m_platform.display.close_display(window);
         return false;
     }
