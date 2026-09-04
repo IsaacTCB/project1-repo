@@ -35,9 +35,7 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     m_app_handler = &app_handler;
 
     /* initialize fps counter */
-    m_fps = 0;
-    m_fps_accum = 0;
-    m_fps_timer = 0.0f;
+    m_fps = {};
 
     auto &os = m_platform.os;
     LOG_INFO("platform: {}", os.get_platform());
@@ -93,15 +91,15 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
 }
 
 bool EngineRuntime::count_fps(float delta) {
-    m_fps_timer += delta;
-    m_fps_accum++;
+    m_fps.timer += delta;
+    m_fps.accumulator++;
 
     /* if a second has passed,
      * transfer accumulator to fps */
-    if (m_fps_timer >= 1.0f) {
-        m_fps = m_fps_accum;
-        m_fps_accum = {};
-        m_fps_timer = {};
+    if (m_fps.timer >= 1.0f) {
+        m_fps.fps = m_fps.accumulator;
+        m_fps.accumulator = {};
+        m_fps.timer = {};
 
         return true;
     }
@@ -191,7 +189,7 @@ void EngineRuntime::close() {
 FrameContext &EngineRuntime::build_frame_context(float delta) {
     m_frame_ctx = {
         .delta = delta,
-        .fps = m_fps,
+        .fps = m_fps.fps,
         .viewport = m_renderer->get_viewport(),
     };
     return m_frame_ctx;
