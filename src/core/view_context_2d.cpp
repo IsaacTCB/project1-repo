@@ -66,8 +66,8 @@ Vec2 ViewContext2D::view_to_world(const Vec2 &view_coord) const {
     if (angle_is_rotated(view_camera->rotation)) {
         /* TODO: cache sine and cosine directly within the camera object.
          * This should happen only if rotation has changed and is dirty. */
-        float sin = std::sinf(view_camera->rotation);
-        float cos = std::cosf(view_camera->rotation);
+        float sin = std::sin(view_camera->rotation);
+        float cos = std::cos(view_camera->rotation);
 
         auto temp{world};
         world.x = (temp.x * cos) - (temp.y * sin);
@@ -90,8 +90,8 @@ Vec2 ViewContext2D::world_to_view(const Vec2 &world_coord) const {
     if (angle_is_rotated(view_camera->rotation)) {
         /* TODO: cache sine and cosine directly within the camera object.
          * This should happen only if rotation has changed and is dirty. */
-        float sin = std::sinf(view_camera->rotation);
-        float cos = std::cosf(view_camera->rotation);
+        float sin = std::sin(view_camera->rotation);
+        float cos = std::cos(view_camera->rotation);
 
         Vec2 temp{view};
         view.x = (temp.x * cos) + (temp.y * sin);
@@ -140,8 +140,8 @@ ViewContext2D::BoundRect ViewContext2D::get_bounds_aabb() const {
         br.clear();
 
         /* rotate corners */
-        float sin = std::sinf(view_camera->rotation);
-        float cos = std::cosf(view_camera->rotation);
+        float sin = std::sin(view_camera->rotation);
+        float cos = std::cos(view_camera->rotation);
         for (const auto &corner : corners) {
             Vec2 rotated{
                 (corner.x * cos) - (corner.y * sin),

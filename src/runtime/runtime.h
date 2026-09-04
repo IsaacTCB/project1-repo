@@ -78,8 +78,11 @@ private:
     std::optional<Renderer2D> m_renderer;
     RenderQueue m_queue;
 
-    uint32_t m_fps, m_fps_accum;
-    float m_fps_timer;
+    struct FpsCounter {
+        uint32_t fps;
+        uint32_t accumulator;
+        float timer;
+    } m_fps{};
 
     InputService m_input_service;
     std::optional<AssetService> m_asset_service;

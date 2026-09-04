@@ -103,8 +103,8 @@ public:
         /* clamp stick and add it into player position */
         move.limit_length(1.0f);
 
-        float cam_cos = std::cosf(m_camera.rotation);
-        float cam_sin = std::sinf(m_camera.rotation);
+        float cam_cos = std::cos(m_camera.rotation);
+        float cam_sin = std::sin(m_camera.rotation);
         for (auto &entity : m_entities) {
             entity.pos.x += ((move.x * cam_cos) - (cam_sin * move.y)) * (PLAYER_SPEED * delta) * entity.speed_scale;
             entity.pos.y += ((move.x * cam_sin) + (cam_cos * move.y)) * (PLAYER_SPEED * delta) * entity.speed_scale;
