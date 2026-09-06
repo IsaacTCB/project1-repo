@@ -17,6 +17,7 @@ using SamplerHandle = Handle;
 using PipelineHandle = Handle;
 using BufferHandle = Handle;
 using MatrixHandle = Handle;
+using RenderTargetHandle = Handle;
 
 enum class IndexFormat {
     UINT32,
@@ -35,11 +36,33 @@ enum class BufferUsage {
     STREAMED,
 };
 
+enum class BlendFactor {
+    ZERO,
+    ONE,
+    SRC_COLOR,
+    ONE_MINUS_SRC_COLOR,
+    DST_COLOR,
+    ONE_MINUS_DST_COLOR,
+    SRC_ALPHA,
+    ONE_MINUS_SRC_ALPHA,
+    DST_ALPHA,
+    ONE_MINUS_DST_ALPHA,
+    CONSTANT_COLOR,
+    ONE_MINUS_CONSTANT_COLOR,
+    CONSTANT_ALPHA,
+    ONE_MINUS_CONSTANT_ALPHA,
+    SRC_ALPHA_SATURATE,
+};
+
 struct PipelineDesc {
+    struct Blending {
+        bool enabled = true;
+        BlendFactor src = BlendFactor::SRC_ALPHA;
+        BlendFactor dst = BlendFactor::ONE_MINUS_SRC_ALPHA;
+    } blending{};
+
     /* TODO: implement these attributes */
     /*
-     * BlendState blend{};
-     *
      * struct DepthProps {
      *     bool test = false;
      *     bool write = false;
@@ -88,6 +111,16 @@ struct MatrixApplyDesc {
     MatrixHandle model{};
 };
 
+struct RenderPassApplyDesc {
+    RenderTargetHandle target{};
+    Viewport viewport{};
+    Color clear_color{};
+};
+
+struct RenderTargetDesc {
+    Vec2i size{};
+};
+
 class IRenderDevice {
 public:
     virtual ~IRenderDevice() = default;
@@ -99,6 +132,14 @@ protected:
 public:
     virtual void begin_frame() = 0;
     virtual void end_frame() = 0;
+
+    virtual void begin_pass(const RenderPassApplyDesc &pass_desc) = 0;
+    virtual void end_pass() = 0;
+
+    virtual RenderTargetHandle create_render_target(const RenderTargetDesc &render_target_desc) = 0;
+    virtual void resize_render_target(RenderTargetHandle handle, Vec2i size) = 0;
+    virtual void destroy_render_target(RenderTargetHandle handle) = 0;
+    virtual TextureHandle get_color_attachment(RenderTargetHandle handle) = 0;
 
     /* texture actions */
     virtual TextureHandle load_texture(const ImageData &data) = 0;

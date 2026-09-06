@@ -29,6 +29,13 @@ struct GL_PipelineStorage {
     GLuint last_used_ibo{};
     GLuint last_used_shader{};
 
+    struct Blending {
+        bool enabled;
+        GLenum src;
+        GLenum dst;
+
+    } blending;
+
     /* layout */
     std::vector<VertexAttribute> attributes;
     size_t stride;
@@ -60,6 +67,15 @@ struct GL_MatrixStorage {
     glm::mat4 matrix;
 };
 
+struct GL_RenderTargetStorage {
+    GLuint framebuffer;
+
+    TextureHandle texture;
+    /* TODO: depth */
+
+    Vec2i size;
+};
+
 class GL_RenderDevice final : public IRenderDevice {
 public:
     GL_RenderDevice() = delete;
@@ -69,6 +85,14 @@ public:
 public:
     void begin_frame() override;
     void end_frame() override;
+
+    void begin_pass(const RenderPassApplyDesc &pass_desc) override;
+    void end_pass() override;
+
+    RenderTargetHandle create_render_target(const RenderTargetDesc &render_target_desc) override;
+    void resize_render_target(RenderTargetHandle handle, Vec2i size) override;
+    void destroy_render_target(RenderTargetHandle handle) override;
+    TextureHandle get_color_attachment(RenderTargetHandle handle) override;
 
     /* texture actions */
     TextureHandle load_texture(const ImageData &data) override;
@@ -123,6 +147,10 @@ private:
     BufferHandle m_bound_ibo;
     TextureHandle m_bound_texture;
     SamplerHandle m_bound_sampler;
+    GLenum m_bound_sfactor = 0;
+    GLenum m_bound_dfactor = 0;
+
+    bool m_blending_enabled = true;
 
     struct MatrixState {
         MatrixHandle projection{};
@@ -135,6 +163,7 @@ private:
     HandlePool<GL_PipelineStorage> m_pipelines;
     HandlePool<GL_BufferStorage> m_buffers;
     HandlePool<GL_MatrixStorage> m_matrices;
+    HandlePool<GL_RenderTargetStorage> m_targets;
 };
 
 class GL_IRenderDeviceFactory : public IRenderDeviceFactory {

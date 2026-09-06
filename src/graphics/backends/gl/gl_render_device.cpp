@@ -34,7 +34,10 @@ static bool init_glad(GLADloadfunc func) {
     return (version != 0);
 }
 
-static std::optional<GL_TextureStorage> build_texture(const ImageData &data);
+static std::optional<GL_TextureStorage> build_texture(size_t width, size_t height, uint8_t channels, const void *data);
+static std::optional<GL_TextureStorage> build_texture(const ImageData &data) {
+    return build_texture(data.width, data.height, data.channels, data.pixels.data());
+}
 
 #if ENABLE_DEBUG_MESSAGES
 
@@ -206,13 +209,97 @@ GL_RenderDevice::~GL_RenderDevice() = default;
  *      Frames       *
  * ================= */
 
-void GL_RenderDevice::begin_frame() {
-    /* TODO: prepare view proj matrix */
-}
+void GL_RenderDevice::begin_frame() {}
 
 void GL_RenderDevice::end_frame() {
     /* TODO: flush */
     m_ctx->swap_buffers();
+}
+
+void GL_RenderDevice::begin_pass(const RenderPassApplyDesc &pass_desc) {
+    /* bind/unbind framebuffer */
+    auto *target = pass_desc.target ? m_targets.get(pass_desc.target) : nullptr;
+    glBindFramebuffer(GL_FRAMEBUFFER, target ? target->framebuffer : 0);
+
+    clear(pass_desc.clear_color);
+
+    /* get viewport dimensions */
+    const Vec2i size = target ? target->size : m_ctx->get_screen_size();
+    const Viewport screen_vp = {.position = {0, 0}, .size = {size.x, size.y}};
+    const Viewport vp = (pass_desc.viewport.size.x > 0 || pass_desc.viewport.size.y > 0)
+                          ? pass_desc.viewport
+                          : screen_vp;
+    apply_viewport(screen_vp, vp);
+}
+
+void GL_RenderDevice::end_pass() {}
+
+RenderTargetHandle GL_RenderDevice::create_render_target(const RenderTargetDesc &render_target_desc) {
+    GL_RenderTargetStorage targets{};
+    glGenFramebuffers(1, &targets.framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, targets.framebuffer);
+
+    targets.size = render_target_desc.size;
+
+    /* create color attachment */
+    auto texture = build_texture(targets.size.x, targets.size.y, 4, nullptr);
+    if (!texture) {
+        glDeleteFramebuffers(1, &targets.framebuffer);
+        ASSERT(false, "gl: Failed to allocate framebuffer color attachment!");
+        return {};
+    }
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture->texture, 0);
+    targets.texture = m_textures.emplace(*texture);
+
+    auto handle = m_targets.emplace(targets);
+    if (!handle) {
+        destroy_texture(targets.texture);
+        glDeleteFramebuffers(1, &targets.framebuffer);
+        return {};
+    }
+    return handle;
+}
+
+void GL_RenderDevice::resize_render_target(RenderTargetHandle handle, Vec2i size) {
+    auto *target = m_targets.get(handle);
+    ASSERT(target, "gl: Attempted to resize a non-existing render target!");
+
+    auto *color_attachment = m_textures.get(target->texture);
+    if (color_attachment) {
+        glDeleteTextures(1, &color_attachment->texture);
+    }
+
+    if (target->framebuffer) {
+        glDeleteFramebuffers(1, &target->framebuffer);
+    }
+
+    /* reallocate new framebuffer */
+    glGenFramebuffers(1, &target->framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, target->framebuffer);
+    target->size = size;
+
+    /* update color attachment */
+    auto texture = build_texture(target->size.x, target->size.y, 4, nullptr);
+    if (!texture) {
+        glDeleteFramebuffers(1, &target->framebuffer);
+        ASSERT(false, "gl: Failed to reallocate framebuffer color attachment!");
+        return;
+    }
+    color_attachment->texture = texture->texture;
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture->texture, 0);
+}
+
+void GL_RenderDevice::destroy_render_target(RenderTargetHandle handle) {
+    auto target = m_targets.get_and_destroy(handle);
+    destroy_texture(target->texture);
+    glDeleteFramebuffers(1, &target->framebuffer);
+}
+
+TextureHandle GL_RenderDevice::get_color_attachment(RenderTargetHandle handle) {
+    auto *target = m_targets.get(handle);
+    return target ? target->texture : TextureHandle{};
 }
 
 /* ================= *
@@ -300,6 +387,43 @@ static GLenum get_index_format(IndexFormat index) {
     }
 }
 
+static GLenum get_gl_blend_factor(BlendFactor factor) {
+    switch (factor) {
+        case BlendFactor::ZERO:
+            return GL_ZERO;
+        case BlendFactor::ONE:
+            return GL_ONE;
+        case BlendFactor::SRC_COLOR:
+            return GL_SRC_COLOR;
+        case BlendFactor::ONE_MINUS_SRC_COLOR:
+            return GL_ONE_MINUS_SRC_COLOR;
+        case BlendFactor::DST_COLOR:
+            return GL_DST_COLOR;
+        case BlendFactor::ONE_MINUS_DST_COLOR:
+            return GL_ONE_MINUS_DST_COLOR;
+        case BlendFactor::SRC_ALPHA:
+            return GL_SRC_ALPHA;
+        case BlendFactor::ONE_MINUS_SRC_ALPHA:
+            return GL_ONE_MINUS_SRC_ALPHA;
+        case BlendFactor::DST_ALPHA:
+            return GL_DST_ALPHA;
+        case BlendFactor::ONE_MINUS_DST_ALPHA:
+            return GL_ONE_MINUS_DST_ALPHA;
+        case BlendFactor::CONSTANT_COLOR:
+            return GL_CONSTANT_COLOR;
+        case BlendFactor::ONE_MINUS_CONSTANT_COLOR:
+            return GL_ONE_MINUS_CONSTANT_COLOR;
+        case BlendFactor::CONSTANT_ALPHA:
+            return GL_CONSTANT_ALPHA;
+        case BlendFactor::ONE_MINUS_CONSTANT_ALPHA:
+            return GL_ONE_MINUS_CONSTANT_ALPHA;
+        case BlendFactor::SRC_ALPHA_SATURATE:
+            return GL_SRC_ALPHA_SATURATE;
+        default:
+            return 0;
+    }
+}
+
 PipelineHandle GL_RenderDevice::create_pipeline(const PipelineDesc &pipeline_desc) {
     GL_PipelineStorage storage{};
 
@@ -309,6 +433,13 @@ PipelineHandle GL_RenderDevice::create_pipeline(const PipelineDesc &pipeline_des
     }
 
     glBindVertexArray(storage.vertex_array);
+
+    /* blending options */
+    storage.blending = {
+        .enabled = pipeline_desc.blending.enabled,
+        .src = get_gl_blend_factor(pipeline_desc.blending.src),
+        .dst = get_gl_blend_factor(pipeline_desc.blending.dst),
+    };
 
     /* copy layout */
     storage.attributes = std::vector<VertexAttribute>(
@@ -445,10 +576,10 @@ void GL_RenderDevice::matrix_translate_rotate_scale(MatrixHandle matrix, const V
  *      Texture      *
  * ================= */
 
-static std::optional<GL_TextureStorage> build_texture(const ImageData &data) {
+static std::optional<GL_TextureStorage> build_texture(size_t width, size_t height, uint8_t channels, const void *data) {
     GL_TextureStorage storage{};
 
-    switch (data.channels) {
+    switch (channels) {
         case 3:
             storage.internal_format = GL_RGB8;
             storage.data_format = GL_RGB;
@@ -470,10 +601,10 @@ static std::optional<GL_TextureStorage> build_texture(const ImageData &data) {
     glBindTexture(GL_TEXTURE_2D, storage.texture);
     glTexImage2D(
         GL_TEXTURE_2D, 0, storage.internal_format,
-        static_cast<GLsizei>(data.width),
-        static_cast<GLsizei>(data.height),
+        static_cast<GLsizei>(width),
+        static_cast<GLsizei>(height),
         0, storage.data_format, GL_UNSIGNED_BYTE,
-        data.pixels.data());
+        data);
 
     /* fixes an opengl message about this texture not having mipmaps */
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -483,7 +614,7 @@ static std::optional<GL_TextureStorage> build_texture(const ImageData &data) {
 }
 
 TextureHandle GL_RenderDevice::load_texture(const ImageData &data) {
-    auto storage = build_texture(data);
+    auto storage = build_texture(data.width, data.height, data.channels, data.pixels.data());
     if (!storage.has_value()) {
         return TextureHandle{};
     }
@@ -585,6 +716,24 @@ void GL_RenderDevice::set_pipeline(PipelineHandle pipeline_handle) {
     auto *pipeline = m_pipelines.get(pipeline_handle);
     glBindVertexArray(pipeline->vertex_array);
     glUseProgram(pipeline->shader->get_program());
+
+    /* enable/disable blending */
+    if (m_blending_enabled != pipeline->blending.enabled) {
+        m_blending_enabled = pipeline->blending.enabled;
+        if (m_blending_enabled) {
+            glEnable(GL_BLEND);
+        } else {
+            glDisable(GL_BLEND);
+        }
+    }
+
+    /* change blend func */
+    if (m_blending_enabled && (m_bound_sfactor != pipeline->blending.src || m_bound_dfactor != pipeline->blending.dst)) {
+        glBlendFunc(pipeline->blending.src, pipeline->blending.dst);
+        m_bound_sfactor = pipeline->blending.src;
+        m_bound_dfactor = pipeline->blending.dst;
+    }
+
     m_bound_pipeline = pipeline_handle;
 }
 

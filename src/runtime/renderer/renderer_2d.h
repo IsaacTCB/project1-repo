@@ -53,13 +53,18 @@ private:
     bool init_device();
     void close_device();
 
+    void render_frame_pass(const RenderContext &ctx);
     void update_view_projection(const ViewContext2D &view);
+    void draw_fullscreen_quad(TextureHandle texture);
 
 private:
     struct MatrixMVP {
         MatrixHandle projection{};
         MatrixHandle view{};
     } m_matrices{};
+
+    bool m_enabled_render_targets{};
+    RenderTargetHandle m_render_target{};
 
     std::optional<BatchBuilder2D> m_batch;
     std::unique_ptr<IRenderDevice> m_rd;

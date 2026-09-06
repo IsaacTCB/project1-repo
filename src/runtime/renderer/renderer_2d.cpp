@@ -1,5 +1,6 @@
 #include "renderer_2d.h"
 
+#include <cstdint>
 #include <variant>
 
 #include "core/assertion.h"
@@ -31,6 +32,15 @@ void Renderer2D::init() {
     init_device();
 }
 
+static Vec2i get_size(Vec2i screen_size, int height = 300) {
+    float ratio =
+        static_cast<float>(screen_size.x) /
+        static_cast<float>(screen_size.y);
+
+    float width = static_cast<float>(height) * ratio;
+    return Vec2i{static_cast<int>(width), height};
+}
+
 bool Renderer2D::init_device() {
     /* create projection & view */
     m_matrices.projection = m_rd->create_matrix();
@@ -44,6 +54,13 @@ bool Renderer2D::init_device() {
     const Vec2i initial_size = m_rd->get_screen_size();
     on_screen_resized(initial_size);
 
+    m_render_target = m_rd->create_render_target({
+        .size = get_size(initial_size),
+    });
+    if (m_render_target) {
+        m_enabled_render_targets = true;
+    }
+
     return true;
 }
 
@@ -51,6 +68,8 @@ void Renderer2D::close_device() {
     ASSERT_DEVICE_READY();
 
     m_batch.reset();
+
+    m_rd->destroy_render_target(m_render_target);
 
     /* remove projection & view */
     m_rd->destroy_matrix(m_matrices.projection);
@@ -92,11 +111,43 @@ void Renderer2D::update_view_projection(const ViewContext2D &view) {
 
 void Renderer2D::render_frame(const RenderContext &ctx) {
     ASSERT_DEVICE_READY();
-
     m_rd->begin_frame();
 
-    m_rd->clear(ctx.clear_color);
-    m_rd->apply_viewport(m_screen_viewport, ctx.frame.viewport);
+    /* draw it into the render target */
+    render_frame_pass(ctx);
+    if (m_enabled_render_targets) {
+        /* draw render target into backbuffer */
+        m_rd->begin_pass({
+            .target = {},
+            .viewport = ctx.frame.viewport,
+            .clear_color = Color::BLACK,
+        });
+        draw_fullscreen_quad(m_rd->get_color_attachment(m_render_target));
+        m_rd->end_pass();
+    }
+
+    m_rd->end_frame();
+}
+
+void Renderer2D::render_frame_pass(const RenderContext &ctx) {
+    RenderPassApplyDesc pass_desc;
+    if (m_enabled_render_targets) {
+        /* render to render target */
+        pass_desc = {
+            .target = m_render_target,
+            .viewport = {}, /* blank viewport == full render target vp */
+            .clear_color = ctx.clear_color,
+        };
+    } else {
+        /* if render targets are disabled, then
+         * just render to the backbuffer directly */
+        pass_desc = {
+            .target = {},
+            .viewport = ctx.frame.viewport,
+            .clear_color = ctx.clear_color,
+        };
+    }
+    m_rd->begin_pass(pass_desc);
 
     update_view_projection(*ctx.view_context);
     m_rd->set_mvp_matrix({
@@ -116,10 +167,90 @@ void Renderer2D::render_frame(const RenderContext &ctx) {
             command);
     }
 
-    /* @NOTE: must flush before finishing the frame! */
+    /* @NOTE: must flush before finishing the pass! */
     m_batch->flush();
 
-    m_rd->end_frame();
+    m_rd->end_pass();
+}
+
+struct BatchVertex2D {
+    Vec2 uv;
+    Color color;
+    Vec3 position;
+};
+
+void Renderer2D::draw_fullscreen_quad(TextureHandle texture) {
+    static bool inited = false;
+    static PipelineHandle pipeline;
+    static BufferHandle vertices;
+    static BufferHandle indices;
+    static SamplerHandle sampler;
+
+    if (!inited) {
+        /* HACK: lazy-init is REALLY stupid here... Also, most of these objects are
+         * already used by the batch renderer, so we might just want to reuse those */
+        const std::array<VertexAttribute, 3> attrib{{
+            {.semantic = VertexAttribute::Semantic::POSITION, .format = VertexAttribute::Format::FLOAT3, .offset = offsetof(BatchVertex2D, position)},
+            {.semantic = VertexAttribute::Semantic::TEXCOORD, .format = VertexAttribute::Format::FLOAT2, .offset = offsetof(BatchVertex2D, uv)},
+            {.semantic = VertexAttribute::Semantic::COLOR, .format = VertexAttribute::Format::RGBA8888, .offset = offsetof(BatchVertex2D, color)},
+        }};
+
+        pipeline = m_rd->create_pipeline({
+            .blending = {
+                .enabled = false,
+            },
+            .index_format = IndexFormat::UINT8,
+            .vertex_layout = {
+                .attributes = attrib,
+                .stride = sizeof(BatchVertex2D),
+            },
+        });
+
+        static const BatchVertex2D vertex_data[] = {
+            {.uv = {0.0f, 0.0f}, .color = Color{0xFFFFFFFF}, .position = {-1.0f, -1.0f, 0.0f}},
+            {.uv = {1.0f, 0.0f}, .color = Color{0xFFFFFFFF}, .position = {1.0f, -1.0f, 0.0f}},
+            {.uv = {1.0f, 1.0f}, .color = Color{0xFFFFFFFF}, .position = {1.0f, 1.0f, 0.0f}},
+            {.uv = {0.0f, 1.0f}, .color = Color{0xFFFFFFFF}, .position = {-1.0f, 1.0f, 0.0f}},
+        };
+        static const uint8_t index_data[] = {
+            // clang-format off
+            0, 1, 2,
+            2, 3, 0
+            // clang-format on
+        };
+
+        vertices = m_rd->create_buffer({
+            .type = BufferType::VERTEX,
+            .usage = BufferUsage::STATIC,
+            .size = sizeof(vertex_data),
+            .ptr = vertex_data,
+        });
+
+        indices = m_rd->create_buffer({
+            .type = BufferType::INDEX,
+            .usage = BufferUsage::STATIC,
+            .size = sizeof(index_data),
+            .ptr = index_data,
+        });
+
+        sampler = m_rd->create_sampler({
+            .filter = {
+                .mag = TextureFilter::NEAREST,
+                .min = TextureFilter::LINEAR,
+            },
+        });
+
+        inited = true;
+        LOG_TRACE("initialized fullscreen quad");
+    }
+
+    m_rd->set_pipeline(pipeline);
+    m_rd->set_mvp_matrix({});
+    m_rd->set_vertex_buffer(vertices);
+    m_rd->set_index_buffer(indices);
+    m_rd->set_texture(0, texture, sampler);
+
+    m_rd->draw_elements(6);
 }
 
 /* ================== *
@@ -145,4 +276,9 @@ void Renderer2D::on_screen_resized(const Vec2i &screen_size) {
     ASSERT_DEVICE_READY();
     ASSERT(screen_size.x > 0 && screen_size.y > 0, "Width & height must not be 0.");
     m_screen_viewport = m_rd->build_viewport(screen_size);
+
+    /* update framebuffer */
+    if (m_render_target) {
+        m_rd->resize_render_target(m_render_target, get_size(screen_size));
+    }
 }
