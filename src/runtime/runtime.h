@@ -10,6 +10,7 @@
 #include "platform_services.h"
 #include "runtime/app/context/frame_context.h"
 #include "runtime/server/display_server.h"
+#include "runtime/view/view_system_2d.h"
 
 class EngineRuntime {
 public:
@@ -77,6 +78,8 @@ private:
     DisplayWindowHandle m_window;
     std::optional<Renderer2D> m_renderer;
     RenderQueue m_queue;
+
+    ViewSystem m_view;
 
     struct FpsCounter {
         uint32_t fps;

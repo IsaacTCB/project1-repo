@@ -65,6 +65,7 @@ private:
 
     bool m_enabled_render_targets{};
     RenderTargetHandle m_render_target{};
+    Vec2i m_render_target_size{};
 
     std::optional<BatchBuilder2D> m_batch;
     std::unique_ptr<IRenderDevice> m_rd;

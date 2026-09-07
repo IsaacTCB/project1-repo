@@ -39,7 +39,8 @@ public:
          * by the on_render() function! this way
          * we don't need to waste time building
          * the same view context twice */
-        m_view_context = Camera2DUtils::build_view_context(m_camera, ctx.frame.viewport);
+        m_view_context = Camera2DUtils::build_view_context(
+            m_camera, m_servers.view.calculate_layout());
 
         if (m_servers.input.is_key_just_pressed(Input::Key::Scancode::SPACE)) {
             LOG_TRACE("Damn");

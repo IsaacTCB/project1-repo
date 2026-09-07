@@ -32,15 +32,6 @@ void Renderer2D::init() {
     init_device();
 }
 
-static Vec2i get_size(Vec2i screen_size, int height = 300) {
-    float ratio =
-        static_cast<float>(screen_size.x) /
-        static_cast<float>(screen_size.y);
-
-    float width = static_cast<float>(height) * ratio;
-    return Vec2i{static_cast<int>(width), height};
-}
-
 bool Renderer2D::init_device() {
     /* create projection & view */
     m_matrices.projection = m_rd->create_matrix();
@@ -55,7 +46,7 @@ bool Renderer2D::init_device() {
     on_screen_resized(initial_size);
 
     m_render_target = m_rd->create_render_target({
-        .size = get_size(initial_size),
+        .size = initial_size,
     });
     if (m_render_target) {
         m_enabled_render_targets = true;
@@ -113,13 +104,22 @@ void Renderer2D::render_frame(const RenderContext &ctx) {
     ASSERT_DEVICE_READY();
     m_rd->begin_frame();
 
+    if (m_enabled_render_targets) {
+        const auto render_target_size = ctx.view_context->layout.render_target_size;
+        if (m_render_target_size != render_target_size) {
+            m_render_target_size = render_target_size;
+            LOG_TRACE(m_render_target_size);
+            m_rd->resize_render_target(m_render_target, m_render_target_size);
+        }
+    }
+
     /* draw it into the render target */
     render_frame_pass(ctx);
     if (m_enabled_render_targets) {
         /* draw render target into backbuffer */
         m_rd->begin_pass({
             .target = {},
-            .viewport = ctx.frame.viewport,
+            .viewport = ctx.view_context->layout.presentation_rect,
             .clear_color = Color::BLACK,
         });
         draw_fullscreen_quad(m_rd->get_color_attachment(m_render_target));
@@ -135,7 +135,7 @@ void Renderer2D::render_frame_pass(const RenderContext &ctx) {
         /* render to render target */
         pass_desc = {
             .target = m_render_target,
-            .viewport = {}, /* blank viewport == full render target vp */
+            .viewport = ctx.view_context->layout.render_viewport,
             .clear_color = ctx.clear_color,
         };
     } else {
@@ -143,7 +143,7 @@ void Renderer2D::render_frame_pass(const RenderContext &ctx) {
          * just render to the backbuffer directly */
         pass_desc = {
             .target = {},
-            .viewport = ctx.frame.viewport,
+            .viewport = ctx.view_context->layout.presentation_rect,
             .clear_color = ctx.clear_color,
         };
     }
@@ -276,9 +276,4 @@ void Renderer2D::on_screen_resized(const Vec2i &screen_size) {
     ASSERT_DEVICE_READY();
     ASSERT(screen_size.x > 0 && screen_size.y > 0, "Width & height must not be 0.");
     m_screen_viewport = m_rd->build_viewport(screen_size);
-
-    /* update framebuffer */
-    if (m_render_target) {
-        m_rd->resize_render_target(m_render_target, get_size(screen_size));
-    }
 }

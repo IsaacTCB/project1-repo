@@ -23,6 +23,7 @@
 #include "platform_services.h"
 #include "runtime/app/application.h"
 #include "runtime/app/context/frame_context.h"
+#include "runtime/view/view_system_2d.h"
 #include "server/display_server.h"
 #include "server/os_server.h"
 
@@ -41,9 +42,19 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     LOG_INFO("platform: {}", os.get_platform());
     LOG_INFO("os: {}", os.get_os());
 
+    constexpr Vec2i DEFAULT_RESOLUTION = {480, 270};
+
     /* create main window/screen */
     DisplayWindowProps props{};
-    props.size = {800, 600};
+    props.size = DEFAULT_RESOLUTION * 3;
+    props.resizable = true;
+
+    m_view.set_presentation({
+        .logical_size = Vec2{DEFAULT_RESOLUTION},
+        .mode = PresentationMode::DISABLED,
+        .aspect = AspectPolicy::KEEP_HEIGHT,
+    });
+
     if (!init_display_and_renderer(props)) {
         exit(-1);
     }
@@ -68,12 +79,14 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     auto &display = m_platform.display;
     Vec2i display_size = display.get_size(m_window);
     LOG_INFO("display size: {0}", display_size);
+    m_view.set_output_size(display_size);
     m_input_service.init();
 
     /* initialize application */
     IApplication::Servers app_servers{
         .input = m_input_service,
         .asset = m_asset_service.value(),
+        .view = m_view,
     };
     m_app_handler->init(app_servers, m_platform);
 }
@@ -198,7 +211,9 @@ void EngineRuntime::update(float delta) {
             if (ptr->size.x <= 0 || ptr->size.y <= 0) {
                 continue;
             }
+
             m_renderer->on_screen_resized(ptr->size);
+            m_view.set_output_size(ptr->size);
         }
         if (std::get_if<EventWindowMaximized>(&event)) {
             LOG_TRACE("maximized");
