@@ -1,5 +1,4 @@
 #include "view_system_2d.h"
-
 #include "core/logger.h"
 
 #include <cmath>
@@ -42,24 +41,27 @@ static Vec2 calculate_logical_size(Vec2i output_size, const ViewPresentationProp
     const auto output_height = static_cast<float>(output_size.y);
 
     if (settings.mode == PresentationMode::DISABLED) {
-        return Vec2{settings.logical_size};
+        return Vec2{output_size};
     }
 
     const float output_aspect =
         output_width / output_height;
 
+    Vec2 result;
     switch (settings.aspect) {
         case AspectPolicy::KEEP_WIDTH:
-            return {
+            result = {
                 settings.logical_size.x,
                 settings.logical_size.x / output_aspect,
             };
+            break;
 
         case AspectPolicy::KEEP_HEIGHT:
-            return {
+            result = {
                 settings.logical_size.y * output_aspect,
                 settings.logical_size.y,
             };
+            break;
 
         case AspectPolicy::EXPAND: {
             const float logical_aspect =
@@ -67,24 +69,35 @@ static Vec2 calculate_logical_size(Vec2i output_size, const ViewPresentationProp
 
             if (output_aspect > logical_aspect) {
                 /* if screen is wider then expose more horizontally */
-                return {
+                result = {
                     settings.logical_size.y * output_aspect,
                     settings.logical_size.y,
                 };
+                break;
             }
 
             /* if screen is taller then expose more vertically */
-            return {
+            result = {
                 settings.logical_size.x,
                 settings.logical_size.x / output_aspect,
             };
+            break;
         }
 
         case AspectPolicy::IGNORE:
-            return settings.logical_size;
+            result = settings.logical_size;
+            break;
     }
 
-    return settings.logical_size;
+    /* fixed resolution must be divisible by 2 */
+    if (settings.mode == PresentationMode::FIXED_RESOLUTION) {
+        result = {
+            std::ceil(result.x / 2.0f) * 2.0f,
+            std::ceil(result.y / 2.0f) * 2.0f,
+        };
+    }
+
+    return result;
 }
 
 static Vec2i calculate_render_target_size(Vec2i output_size, Vec2 logical_size, const ViewPresentationProps &settings) {
@@ -114,12 +127,20 @@ static Viewport calculate_presentation_rect(Vec2i output_size, Vec2i render_targ
     }
 
     const Vec2 ratio = Vec2{output_size} / Vec2{render_target_size};
-    const float scale = std::min(ratio.x, ratio.y);
+
+    float scale;
+    if (settings.aspect == AspectPolicy::KEEP_WIDTH) {
+        scale = ratio.x;
+    } else if (settings.aspect == AspectPolicy::KEEP_HEIGHT) {
+        scale = ratio.y;
+    } else {
+        scale = std::min(ratio.x, ratio.y);
+    }
 
     const Vec2i size = Vec2i{Vec2{render_target_size} * scale};
     const Vec2i pos = (output_size - size) / 2;
 
-    return Viewport{
+    return {
         .position = pos,
         .size = size,
     };
