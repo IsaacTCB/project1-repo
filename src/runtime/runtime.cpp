@@ -42,16 +42,16 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     LOG_INFO("platform: {}", os.get_platform());
     LOG_INFO("os: {}", os.get_os());
 
-    constexpr Vec2i DEFAULT_RESOLUTION = {480, 270};
+    constexpr Vec2i DEFAULT_RESOLUTION = {800, 600};
 
     /* create main window/screen */
     DisplayWindowProps props{};
-    props.size = DEFAULT_RESOLUTION * 3;
+    props.size = DEFAULT_RESOLUTION;
     props.resizable = true;
 
     m_view.set_presentation({
         .logical_size = Vec2{DEFAULT_RESOLUTION},
-        .mode = PresentationMode::DISABLED,
+        .mode = PresentationMode::LOGICAL_VIEW,
         .aspect = AspectPolicy::KEEP_HEIGHT,
     });
 
