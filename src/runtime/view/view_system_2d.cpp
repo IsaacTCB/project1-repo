@@ -1,5 +1,4 @@
 #include "view_system_2d.h"
-#include "core/logger.h"
 
 #include <cmath>
 
@@ -7,31 +6,29 @@ static Vec2 calculate_logical_size(Vec2i output_size, const ViewPresentationProp
 static Vec2i calculate_render_target_size(Vec2i output_size, Vec2 logical_size, const ViewPresentationProps &settings);
 static Viewport calculate_presentation_rect(Vec2i output_size, Vec2i render_target_size, const ViewPresentationProps &settings);
 
-ViewLayout ViewSystem::calculate_layout() {
-    ViewLayout result;
-    result.logical_size = calculate_logical_size(
+void ViewSystem::calculate_layout() {
+    m_layout = {};
+    m_layout.logical_size = calculate_logical_size(
         m_output_size,
         m_presentation);
 
-    result.render_target_size = calculate_render_target_size(
+    m_layout.render_target_size = calculate_render_target_size(
         m_output_size,
-        result.logical_size,
+        m_layout.logical_size,
         m_presentation);
 
-    result.render_viewport = {
+    m_layout.render_viewport = {
         .position = {0, 0},
-        .size = result.render_target_size,
+        .size = m_layout.render_target_size,
     };
 
-    result.presentation_rect = calculate_presentation_rect(
+    m_layout.presentation_rect = calculate_presentation_rect(
         m_output_size,
-        result.render_target_size,
+        m_layout.render_target_size,
         m_presentation);
 
-    result.scale = Vec2{result.presentation_rect.size} /
-                   Vec2{result.render_target_size};
-
-    return result;
+    m_layout.scale = Vec2{m_layout.presentation_rect.size} /
+                     Vec2{m_layout.render_target_size};
 }
 
 /* private */

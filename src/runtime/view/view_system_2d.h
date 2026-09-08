@@ -29,15 +29,29 @@ class ViewSystem {
 public:
     void set_output_size(Vec2i size) {
         m_output_size = size;
+        m_dirty = true;
     }
 
     void set_presentation(const ViewPresentationProps &presentation) {
         m_presentation = presentation;
+        m_dirty = true;
     }
 
-    ViewLayout calculate_layout();
+    const ViewLayout &get_layout() {
+        if (m_dirty) {
+            calculate_layout();
+            m_dirty = false;
+        }
+        return m_layout;
+    }
+
+private:
+    void calculate_layout();
 
 private:
     ViewPresentationProps m_presentation;
     Vec2i m_output_size;
+
+    ViewLayout m_layout;
+    bool m_dirty;
 };
