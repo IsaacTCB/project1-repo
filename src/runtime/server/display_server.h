@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "core/math/vec2i.h"
@@ -14,6 +15,8 @@
 struct DisplayWindowProps {
     std::string caption = "Window";
     Vec2i size{800, 600};
+    std::optional<Vec2i> min_size;
+    std::optional<Vec2i> max_size;
     std::string api;
     bool resizable = false;
 };
