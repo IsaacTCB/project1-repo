@@ -1,5 +1,6 @@
 #include "batch_builder_2d.h"
 
+#include <array>
 #include <cmath>
 #include <cstddef>
 
@@ -11,7 +12,7 @@ constexpr size_t QUAD_VERTEX_COUNT = 4;
 constexpr size_t QUAD_INDEX_COUNT = 6;
 
 void BatchBuilder2D::init(size_t quad_count) {
-    const std::array<VertexAttribute, 3> attrib{{
+    const std::array<VertexAttribute, 3> attrib = {{
         {.semantic = VertexAttribute::Semantic::POSITION, .format = VertexAttribute::Format::FLOAT3, .offset = offsetof(BatchVertex2D, position)},
         {.semantic = VertexAttribute::Semantic::TEXCOORD, .format = VertexAttribute::Format::FLOAT2, .offset = offsetof(BatchVertex2D, uv)},
         {.semantic = VertexAttribute::Semantic::COLOR, .format = VertexAttribute::Format::RGBA8888, .offset = offsetof(BatchVertex2D, color)},

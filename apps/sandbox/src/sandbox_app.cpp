@@ -1,5 +1,6 @@
 #include <cmath>
 #include <vector>
+#include <numbers>
 
 #include "core/camera.h"
 #include "core/input/keyboard.h"

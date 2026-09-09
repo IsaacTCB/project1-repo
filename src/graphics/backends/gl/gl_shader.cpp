@@ -4,6 +4,7 @@
 #include <core/logger.h>
 
 #include <initializer_list>
+#include <span>
 #include <string_view>
 #include <vector>
 

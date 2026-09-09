@@ -1,5 +1,6 @@
 #include "renderer_2d.h"
 
+#include <array>
 #include <cstdint>
 #include <variant>
 

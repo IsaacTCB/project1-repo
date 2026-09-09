@@ -1,5 +1,6 @@
 #include "gl_render_device.h"
 
+#include <array>
 #include <cstddef>
 #include <optional>
 #include <tuple>
@@ -250,6 +251,8 @@ RenderTargetHandle GL_RenderDevice::create_render_target(const RenderTargetDesc 
     }
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture->texture, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     targets.texture = m_textures.emplace(*texture);
 
     auto handle = m_targets.emplace(targets);
@@ -289,6 +292,7 @@ void GL_RenderDevice::resize_render_target(RenderTargetHandle handle, Vec2i size
     color_attachment->texture = texture->texture;
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture->texture, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void GL_RenderDevice::destroy_render_target(RenderTargetHandle handle) {
