@@ -17,7 +17,7 @@ class ApplicationHandler final : public IApplicationHandler {
 public:
     ApplicationHandler() = default;
 
-protected:
+public:
     IApplication *create_app(const IApplication::Servers &app_servers, const PlatformServices &platform_services) override {
         return IApplication::create_application(app_servers, platform_services);
     }

@@ -53,6 +53,8 @@ public:
      */
     virtual void close_display(DisplayWindowHandle handle) = 0;
 
+    virtual void set_display_caption(DisplayWindowHandle handle, const std::string &caption) = 0;
+
     /**
      * @brief Gets the current window display size.
      * @return A tuple containing the window's width and height respectively.

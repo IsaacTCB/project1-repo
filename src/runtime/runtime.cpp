@@ -31,9 +31,37 @@ EngineRuntime::EngineRuntime(const PlatformServices &platform)
     : m_platform(platform) {
 }
 
+static DisplayWindowProps get_window_props_from_config(const std::string &app_name, const ApplicationConfig &config) {
+    return {
+        .caption = config.display.caption.empty()
+                     ? app_name
+                     : config.display.caption,
+        .size = config.display.size,
+        .min_size = std::nullopt,
+        .max_size = std::nullopt,
+        .api = "",
+        .resizable = config.display.resizable,
+    };
+}
+
 void EngineRuntime::init(IApplicationHandler &app_handler) {
-    /* bind with app handler */
-    m_app_handler = &app_handler;
+    m_asset_service.emplace(); /* HACK: asset service must be a valid object for .value() to work */
+
+    m_app = std::unique_ptr<IApplication>(app_handler.create_app(
+        IApplication::Servers{
+            .input = m_input_service,
+            .asset = m_asset_service.value(),
+            .view = m_view,
+        },
+        m_platform));
+    if (!m_app) {
+        LOG_CRITICAL("Failed to attach application during runtime.");
+        exit(-1);
+    }
+
+    ApplicationConfig config;
+    m_app->configure(config);
+    m_app_config = config;
 
     /* initialize fps counter */
     m_fps = {};
@@ -42,24 +70,20 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     LOG_INFO("platform: {}", os.get_platform());
     LOG_INFO("os: {}", os.get_os());
 
-    constexpr Vec2i DEFAULT_RESOLUTION = {360, 270};
-
     /* create main window/screen */
-    DisplayWindowProps props{};
-    props.size = DEFAULT_RESOLUTION * 3;
-    props.resizable = true;
-
-    m_view.set_presentation({
-        .logical_size = Vec2{DEFAULT_RESOLUTION},
-        .mode = PresentationMode::FIXED_RESOLUTION,
-        .aspect = AspectPolicy::KEEP_HEIGHT,
-    });
-
+    const auto props = get_window_props_from_config(m_app->get_name(), m_app_config);
     if (!init_display_and_renderer(props)) {
         exit(-1);
     }
 
+    m_view.set_presentation({
+        .logical_size = m_app_config.view.logical_size,
+        .mode = m_app_config.view.mode,
+        .aspect = m_app_config.view.aspect,
+    });
+
     /* initialize asset service */
+    m_asset_service.reset();
     m_asset_service.emplace(::AssetService::Provider{
         .renderer = {
             .load_texture = [](ImageData &image, void *userdata) -> TextureHandle {
@@ -83,12 +107,7 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     m_input_service.init();
 
     /* initialize application */
-    IApplication::Servers app_servers{
-        .input = m_input_service,
-        .asset = m_asset_service.value(),
-        .view = m_view,
-    };
-    m_app_handler->init(app_servers, m_platform);
+    m_app->on_init();
 }
 
 bool EngineRuntime::try_init_backend(const std::string &backend, const DisplayWindowProps &props) {
@@ -203,6 +222,17 @@ void EngineRuntime::update(float delta) {
         return;
     }
 
+#if defined(DEBUG)
+    /* update caption debug info */
+    if (new_second) {
+        const auto &render_size = m_view.get_layout().render_viewport.size;
+        const std::string resolution = std::format("{0}x{1}", render_size.x, render_size.y);
+
+        std::string title = std::format("{0} | {1}fps | {2} | Debug", m_app_config.display.caption, m_fps.fps, resolution);
+        m_platform.display.set_display_caption(m_window, title);
+    }
+#endif
+
     for (const auto &event : m_platform.event.span<EventWindow>()) {
         if (const auto *ptr = std::get_if<EventWindowResized>(&event)) {
             LOG_TRACE("resized: {}", ptr->size);
@@ -234,7 +264,7 @@ void EngineRuntime::update(float delta) {
         .frame = build_frame_context(delta),
         .new_second = new_second,
     };
-    m_app_handler->update(update_ctx);
+    m_app->on_update(update_ctx);
 }
 
 void EngineRuntime::render() {
@@ -248,7 +278,7 @@ void EngineRuntime::render() {
         .clear_color = Color{25, 25, 25, 0},
     };
 
-    m_app_handler->render(render);
+    m_app->on_draw(render);
     render_frame(render);
 }
 
@@ -258,7 +288,8 @@ void EngineRuntime::render_frame(RenderContext &ctx) {
 }
 
 void EngineRuntime::close() {
-    m_app_handler->close();
+    m_app->on_close();
+    m_app.reset();
 
     m_input_service.close();
     m_asset_service.reset();

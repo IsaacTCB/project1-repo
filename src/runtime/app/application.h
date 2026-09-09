@@ -1,10 +1,29 @@
 #pragma once
 
+#include "core/math/vec2i.h"
 #include "runtime/app/context/frame_context.h"
 #include "runtime/asset_service.h"
 #include "runtime/input_service.h"
 #include "runtime/platform_services.h"
 #include "runtime/view/view_system_2d.h"
+
+#include <string>
+
+struct ApplicationConfig {
+    struct Display {
+        std::string caption = "Untitled";
+        Vec2i size = {800, 600};
+        bool resizable = false;
+
+    } display;
+
+    struct View {
+        Vec2 logical_size = {800.0f, 600.0f};
+        PresentationMode mode = PresentationMode::DISABLED;
+        AspectPolicy aspect = AspectPolicy::KEEP_HEIGHT;
+
+    } view;
+};
 
 class IApplication {
 public:
@@ -28,6 +47,20 @@ public:
     virtual const char *get_name() const = 0;
 
 public:
+    /**
+     * @brief Provides initial configuration for the engine runtime.
+     *
+     * This is used to setup initial window size, caption and other
+     * properties at runtime.
+     *
+     * Called before on_init, so don't rely on this function
+     * for providing extra functionality.
+     *
+     * @param config A reference for an application config object
+     * to update.
+     */
+    virtual void configure(ApplicationConfig &config) = 0;
+
     /**
      * @brief Initialization code. Called on init.
      */

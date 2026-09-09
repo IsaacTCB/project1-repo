@@ -18,14 +18,14 @@ public:
         using UnloadFn = void (*)(TextureHandle handle, void *userdata);
 
         struct {
-            LoadFn load_texture;
-            UnloadFn unload_texture;
-            void *userdata;
-        } renderer;
+            LoadFn load_texture = nullptr;
+            UnloadFn unload_texture = nullptr;
+            void *userdata = nullptr;
+        } renderer{};
     };
 
 public:
-    explicit AssetService() = delete;
+    explicit AssetService();
     explicit AssetService(const ::AssetService::Provider &provider);
     ~AssetService();
 

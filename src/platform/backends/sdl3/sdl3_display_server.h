@@ -46,8 +46,14 @@ private:
     }
 
     void close_display(DisplayWindowHandle handle) override {
-        SDL_DestroyWindow((SDL_Window *)handle.raw_window_handle);
+        auto *window = static_cast<SDL_Window *>(handle.raw_window_handle);
+        SDL_DestroyWindow(window);
         handle.raw_window_handle = nullptr;
+    }
+
+    void set_display_caption(DisplayWindowHandle handle, const std::string &caption) override {
+        auto *window = static_cast<SDL_Window *>(handle.raw_window_handle);
+        SDL_SetWindowTitle(window, caption.c_str());
     }
 
     [[nodiscard]]

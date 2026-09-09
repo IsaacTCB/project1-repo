@@ -1,6 +1,6 @@
 #include <cmath>
-#include <vector>
 #include <numbers>
+#include <vector>
 
 #include "core/camera.h"
 #include "core/input/keyboard.h"
@@ -22,6 +22,27 @@ class SandboxApplication : public IApplication {
     DECLARE_APP(SandboxApplication);
 
 public:
+    void configure(ApplicationConfig &config) override {
+        constexpr Vec2i VIEWPORT_SIZE = {480, 270};
+
+        config.display = {
+            .caption = "Sandbox",
+            .size = VIEWPORT_SIZE * 3,
+            .resizable = true,
+        };
+
+        config.view = {
+            /* desired camera view size */
+            .logical_size = Vec2{VIEWPORT_SIZE},
+
+            /* pixelated viewport, results in a retro feel. */
+            .mode = PresentationMode::FIXED_RESOLUTION,
+
+            /* viewport expands to fill the window's total width */
+            .aspect = AspectPolicy::KEEP_HEIGHT,
+        };
+    }
+
     void on_init() override {
         m_texture = m_servers.asset.get_texture("test.png");
 

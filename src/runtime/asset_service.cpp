@@ -13,6 +13,8 @@ struct AssetService::Impl {
     AssetCache<TextureHandle> textures;
 };
 
+AssetService::AssetService() = default;
+
 AssetService::AssetService(const Provider &provider)
     : m_provider{provider} {
     m_impl = std::make_unique<Impl>();
