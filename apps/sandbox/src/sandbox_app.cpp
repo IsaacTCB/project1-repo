@@ -1,7 +1,9 @@
 #include <cmath>
+#include <numbers>
 #include <vector>
 
 #include "core/camera.h"
+#include "core/input/keyboard.h"
 #include "core/logger.h"
 #include "core/math/random.h"
 #include "core/math/vec2.h"
@@ -21,6 +23,14 @@ class SandboxApplication : public IApplication {
     DECLARE_APP(SandboxApplication);
 
 public:
+    void configure(ApplicationConfig &config) override {
+        config.display = {
+            .caption = "Sandbox",
+            .size = {1280, 720},
+            .resizable = true,
+        };
+    }
+
     void on_init() override {
         m_texture = m_servers.asset.get_texture("test.png");
 

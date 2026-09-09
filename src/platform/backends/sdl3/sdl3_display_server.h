@@ -1,9 +1,10 @@
 #pragma once
 
-#include "runtime/server/display_server.h"
+#include <string>
 
 #include "core/assertion.h"
 #include "core/logger.h"
+#include "runtime/server/display_server.h"
 
 #include <SDL3/SDL.h>
 
@@ -43,8 +44,14 @@ class SDL3_DisplayServer final : public IDisplayServer {
     }
 
     void close_display(DisplayWindowHandle handle) override {
-        SDL_DestroyWindow((SDL_Window *)handle.raw_window_handle);
+        auto *window = static_cast<SDL_Window *>(handle.raw_window_handle);
+        SDL_DestroyWindow(window);
         handle.raw_window_handle = nullptr;
+    }
+
+    void set_display_caption(DisplayWindowHandle handle, const std::string &caption) override {
+        auto *window = static_cast<SDL_Window *>(handle.raw_window_handle);
+        SDL_SetWindowTitle(window, caption.c_str());
     }
 
     [[nodiscard]]

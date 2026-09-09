@@ -10,6 +10,7 @@
 #include "asset_service.h"
 #include "input_service.h"
 #include "platform_services.h"
+#include "runtime/app/application.h"
 #include "runtime/app/context/frame_context.h"
 
 class EngineRuntime {
@@ -43,7 +44,6 @@ private:
 
 private:
     PlatformServices m_platform;
-    IApplicationHandler *m_app_handler;
 
 private:
     FrameContext m_frame_ctx;
@@ -59,4 +59,7 @@ private:
 
     InputService m_input_service;
     std::optional<AssetService> m_asset_service;
+
+    std::unique_ptr<IApplication> m_app;
+    ApplicationConfig m_app_config;
 };
