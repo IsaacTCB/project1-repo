@@ -9,8 +9,8 @@
 #include "core/events/platform_events.h"
 #include "core/events/window_events.h"
 #include "core/logger.h"
-
 #include "core/math/color.h"
+
 #include "platform/api/event_server.h"
 
 #include "renderer/api/render_handles.h"
@@ -30,14 +30,39 @@ EngineRuntime::EngineRuntime(const PlatformServices &platform)
     : m_platform(platform) {
 }
 
+static DisplayWindowProps get_window_props_from_config(const std::string &app_name, const ApplicationConfig &config) {
+    return {
+        .caption = config.display.caption.empty()
+                     ? app_name
+                     : config.display.caption,
+        .size = config.display.size,
+        .min_size = std::nullopt,
+        .max_size = std::nullopt,
+        .api = get_default_api(),
+        .resizable = config.display.resizable,
+    };
+}
+
 void EngineRuntime::init(IApplicationHandler &app_handler) {
-    /* bind with app handler */
-    m_app_handler = &app_handler;
+    m_asset_service.emplace(); /* HACK: asset service must be a valid object for .value() to work */
+
+    m_app = std::unique_ptr<IApplication>(app_handler.create_app(
+        IApplication::Servers{
+            .input = m_input_service,
+            .asset = m_asset_service.value(),
+        },
+        m_platform));
+    if (!m_app) {
+        LOG_CRITICAL("Failed to attach application during runtime.");
+        exit(-1);
+    }
+
+    ApplicationConfig config;
+    m_app->configure(config);
+    m_app_config = config;
 
     /* initialize fps counter */
-    m_fps = 0;
-    m_fps_accum = 0;
-    m_fps_timer = 0.0f;
+    m_fps = {};
 
     auto &os = m_platform.os;
     LOG_INFO("platform: {}", os.get_platform());
@@ -45,10 +70,9 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
 
     /* create main window/screen */
     auto &display = m_platform.display;
-    DisplayWindowProps props{};
-    props.size = {800, 600};
-    props.api = RendererAPI::OpenGL;
 
+    auto props = get_window_props_from_config(m_app->get_name(), m_app_config);
+    props.api = RendererAPI::OpenGL;
     m_window = display.init_display(props);
     if (!m_window) {
         LOG_CRITICAL("EngineRuntime::init(): Failed to create main window");
@@ -63,18 +87,18 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     }
 
     /* initialize asset service */
+    m_asset_service.reset();
     m_asset_service.emplace(::AssetService::Provider{
-        .renderer{
+        .renderer = {
             .load_texture = [](ImageData &image, void *userdata) -> TextureHandle {
                 ASSERT(userdata);
                 auto &renderer = *static_cast<std::unique_ptr<Renderer> *>(userdata);
                 return renderer->load_texture(image);
             },
-            .unload_texture = [](TextureHandle texture, void *userdata) {
+            .unload_texture = [](TextureHandle texture, void *userdata) -> void {
                 ASSERT(userdata);
                 auto &renderer = *static_cast<std::unique_ptr<Renderer> *>(userdata);
                 renderer->destroy_texture(texture);
-                // this comment fixes clang-format. do not remove it
             },
             .userdata = &m_renderer,
         },
@@ -85,23 +109,19 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     m_input_service.init();
 
     /* initialize application */
-    IApplication::Servers app_servers{
-        .input = m_input_service,
-        .asset = m_asset_service.value(),
-    };
-    m_app_handler->init(app_servers, m_platform);
+    m_app->on_init();
 }
 
 bool EngineRuntime::count_fps(float delta) {
-    m_fps_timer += delta;
-    m_fps_accum++;
+    m_fps.timer += delta;
+    m_fps.accumulator++;
 
     /* if a second has passed,
      * transfer accumulator to fps */
-    if (m_fps_timer >= 1.0f) {
-        m_fps = m_fps_accum;
-        m_fps_accum = {};
-        m_fps_timer = {};
+    if (m_fps.timer >= 1.0f) {
+        m_fps.fps = m_fps.accumulator;
+        m_fps.accumulator = {};
+        m_fps.timer = {};
 
         return true;
     }
@@ -124,6 +144,12 @@ void EngineRuntime::update(float delta) {
         return;
     }
 
+    /* update caption debug info */
+    if (new_second) {
+        std::string title = std::format("{0} | {1}fps", m_app_config.display.caption, m_fps.fps);
+        m_platform.display.set_display_caption(m_window, title);
+    }
+
     for (const auto &event : m_platform.event.span<EventWindow>()) {
         if (const auto *ptr = std::get_if<EventWindowResized>(&event)) {
             LOG_TRACE("resized: {}", ptr->size);
@@ -132,6 +158,7 @@ void EngineRuntime::update(float delta) {
             if (ptr->size.x <= 0 || ptr->size.y <= 0) {
                 continue;
             }
+
             m_renderer->on_screen_resized(ptr->size);
         }
         if (std::get_if<EventWindowMaximized>(&event)) {
@@ -153,7 +180,7 @@ void EngineRuntime::update(float delta) {
         .frame = build_frame_context(delta),
         .new_second = new_second,
     };
-    m_app_handler->update(update_ctx);
+    m_app->on_update(update_ctx);
 }
 
 void EngineRuntime::render() {
@@ -167,7 +194,7 @@ void EngineRuntime::render() {
         .clear_color = Color{25, 25, 25, 0},
     };
 
-    m_app_handler->render(render);
+    m_app->on_draw(render);
     render_frame(render);
 }
 
@@ -179,7 +206,8 @@ void EngineRuntime::render_frame(RenderContext &ctx) {
 }
 
 void EngineRuntime::close() {
-    m_app_handler->close();
+    m_app->on_close();
+    m_app.reset();
 
     m_input_service.close();
     m_asset_service.reset();
@@ -191,7 +219,7 @@ void EngineRuntime::close() {
 FrameContext &EngineRuntime::build_frame_context(float delta) {
     m_frame_ctx = {
         .delta = delta,
-        .fps = m_fps,
+        .fps = m_fps.fps,
         .viewport = m_renderer->get_viewport(),
     };
     return m_frame_ctx;

@@ -8,7 +8,7 @@
 #include <array>
 #include <cmath>
 
-inline static bool angle_is_rotated(float angle, float eps = EPSILON);
+inline static bool angle_is_rotated(float angle);
 
 /* ================================ */
 /*  Screen <--> World conversions   */
@@ -66,8 +66,8 @@ Vec2 ViewContext2D::view_to_world(const Vec2 &view_coord) const {
     if (angle_is_rotated(view_camera->rotation)) {
         /* TODO: cache sine and cosine directly within the camera object.
          * This should happen only if rotation has changed and is dirty. */
-        float sin = std::sinf(view_camera->rotation);
-        float cos = std::cosf(view_camera->rotation);
+        float sin = std::sin(view_camera->rotation);
+        float cos = std::cos(view_camera->rotation);
 
         auto temp{world};
         world.x = (temp.x * cos) - (temp.y * sin);
@@ -90,8 +90,8 @@ Vec2 ViewContext2D::world_to_view(const Vec2 &world_coord) const {
     if (angle_is_rotated(view_camera->rotation)) {
         /* TODO: cache sine and cosine directly within the camera object.
          * This should happen only if rotation has changed and is dirty. */
-        float sin = std::sinf(view_camera->rotation);
-        float cos = std::cosf(view_camera->rotation);
+        float sin = std::sin(view_camera->rotation);
+        float cos = std::cos(view_camera->rotation);
 
         Vec2 temp{view};
         view.x = (temp.x * cos) + (temp.y * sin);
@@ -140,8 +140,8 @@ ViewContext2D::BoundRect ViewContext2D::get_bounds_aabb() const {
         br.clear();
 
         /* rotate corners */
-        float sin = std::sinf(view_camera->rotation);
-        float cos = std::cosf(view_camera->rotation);
+        float sin = std::sin(view_camera->rotation);
+        float cos = std::cos(view_camera->rotation);
         for (const auto &corner : corners) {
             Vec2 rotated{
                 (corner.x * cos) - (corner.y * sin),
@@ -197,8 +197,8 @@ Vec2 ViewContext2D::get_anchor_offset() const {
     return Vec2{};
 }
 
-inline static bool angle_is_rotated(float angle, float eps) {
+inline static bool angle_is_rotated(float angle) {
     /* HACK: checking if non-zero is not ideal bc it won't detect
      * angles near 360deg such as (2 * PI - 0.00001) */
-    return (std::fabs(angle) > eps);
+    return !is_zero_approx(angle);
 }

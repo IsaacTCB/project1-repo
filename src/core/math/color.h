@@ -20,10 +20,10 @@ public:
         : r(r), g(g), b(b), a(a) {}
 
     constexpr explicit Color(uint32_t rgba32)
-        : r((rgba32 >> 24) & 0xFF),
-          g((rgba32 >> 16) & 0xFF),
-          b((rgba32 >> 8) & 0xFF),
-          a(rgba32 & 0xFF) {}
+        : r(static_cast<uint8_t>(rgba32 >> 24) & 0xFF),
+          g(static_cast<uint8_t>(rgba32 >> 16) & 0xFF),
+          b(static_cast<uint8_t>(rgba32 >> 8) & 0xFF),
+          a(static_cast<uint8_t>(rgba32 & 0xFF)) {}
 
     [[nodiscard]]
     std::tuple<float, float, float, float> normalized() const {
