@@ -1,10 +1,21 @@
 #pragma once
 
-#include "renderer/api/render_queue.h"
+#include "core/math/vec2i.h"
 #include "runtime/app/context/frame_context.h"
 #include "runtime/asset_service.h"
 #include "runtime/input_service.h"
 #include "runtime/platform_services.h"
+
+#include <string>
+
+struct ApplicationConfig {
+    struct Display {
+        std::string caption = "Untitled";
+        Vec2i size = {800, 600};
+        bool resizable = false;
+
+    } display;
+};
 
 class IApplication {
 public:
@@ -26,6 +37,20 @@ public:
     virtual const char *get_name() const = 0;
 
 public:
+    /**
+     * @brief Provides initial configuration for the engine runtime.
+     *
+     * This is used to setup initial window size, caption and other
+     * properties at runtime.
+     *
+     * Called before on_init, so don't rely on this function
+     * for providing extra functionality.
+     *
+     * @param config A reference for an application config object
+     * to update.
+     */
+    virtual void configure(ApplicationConfig &config) = 0;
+
     /**
      * @brief Initialization code. Called on init.
      */

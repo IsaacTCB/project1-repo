@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 
 #include "core/math/vec2i.h"
@@ -13,6 +14,8 @@
 struct DisplayWindowProps {
     std::string caption = "Window";
     Vec2i size{800, 600};
+    std::optional<Vec2i> min_size;
+    std::optional<Vec2i> max_size;
     RendererAPI api = get_default_api();
     bool resizable = false;
 };
@@ -48,6 +51,8 @@ public:
      * @brief Closes the window display handle.
      */
     virtual void close_display(DisplayWindowHandle handle) = 0;
+
+    virtual void set_display_caption(DisplayWindowHandle handle, const std::string &caption) = 0;
 
     /**
      * @brief Gets the current window display size.

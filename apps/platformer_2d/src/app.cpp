@@ -80,14 +80,13 @@ class Platformer2D : public IApplication {
     DECLARE_APP(Platformer2D);
 
 public:
-    // void configure(ApplicationConfig &config) override {
-    //     config.window.title = "Platformer 2D";
-    //     config.window.size = Vec2i{1200, 600};
-    //     config.window.fullscreen = false;
-    //     config.window.resizable = true;
-    //     config.window.vsync = true;
-    //     config.window.max_fps = 0; /* disables frame limit */
-    // }
+    void configure(ApplicationConfig &config) override {
+        config.display = {
+            .caption = "Platformer 2D",
+            .size = {1200, 600},
+            .resizable = true,
+        };
+    }
 
     void on_init() override {
         m_camera.zoom = 1.0f;

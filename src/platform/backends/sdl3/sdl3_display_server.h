@@ -1,9 +1,10 @@
 #pragma once
 
-#include "runtime/server/display_server.h"
+#include <string>
 
 #include "core/assertion.h"
 #include "core/logger.h"
+#include "runtime/server/display_server.h"
 
 #include <SDL3/SDL.h>
 
@@ -31,6 +32,11 @@ class SDL3_DisplayServer final : public IDisplayServer {
             return {};
         }
 
+        if (!configure_window(window, props)) {
+            LOG_ERROR("SDL3: Failed to configure window. Reason: {0}", SDL_GetError());
+            return {};
+        }
+
         return {
             .raw_window_handle = reinterpret_cast<void *>(window),
             .props = props,
@@ -38,8 +44,14 @@ class SDL3_DisplayServer final : public IDisplayServer {
     }
 
     void close_display(DisplayWindowHandle handle) override {
-        SDL_DestroyWindow((SDL_Window *)handle.raw_window_handle);
+        auto *window = static_cast<SDL_Window *>(handle.raw_window_handle);
+        SDL_DestroyWindow(window);
         handle.raw_window_handle = nullptr;
+    }
+
+    void set_display_caption(DisplayWindowHandle handle, const std::string &caption) override {
+        auto *window = static_cast<SDL_Window *>(handle.raw_window_handle);
+        SDL_SetWindowTitle(window, caption.c_str());
     }
 
     [[nodiscard]]
@@ -63,5 +75,19 @@ private:
             flags |= SDL_WINDOW_RESIZABLE;
         }
         return flags;
+    }
+
+    static bool configure_window(SDL_Window *window, const DisplayWindowProps &props) {
+        ASSERT(window);
+
+        if (props.min_size) {
+            SDL_SetWindowMinimumSize(window, props.min_size->x, props.min_size->y);
+        }
+
+        if (props.max_size) {
+            SDL_SetWindowMaximumSize(window, props.max_size->x, props.max_size->y);
+        }
+
+        return true;
     }
 };

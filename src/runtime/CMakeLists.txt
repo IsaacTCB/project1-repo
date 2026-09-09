@@ -1,7 +1,6 @@
 include(engine_utils)
 
 set(RUNTIME_SOURCES
-    app/application_handler.cpp
     asset_service.cpp
     input_service.cpp
     image/decoder.cpp
