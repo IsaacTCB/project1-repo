@@ -20,19 +20,31 @@ void ViewSystem::calculate_layout() {
         m_layout.logical_size,
         m_presentation);
 
-    m_layout.render_viewport = {
-        .position = {0, 0},
-        .size = m_layout.render_target_size,
-    };
 
     m_layout.presentation_rect = calculate_presentation_rect(
         m_output_size,
         m_layout.render_target_size,
         m_presentation);
     
+    
+    /* use the smallest size (fixes some problems with framebuffer memory
+     * allocation being too large depending on window size) */
+    m_layout.render_target_size = {
+        std::min(m_layout.render_target_size.x, m_layout.presentation_rect.size.x),
+        std::min(m_layout.render_target_size.y, m_layout.presentation_rect.size.y),
+    };
+
     /* just in case... */
-    m_layout.render_target_size.x = std::clamp(m_layout.render_target_size.x, 2, MAX_RENDER_TARGET_SIZE.x);
-    m_layout.render_target_size.y = std::clamp(m_layout.render_target_size.y, 2, MAX_RENDER_TARGET_SIZE.y);
+    m_layout.render_target_size = {
+        std::clamp(m_layout.render_target_size.x, 2, MAX_RENDER_TARGET_SIZE.x),
+        std::clamp(m_layout.render_target_size.y, 2, MAX_RENDER_TARGET_SIZE.y),
+    };
+
+    /* setup render target's viewport */
+    m_layout.render_viewport = {
+        .position = {0, 0},
+        .size = m_layout.render_target_size,
+    };
 
     m_layout.scale = Vec2{m_layout.presentation_rect.size} /
                      Vec2{m_layout.render_target_size};
@@ -107,17 +119,9 @@ static Vec2 calculate_logical_size(Vec2i output_size, const ViewPresentationProp
 static Vec2i calculate_render_target_size(Vec2i output_size, Vec2 logical_size, const ViewPresentationProps &settings) {
     switch (settings.mode) {
         case PresentationMode::FIXED_RESOLUTION: {
-            Vec2i integer_size = {
+            return {
                 static_cast<int>(std::ceil(logical_size.x)),
                 static_cast<int>(std::ceil(logical_size.y)),
-            };
-            
-            /* use the smallest size (fixes some problems
-             * with framebuffer memory allocation being
-             * too large depending on window size) */
-            return Vec2i{
-                std::min(integer_size.x, output_size.x),
-                std::min(integer_size.y, output_size.y),
             };
         }
 
