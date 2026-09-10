@@ -1,6 +1,9 @@
 #include "view_system_2d.h"
 
+#include <algorithm>
 #include <cmath>
+
+constexpr Vec2i MAX_RENDER_TARGET_SIZE = {16384, 16384};
 
 static Vec2 calculate_logical_size(Vec2i output_size, const ViewPresentationProps &settings);
 static Vec2i calculate_render_target_size(Vec2i output_size, Vec2 logical_size, const ViewPresentationProps &settings);
@@ -26,6 +29,10 @@ void ViewSystem::calculate_layout() {
         m_output_size,
         m_layout.render_target_size,
         m_presentation);
+    
+    /* just in case... */
+    m_layout.render_target_size.x = std::clamp(m_layout.render_target_size.x, 2, MAX_RENDER_TARGET_SIZE.x);
+    m_layout.render_target_size.y = std::clamp(m_layout.render_target_size.y, 2, MAX_RENDER_TARGET_SIZE.y);
 
     m_layout.scale = Vec2{m_layout.presentation_rect.size} /
                      Vec2{m_layout.render_target_size};
@@ -100,9 +107,17 @@ static Vec2 calculate_logical_size(Vec2i output_size, const ViewPresentationProp
 static Vec2i calculate_render_target_size(Vec2i output_size, Vec2 logical_size, const ViewPresentationProps &settings) {
     switch (settings.mode) {
         case PresentationMode::FIXED_RESOLUTION: {
-            return {
+            Vec2i integer_size = {
                 static_cast<int>(std::ceil(logical_size.x)),
                 static_cast<int>(std::ceil(logical_size.y)),
+            };
+            
+            /* use the smallest size (fixes some problems
+             * with framebuffer memory allocation being
+             * too large depending on window size) */
+            return Vec2i{
+                std::min(integer_size.x, output_size.x),
+                std::min(integer_size.y, output_size.y),
             };
         }
 
