@@ -105,7 +105,8 @@ static Vec2 calculate_logical_size(Vec2i output_size, const ViewPresentationProp
             break;
     }
 
-    /* fixed resolution must be divisible by 2 */
+    /* fixed resolution must be divisible by 2 for
+     * steadier centered cameras (also reduces mixels) */
     if (settings.mode == PresentationMode::FIXED_RESOLUTION) {
         result = {
             std::ceil(result.x / 2.0f) * 2.0f,
@@ -138,7 +139,7 @@ static Viewport calculate_presentation_rect(Vec2i output_size, Vec2i render_targ
         settings.aspect == AspectPolicy::IGNORE) {
         return Viewport{
             .position = {0, 0},
-            .size = {output_size.x, output_size.y},
+            .size = output_size,
         };
     }
 
