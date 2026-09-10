@@ -5,6 +5,7 @@
 #include <variant>
 
 #include "core/assertion.h"
+#include "core/logger.h"
 #include "core/math/vec2.h"
 #include "core/math/vec2i.h"
 #include "core/view_context_2d.h"
@@ -109,7 +110,6 @@ void Renderer2D::render_frame(const RenderContext &ctx) {
         const auto render_target_size = ctx.view_context->layout.render_target_size;
         if (m_render_target_size != render_target_size) {
             m_render_target_size = render_target_size;
-            LOG_TRACE(m_render_target_size);
             m_rd->resize_render_target(m_render_target, m_render_target_size);
         }
     }
