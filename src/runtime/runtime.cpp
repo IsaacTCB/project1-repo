@@ -51,7 +51,6 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
         IApplication::Servers{
             .input = m_input_service,
             .asset = m_asset_service.value(),
-            .view = m_view,
         },
         m_platform));
     if (!m_app) {
@@ -264,6 +263,7 @@ void EngineRuntime::update(float delta) {
         .frame = build_frame_context(delta),
         .new_second = new_second,
     };
+
     m_app->on_update(update_ctx);
 }
 
@@ -302,7 +302,7 @@ FrameContext &EngineRuntime::build_frame_context(float delta) {
     m_frame_ctx = {
         .delta = delta,
         .fps = m_fps.fps,
-        .viewport = m_renderer->get_viewport(),
+        .view_layout = &m_view.get_layout(),
     };
     return m_frame_ctx;
 }

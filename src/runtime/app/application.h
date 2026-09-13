@@ -30,8 +30,6 @@ public:
     struct Servers {
         InputService &input;
         AssetService &asset;
-
-        ViewSystem &view;
     };
 
 public:
