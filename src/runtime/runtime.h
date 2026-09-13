@@ -11,7 +11,7 @@
 #include "runtime/app/application.h"
 #include "runtime/app/context/frame_context.h"
 #include "runtime/server/display_server.h"
-#include "runtime/view/view_system_2d.h"
+#include "runtime/system/view/view_system_2d.h"
 
 class EngineRuntime {
 public:

@@ -6,7 +6,7 @@ set(RUNTIME_SOURCES
     image/decoder.cpp
     renderer/renderer_2d.cpp
     renderer/batch_builder_2d.cpp
-    view/view_system_2d.cpp
+    system/view/view_system_2d.cpp
     runtime.cpp
 )
 

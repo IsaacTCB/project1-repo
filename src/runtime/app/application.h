@@ -5,7 +5,7 @@
 #include "runtime/asset_service.h"
 #include "runtime/input_service.h"
 #include "runtime/platform_services.h"
-#include "runtime/view/view_system_2d.h"
+#include "runtime/system/view/view_system_2d.h"
 
 #include <string>
 

@@ -23,7 +23,7 @@
 #include "platform_services.h"
 #include "runtime/app/application.h"
 #include "runtime/app/context/frame_context.h"
-#include "runtime/view/view_system_2d.h"
+#include "runtime/system/view/view_system_2d.h"
 #include "server/display_server.h"
 #include "server/os_server.h"
 
