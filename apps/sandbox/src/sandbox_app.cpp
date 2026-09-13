@@ -17,7 +17,7 @@
 #include "runtime/asset_service.h"
 #include "runtime/camera_2d_utils.h"
 #include "runtime/input_service.h"
-#include "runtime/system/particle_system_2d.h"
+#include "runtime/system/particles/particle_system_2d.h"
 
 #include "entity.h"
 
