@@ -12,8 +12,8 @@
 #include "core/utils/handles.h"
 #include "renderer/api/render_queue.h"
 
-#include "../asset_service.h"
 #include "particle_emitter_2d.h"
+#include "runtime/asset_service.h"
 
 using EffectHandle = Handle;
 struct ParticleEffect2D {

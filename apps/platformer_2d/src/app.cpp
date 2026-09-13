@@ -23,8 +23,8 @@
 #include <entt/entity/registry.hpp>
 
 #include "components.h"
-#include "runtime/system/particle_emitter_2d.h"
-#include "runtime/system/particle_system_2d.h"
+#include "runtime/system/particles/particle_emitter_2d.h"
+#include "runtime/system/particles/particle_system_2d.h"
 #include "utils/gridmap.h"
 #include "utils/input.h"
 
