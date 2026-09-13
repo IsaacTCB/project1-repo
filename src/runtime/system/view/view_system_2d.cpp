@@ -20,13 +20,11 @@ void ViewSystem::calculate_layout() {
         m_layout.logical_size,
         m_presentation);
 
-
     m_layout.presentation_rect = calculate_presentation_rect(
         m_output_size,
         m_layout.render_target_size,
         m_presentation);
-    
-    
+
     /* use the smallest size (fixes some problems with framebuffer memory
      * allocation being too large depending on window size) */
     m_layout.render_target_size = {
