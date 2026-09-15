@@ -38,7 +38,7 @@ static Input::Mouse::Buttons convert_mouse_button(uint8_t button) {
 SDL_AppResult SDL3_PlatformImpl::init([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
     log_init();
 
-    if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
+    if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_AUDIO)) {
         LOG_CRITICAL("Failed to initialize SDL3. Reason: {0}", SDL_GetError());
         return SDL_APP_FAILURE;
     }

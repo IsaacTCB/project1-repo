@@ -6,6 +6,7 @@
 
 #include "core/math/vec2i.h"
 #include "graphics/api/render_device_factory.h"
+#include "runtime/audio/audio_device.h"
 
 #include "server_macros.inl"
 
@@ -40,6 +41,8 @@ public:
     DECLARE_SERVER(IDisplayServer)
 
 public:
+    virtual std::unique_ptr<IAudioDevice> get_audio_device() = 0;
+
     /**
      * @brief Initializes the window display
      *

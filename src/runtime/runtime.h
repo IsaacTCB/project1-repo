@@ -10,6 +10,7 @@
 #include "platform_services.h"
 #include "runtime/app/application.h"
 #include "runtime/app/context/frame_context.h"
+#include "runtime/audio/audio_system.h"
 #include "runtime/server/display_server.h"
 #include "runtime/system/view/view_system_2d.h"
 
@@ -79,6 +80,7 @@ private:
     std::optional<Renderer2D> m_renderer;
     RenderQueue m_queue;
 
+    std::unique_ptr<AudioSystem> m_audio_system;
     ViewSystem m_view;
 
     struct FpsCounter {

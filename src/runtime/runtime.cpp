@@ -81,6 +81,10 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
         .aspect = m_app_config.view.aspect,
     });
 
+    m_audio_system = std::make_unique<AudioSystem>(
+        m_platform.display.get_audio_device());
+    m_audio_system->init();
+
     /* initialize asset service */
     m_asset_service.reset();
     m_asset_service.emplace(::AssetService::Provider{
@@ -290,6 +294,8 @@ void EngineRuntime::render_frame(RenderContext &ctx) {
 void EngineRuntime::close() {
     m_app->on_close();
     m_app.reset();
+
+    m_audio_system->close();
 
     m_input_service.close();
     m_asset_service.reset();
