@@ -210,6 +210,14 @@ public:
         return slot->next_handle;
     }
 
+    Handle push(const T &value) {
+        return this->emplace(value);
+    }
+
+    Handle push(T &&value) {
+        return this->emplace(value);
+    }
+
     const T *get(Handle handle) const {
         const Slot *slot = get_slot(handle);
         return slot ? &slot->data.value()
