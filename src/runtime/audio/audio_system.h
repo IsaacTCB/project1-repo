@@ -7,7 +7,8 @@
 #include <memory>
 #include <span>
 
-#include "runtime/audio/audio_mixer.h"
+#include "audio_mixer.h"
+#include "spsc_queue.h"
 
 class AudioSystem {
 private:
@@ -36,5 +37,16 @@ private:
     std::unique_ptr<IAudioDevice> m_ad;
     std::array<float, BUFFER_SIZE> m_buffer;
 
-    AudioMixer m_mixer;
+    struct PlaySoundCommand {
+        PcmAudioSource *clip;
+    };
+
+    struct AudioDeviceThreadState {
+        AudioMixer mixer;
+
+        /* SPSC command queue:
+         * - produced by Game thread.
+         * - consumed by Audio thread. */
+        SpscQueue<PlaySoundCommand, 32> commands;
+    } m_audio_thread;
 };

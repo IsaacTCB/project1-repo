@@ -77,7 +77,9 @@ void AudioSystem::init() {
 
     m_ad->start();
 
-    m_mixer.create_voice(s_audio_clip);
+    m_audio_thread.commands.try_emplace(PlaySoundCommand{
+        .clip = &s_audio_clip,
+    });
 }
 
 void AudioSystem::close() {
@@ -86,10 +88,20 @@ void AudioSystem::close() {
 }
 
 std::span<float> AudioSystem::render_audio(size_t requested_frames) {
-    const auto frames = std::min(requested_frames, FRAME_SIZE);
-    std::fill_n(m_buffer.begin(), frames * CHANNELS, 0.0f);
+    /* process spsc commands */
+    PlaySoundCommand cmd;
+    while (m_audio_thread.commands.try_pop(cmd)) {
+        m_audio_thread.mixer.create_voice({
+            .audio_source = *cmd.clip,
+        });
+    }
 
-    m_mixer.render_frames(m_buffer, frames, SAMPLE_RATE);
+    const auto frames = std::min(
+        requested_frames, FRAME_SIZE);
+
+    /* mix all voices into buffer */
+    m_audio_thread.mixer.render_frames(
+        m_buffer, frames, SAMPLE_RATE);
 
     /* after mixing is done, apply hard-limiter */
     for (auto &sample : m_buffer) {

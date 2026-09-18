@@ -1,7 +1,7 @@
 #include "audio_mixer.h"
-#include "core/logger.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <span>
 
@@ -79,24 +79,29 @@ AudioMixer::VoicePlaybackState *AudioMixer::find_free_voice() {
     return nullptr;
 }
 
-void AudioMixer::create_voice(PcmAudioSource &audio_source) {
+void AudioMixer::create_voice(const VoiceCreateDesc &desc) {
     auto *v = find_free_voice();
     if (!v) {
         return;
     }
 
     const size_t frame_count =
-        audio_source.pcm.size() /
-        audio_source.channels;
+        desc.audio_source.pcm.size() /
+        desc.audio_source.channels;
 
     *v = {
-        .audio_source = &audio_source,
+        .audio_source = &desc.audio_source,
         .frame_count = frame_count,
         .position = 0,
     };
 }
 
 void AudioMixer::render_frames(std::span<float> out, size_t frames, size_t freq) {
+    /* TODO: let owner specify channel count */
+    constexpr size_t CHANNELS = 2;
+
+    std::fill_n(out.begin(), frames * CHANNELS, 0.0f);
+
     for (auto &voice : m_voices) {
         if (!voice.audio_source) {
             continue;
@@ -112,8 +117,7 @@ void AudioMixer::render_frames(std::span<float> out, size_t frames, size_t freq)
 
         size_t produced = 0;
 
-        /* TODO: specify channel count */
-        switch (2) {
+        switch (CHANNELS) {
             case 1:
                 produced = resample_pcm<1>(
                     src, voice.frame_count, voice.position, step, out.data(), frames);

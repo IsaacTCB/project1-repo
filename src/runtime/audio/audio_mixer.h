@@ -11,12 +11,16 @@ struct PcmAudioSource {
     size_t sample_rate;
 };
 
+struct VoiceCreateDesc {
+    PcmAudioSource &audio_source;
+};
+
 class AudioMixer {
 public:
     static constexpr size_t MAX_VOICES = 32;
 
 public:
-    void create_voice(PcmAudioSource &audio_source);
+    void create_voice(const VoiceCreateDesc &desc);
     void render_frames(std::span<float> out, size_t frames, size_t freq);
 
 private:
