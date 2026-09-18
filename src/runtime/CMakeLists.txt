@@ -2,6 +2,7 @@ include(engine_utils)
 
 set(RUNTIME_SOURCES
     audio/audio_system.cpp
+    audio/audio_mixer.cpp
     asset_service.cpp
     input_service.cpp
     image/decoder.cpp
@@ -18,3 +19,7 @@ engine_add_module(runtime)
 # stb_image
 add_subdirectory(${PROJECT_SOURCE_DIR}/external/stb_image external/stb_image)
 target_link_libraries(runtime PRIVATE stb_image)
+
+# vorbis
+add_subdirectory(${PROJECT_SOURCE_DIR}/external/vorbis external/vorbis)
+target_link_libraries(runtime PRIVATE vorbisfile)

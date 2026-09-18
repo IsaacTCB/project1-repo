@@ -2,9 +2,12 @@
 
 #include "audio_device.h"
 
+#include <array>
 #include <cstddef>
 #include <memory>
 #include <span>
+
+#include "runtime/audio/audio_mixer.h"
 
 class AudioSystem {
 private:
@@ -30,8 +33,8 @@ private:
     }
 
 private:
-    /* used by the sine wave generator */
-    size_t m_current_size_sample = 0;
     std::unique_ptr<IAudioDevice> m_ad;
     std::array<float, BUFFER_SIZE> m_buffer;
+
+    AudioMixer m_mixer;
 };
