@@ -2,6 +2,7 @@ include(engine_utils)
 
 set(RUNTIME_SOURCES
     audio/audio_system.cpp
+    audio/audio_source_decoded.cpp
     audio/audio_mixer.cpp
     asset_service.cpp
     input_service.cpp

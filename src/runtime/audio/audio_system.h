@@ -1,12 +1,11 @@
 #pragma once
 
-#include "audio_device.h"
-
 #include <array>
 #include <cstddef>
 #include <memory>
 #include <span>
 
+#include "audio_device.h"
 #include "audio_mixer.h"
 #include "spsc_queue.h"
 
@@ -38,7 +37,7 @@ private:
     std::array<float, BUFFER_SIZE> m_buffer;
 
     struct PlaySoundCommand {
-        PcmAudioSource *clip;
+        std::shared_ptr<IAudioSource> source;
     };
 
     struct AudioDeviceThreadState {
