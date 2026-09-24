@@ -1,7 +1,6 @@
 #include "audio_source_decoded.h"
 
-#include "core/logger.h"
-#include "runtime/audio/audio_source.h"
+#include "audio_source.h"
 
 #include <cstdint>
 #include <vorbis/vorbisfile.h>
@@ -9,10 +8,6 @@
 /* ================== *
  *       Source       *
  * ================== */
-
-AudioSourceDecoded::~AudioSourceDecoded() {
-    LOG_TRACE("Unloaded audio source");
-}
 
 std::shared_ptr<AudioSourceDecoded> AudioSourceDecoded::open(const std::filesystem::path &path) {
     auto source = std::make_shared<AudioSourceDecoded>(PrivateTag{});

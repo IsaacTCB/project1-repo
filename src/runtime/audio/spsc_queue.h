@@ -23,11 +23,11 @@ public:
     }
 
     bool try_push(const T &value) {
-        m_data.try_emplace(value);
+        return this->try_emplace(value);
     }
 
     bool try_push(T &&value) {
-        m_data.try_emplace(std::move(value));
+        return this->try_emplace(std::move(value));
     }
 
     bool try_pop(T &value) {

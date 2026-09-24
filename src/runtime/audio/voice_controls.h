@@ -2,6 +2,8 @@
 
 #include <cstddef>
 
+#include "audio_source.h"
+
 struct VoiceParams {
     float volume;
     float pitch;

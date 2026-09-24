@@ -10,7 +10,7 @@
 #include "voice_controls.h"
 
 struct VoiceCreateDesc {
-    std::shared_ptr<IAudioSource> source;
+    IAudioSourceInstance *instance;
     size_t handle_index;
 };
 
@@ -25,11 +25,11 @@ public:
         m_voice_controller = &voice_controller;
     }
 
-    [[nodiscard]] bool create_voice(const VoiceCreateDesc &desc);
+    void create_voice(VoiceCreateDesc &&desc);
     void render_frames(std::span<float> out, size_t frames, size_t freq);
 
     struct VoicePlaybackState {
-        std::unique_ptr<IAudioSourceInstance> instance{nullptr};
+        IAudioSourceInstance *instance = nullptr;
 
         /* handle index */
         size_t handle_index = 0;

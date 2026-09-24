@@ -1,8 +1,7 @@
 #include "audio_mixer.h"
 
-#include "core/logger.h"
-#include "runtime/audio/audio_limits.h"
-#include "runtime/audio/voice_controls.h"
+#include "audio_limits.h"
+#include "voice_controls.h"
 
 #include <algorithm>
 #include <cstddef>
@@ -77,22 +76,24 @@ AudioMixer::VoicePlaybackState *AudioMixer::find_free_voice() {
     return nullptr;
 }
 
-bool AudioMixer::create_voice(const VoiceCreateDesc &desc) {
+void AudioMixer::create_voice(VoiceCreateDesc &&desc) {
     auto *v = find_free_voice();
 
     if (!v) {
-        return false;
+        /* Failed to find or steal a voice candidate, so we must
+         * flag voice controller that this voice won't play */
+        m_voice_controller->mark_finished(desc.handle_index);
+        return;
     }
 
-    const auto info = desc.source->info();
+    const auto info = desc.instance->source()->info();
     *v = {
-        .instance = desc.source->create_instance(),
+        .instance = desc.instance,
         .handle_index = desc.handle_index,
         .position = 0,
         .channels = info.channels,
         .sample_rate = info.sample_rate,
     };
-    return true;
 }
 
 static void fill_scratch(AudioMixer::VoicePlaybackState &v) {
@@ -135,7 +136,6 @@ void AudioMixer::render_frames(std::span<float> out, size_t frames, size_t freq)
         const auto params = m_voice_controller->params(v.handle_index);
 
         if (params.stop_requested) {
-            LOG_TRACE("damn");
             end_voice(v);
             continue;
         }
@@ -184,10 +184,6 @@ void AudioMixer::render_frames(std::span<float> out, size_t frames, size_t freq)
 }
 
 void AudioMixer::end_voice(VoicePlaybackState &voice) {
-    voice.position = 0;
-    voice.start = 0;
-    voice.valid = 0;
-
-    voice.instance.reset();
     m_voice_controller->mark_finished(voice.handle_index);
+    voice = {};
 }

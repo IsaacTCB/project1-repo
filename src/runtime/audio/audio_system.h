@@ -5,13 +5,13 @@
 #include <filesystem>
 #include <memory>
 #include <span>
-#include <vector>
 
 #include "audio_controller.h"
 #include "audio_device.h"
 #include "audio_handles.h"
 #include "audio_limits.h"
 #include "audio_mixer.h"
+#include "audio_source.h"
 #include "spsc_queue.h"
 
 class AudioSystem {
@@ -54,7 +54,7 @@ private:
 
     struct PlaySoundCommand {
         size_t handle_index;
-        std::shared_ptr<IAudioSource> source;
+        IAudioSourceInstance *instance;
     };
 
     struct AudioDeviceThreadState {
@@ -69,5 +69,4 @@ private:
     VoiceController m_voice_controller;
 
     HandlePool<std::shared_ptr<IAudioSource>> m_sources;
-    std::vector<std::shared_ptr<IAudioSource>> m_unloaded;
 };

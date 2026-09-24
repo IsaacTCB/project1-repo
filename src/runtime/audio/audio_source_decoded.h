@@ -12,7 +12,6 @@ private:
 
 public:
     explicit AudioSourceDecoded([[maybe_unused]] PrivateTag tag) {};
-    ~AudioSourceDecoded() override;
 
     [[nodiscard]]
     static std::shared_ptr<AudioSourceDecoded> open(const std::filesystem::path &path);

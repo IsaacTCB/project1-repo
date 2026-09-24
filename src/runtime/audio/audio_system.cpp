@@ -5,9 +5,9 @@
 #include <memory>
 #include <span>
 
+#include "audio_controller.h"
 #include "audio_mixer.h"
 #include "audio_source_decoded.h"
-#include "runtime/audio/audio_controller.h"
 #include "spsc_queue.h"
 
 AudioSystem::AudioSystem(std::unique_ptr<IAudioDevice> ad)
@@ -40,16 +40,16 @@ void AudioSystem::close() {
     m_ad.reset();
 
     /* now that audio device is dead, we can
-     * clear all loaded/unloaded sources. */
+     * clear all loaded sources. */
     m_sources.clear();
-    m_unloaded.clear();
+
+    /* one last update */
+    m_voice_controller.force_release_all();
 }
 
 void AudioSystem::update() {
-    /* TODO: make this faster by using swap-deletion */
-    std::erase_if(m_unloaded, [](const std::shared_ptr<IAudioSource> &source) {
-        return source.use_count() == 1;
-    });
+    /* voice controller to free any instances */
+    m_voice_controller.update();
 }
 
 AudioSourceHandle AudioSystem::load_source(const std::filesystem::path &filepath) {
@@ -66,12 +66,10 @@ AudioSourceHandle AudioSystem::load_source(const std::filesystem::path &filepath
 void AudioSystem::unload_source(AudioSourceHandle handle) {
     auto *source = m_sources.get(handle);
     ASSERT(source, "Tried to unload non-existent source");
-
     if (!source) {
         return;
     }
 
-    m_unloaded.emplace_back(std::move(*source));
     m_sources.remove(handle);
 
     /* flag all voices to stop */
@@ -89,9 +87,10 @@ VoiceHandle AudioSystem::play_audio(AudioSourceHandle source, const PlayDesc &de
         return VoiceHandle{};
     }
 
+    auto *inst = m_voice_controller.attach(voice_handle, (*source_)->create_instance());
     const bool queued = m_audio_thread.commands.try_emplace(PlaySoundCommand{
         .handle_index = voice_handle.index(),
-        .source = *source_,
+        .instance = inst,
     });
 
     /* failed to append to sound queue, free
@@ -116,16 +115,10 @@ std::span<float> AudioSystem::render_audio(size_t requested_frames) {
     /* process spsc commands */
     PlaySoundCommand cmd;
     while (m_audio_thread.commands.try_pop(cmd)) {
-        bool success = m_audio_thread.mixer.create_voice({
-            .source = cmd.source,
+        m_audio_thread.mixer.create_voice({
+            .instance = cmd.instance,
             .handle_index = cmd.handle_index,
         });
-
-        if (!success) {
-            /* Failed to find or steal a voice candidate, so we must
-             * flag voice controller that this voice won't play */
-            m_voice_controller.mark_finished(cmd.handle_index);
-        }
     }
 
     const auto frames = std::min(

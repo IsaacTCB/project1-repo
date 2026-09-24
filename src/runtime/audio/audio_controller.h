@@ -5,14 +5,22 @@
 #include <array>
 #include <atomic>
 #include <cstddef>
+#include <cstdint>
 
 #include "audio_handles.h"
 #include "audio_limits.h"
+#include "audio_source.h"
 #include "voice_controls.h"
 
 struct PlayDesc {
     float volume = 1.0f;
     float pitch = 1.0f;
+};
+
+enum class VoiceState : uint8_t {
+    FREE,     /* slot is currently unused */
+    PLAYING,  /* slot is being used for playback */
+    FINISHED, /* slot playback is done, unload everything */
 };
 
 class VoiceController : public IVoiceControls {
@@ -23,16 +31,24 @@ public:
 
 public:
     VoiceHandle claim(const PlayDesc &desc);
+    void force_release_all();
     void force_release(VoiceHandle handle);
+    IAudioSourceInstance *attach(VoiceHandle handle, std::unique_ptr<IAudioSourceInstance> instance);
+
     void stop_voice(VoiceHandle handle);
     void stop_voices_of_source(Handle source_handle);
 
     [[nodiscard]]
     bool is_playing(VoiceHandle voice_handle) const;
 
+    void update();
+
 private:
     struct Slot {
-        std::atomic<bool> playing{false};
+        std::unique_ptr<IAudioSourceInstance> instance;
+
+        std::atomic<VoiceState> state{VoiceState::FREE};
+
         std::atomic<bool> stop_request{false};
         std::atomic<float> volume{0.0f};
         std::atomic<float> pitch{0.0f};
