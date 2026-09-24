@@ -17,12 +17,6 @@ struct PlayDesc {
     float pitch = 1.0f;
 };
 
-enum class VoiceState : uint8_t {
-    FREE,     /* slot is currently unused */
-    PLAYING,  /* slot is being used for playback */
-    FINISHED, /* slot playback is done, unload everything */
-};
-
 class VoiceController : public IVoiceControls {
 public:
     [[nodiscard]]
@@ -44,23 +38,31 @@ public:
     void update();
 
 private:
-    struct Slot {
-        std::unique_ptr<IAudioSourceInstance> instance;
+    enum class VoiceState : uint8_t {
+        FREE,     /* slot is unused */
+        PLAYING,  /* slot is being used for playback */
+        FINISHED, /* playback has finished and main thread is yet to acknowledge it */
+    };
 
+    struct VoiceSlot {
+        /* instance & instance state */
+        std::unique_ptr<IAudioSourceInstance> instance;
         std::atomic<VoiceState> state{VoiceState::FREE};
 
+        /* controls */
         std::atomic<bool> stop_request{false};
         std::atomic<float> volume{0.0f};
         std::atomic<float> pitch{0.0f};
         std::atomic<size_t> generation{0};
 
-        std::atomic<Handle::StorageType> source_index{0};
+        /* audio source handle, used by stop_voices_of_source() */
+        std::atomic<Handle::StorageType> source_handle{0};
     };
 
-    [[nodiscard]] Slot *get_slot_from_handle(Handle handle);
-    [[nodiscard]] const Slot *get_slot_from_handle(VoiceHandle handle) const {
+    [[nodiscard]] VoiceSlot *get_slot_from_handle(Handle handle);
+    [[nodiscard]] const VoiceSlot *get_slot_from_handle(VoiceHandle handle) const {
         return const_cast<VoiceController *>(this)->get_slot_from_handle(handle);
     }
 
-    std::array<Slot, AudioLimits::MAX_VOICES> m_slots;
+    std::array<VoiceSlot, AudioLimits::MAX_VOICES> m_slots;
 };

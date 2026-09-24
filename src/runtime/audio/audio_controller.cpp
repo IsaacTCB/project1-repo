@@ -50,10 +50,9 @@ void VoiceController::stop_voice(VoiceHandle handle) {
 }
 
 void VoiceController::stop_voices_of_source(Handle source_handle) {
-    auto source_index = source_handle.index();
     for (auto &slot : m_slots) {
         if (slot.state.load(std::memory_order_acquire) == VoiceState::PLAYING &&
-            slot.source_index.load(std::memory_order_acquire) == source_index) {
+            slot.source_handle.load(std::memory_order_acquire) == source_handle.value()) {
             slot.stop_request.store(true, std::memory_order_release);
         }
     }
@@ -85,7 +84,7 @@ void VoiceController::update() {
     }
 }
 
-VoiceController::Slot *VoiceController::get_slot_from_handle(Handle handle) {
+VoiceController::VoiceSlot *VoiceController::get_slot_from_handle(Handle handle) {
     if (!handle || handle.index() >= m_slots.size()) {
         return nullptr;
     }
