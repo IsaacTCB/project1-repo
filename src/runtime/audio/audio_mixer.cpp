@@ -1,5 +1,9 @@
 #include "audio_mixer.h"
 
+#include "core/logger.h"
+#include "runtime/audio/audio_limits.h"
+#include "runtime/audio/voice_controls.h"
+
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
@@ -10,11 +14,11 @@ static constexpr uint64_t FIXED_POINT_ONE = 1ull << FIXED_POINT_BITS;
 static constexpr uint64_t FIXED_POINT_MASK = FIXED_POINT_ONE - 1;
 
 AudioMixer::AudioMixer() {
-    m_voices = std::make_unique<std::array<VoicePlaybackState, MAX_VOICES>>();
+    m_voices = std::make_unique<std::array<VoicePlaybackState, AudioLimits::MAX_VOICES>>();
 }
 
 template <size_t SrcChannels>
-static size_t resample_pcm(const float *base, size_t start, size_t capacity, uint64_t valid_frames, bool eof, uint64_t &position, uint64_t step, float *dst, size_t dst_frames) {
+static size_t resample_pcm(const float *base, size_t start, size_t capacity, uint64_t valid_frames, bool eof, uint64_t &position, uint64_t step, float *dst, size_t dst_frames, float gain) {
     size_t produced = 0;
     for (; produced < dst_frames; ++produced) {
         const auto idx = static_cast<size_t>(position >> FIXED_POINT_BITS);
@@ -36,12 +40,12 @@ static size_t resample_pcm(const float *base, size_t start, size_t capacity, uin
 
         float *out = dst + (produced * 2);
         if constexpr (SrcChannels == 1) {
-            const float sample = s0[0] + ((s1[0] - s0[0]) * t);
+            const float sample = (s0[0] + ((s1[0] - s0[0]) * t)) * gain;
             out[0] += sample;
             out[1] += sample;
         } else {
-            out[0] += s0[0] + ((s1[0] - s0[0]) * t);
-            out[1] += s0[1] + ((s1[1] - s0[1]) * t);
+            out[0] += (s0[0] + ((s1[0] - s0[0]) * t)) * gain;
+            out[1] += (s0[1] + ((s1[1] - s0[1]) * t)) * gain;
         }
 
         position += step;
@@ -73,20 +77,22 @@ AudioMixer::VoicePlaybackState *AudioMixer::find_free_voice() {
     return nullptr;
 }
 
-void AudioMixer::create_voice(const VoiceCreateDesc &desc) {
+bool AudioMixer::create_voice(const VoiceCreateDesc &desc) {
     auto *v = find_free_voice();
+
     if (!v) {
-        return;
+        return false;
     }
 
     const auto info = desc.source->info();
-
     *v = {
         .instance = desc.source->create_instance(),
+        .handle_index = desc.handle_index,
         .position = 0,
         .channels = info.channels,
         .sample_rate = info.sample_rate,
     };
+    return true;
 }
 
 static void fill_scratch(AudioMixer::VoicePlaybackState &v) {
@@ -119,17 +125,22 @@ static void drop_consumed(AudioMixer::VoicePlaybackState &v) {
 }
 
 void AudioMixer::render_frames(std::span<float> out, size_t frames, size_t freq) {
-    /* TODO: let owner specify channel count */
-    constexpr size_t CHANNELS = 2;
-
-    std::fill_n(out.begin(), frames * CHANNELS, 0.0f);
+    std::fill_n(out.begin(), frames * AudioLimits::OUTPUT_CHANNELS, 0.0f);
 
     for (auto &v : *m_voices) {
         if (!v.instance) {
             continue;
         }
 
-        const uint64_t step = get_step_rate(v.sample_rate, freq, 1.0f);
+        const auto params = m_voice_controller->params(v.handle_index);
+
+        if (params.stop_requested) {
+            LOG_TRACE("damn");
+            end_voice(v);
+            continue;
+        }
+
+        const uint64_t step = get_step_rate(v.sample_rate, freq, params.pitch);
 
         size_t produced = 0;
         while (produced < frames) {
@@ -145,12 +156,14 @@ void AudioMixer::render_frames(std::span<float> out, size_t frames, size_t freq)
                 case 1:
                     n = resample_pcm<1>(
                         v.scratch.data(), v.start, SCRATCH_FRAMES,
-                        v.valid, v.eof, v.position, step, dst, frames - produced);
+                        v.valid, v.eof, v.position, step, dst, frames - produced,
+                        params.volume);
                     break;
                 case 2:
                     n = resample_pcm<2>(
                         v.scratch.data(), v.start, SCRATCH_FRAMES,
-                        v.valid, v.eof, v.position, step, dst, frames - produced);
+                        v.valid, v.eof, v.position, step, dst, frames - produced,
+                        params.volume);
                     break;
                 default:
                     break;
@@ -171,8 +184,10 @@ void AudioMixer::render_frames(std::span<float> out, size_t frames, size_t freq)
 }
 
 void AudioMixer::end_voice(VoicePlaybackState &voice) {
-    voice.instance.reset();
     voice.position = 0;
     voice.start = 0;
     voice.valid = 0;
+
+    voice.instance.reset();
+    m_voice_controller->mark_finished(voice.handle_index);
 }

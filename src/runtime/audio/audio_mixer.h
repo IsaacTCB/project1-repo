@@ -5,25 +5,34 @@
 #include <cstdint>
 #include <span>
 
+#include "audio_limits.h"
 #include "audio_source.h"
+#include "voice_controls.h"
 
 struct VoiceCreateDesc {
     std::shared_ptr<IAudioSource> source;
+    size_t handle_index;
 };
 
 class AudioMixer {
 public:
     AudioMixer();
 
-    static constexpr size_t MAX_VOICES = 32;
     static constexpr size_t SCRATCH_FRAMES = 4 * 512 * 2;
 
 public:
-    void create_voice(const VoiceCreateDesc &desc);
+    void set_voice_controller(IVoiceControls &voice_controller) {
+        m_voice_controller = &voice_controller;
+    }
+
+    [[nodiscard]] bool create_voice(const VoiceCreateDesc &desc);
     void render_frames(std::span<float> out, size_t frames, size_t freq);
 
     struct VoicePlaybackState {
         std::unique_ptr<IAudioSourceInstance> instance{nullptr};
+
+        /* handle index */
+        size_t handle_index = 0;
 
         /* scratch ring/circular buffer, used for resampling */
         std::array<float, SCRATCH_FRAMES * 2> scratch{};
@@ -45,7 +54,8 @@ public:
     };
 
 private:
-    std::unique_ptr<std::array<VoicePlaybackState, MAX_VOICES>> m_voices;
+    std::unique_ptr<std::array<VoicePlaybackState, AudioLimits::MAX_VOICES>> m_voices;
+    IVoiceControls *m_voice_controller{};
 
 private:
     void end_voice(VoicePlaybackState &voice);

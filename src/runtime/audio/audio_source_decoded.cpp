@@ -10,11 +10,22 @@
  *       Source       *
  * ================== */
 
-AudioSourceDecoded::AudioSourceDecoded(const std::filesystem::path &path) {
+AudioSourceDecoded::~AudioSourceDecoded() {
+    LOG_TRACE("Unloaded audio source");
+}
+
+std::shared_ptr<AudioSourceDecoded> AudioSourceDecoded::open(const std::filesystem::path &path) {
+    auto source = std::make_shared<AudioSourceDecoded>(PrivateTag{});
+    if (!source->decode(path)) {
+        return {};
+    }
+    return source;
+}
+
+bool AudioSourceDecoded::decode(const std::filesystem::path &path) {
     OggVorbis_File vf;
     if (ov_fopen(path.c_str(), &vf) < 0) {
-        LOG_CRITICAL("Failed to open '{}'", path.string());
-        exit(2);
+        return false;
     }
 
     m_info.channels = vf.vi->channels;
@@ -52,6 +63,7 @@ AudioSourceDecoded::AudioSourceDecoded(const std::filesystem::path &path) {
     }
 
     ov_clear(&vf);
+    return true;
 }
 
 AudioSourceInfo AudioSourceDecoded::info() const {

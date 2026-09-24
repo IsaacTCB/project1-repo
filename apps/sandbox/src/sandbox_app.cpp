@@ -13,10 +13,14 @@
 #include "runtime/app/application.h"
 #include "runtime/app/context/frame_context.h"
 #include "runtime/asset_service.h"
+#include "runtime/audio/audio_controller.h"
+#include "runtime/audio/audio_system.h"
 #include "runtime/camera_2d_utils.h"
 #include "runtime/input_service.h"
 
 #include "entity.h"
+
+static constexpr std::string AUDIO_FILEPATH = "audio.ogg";
 
 class SandboxApplication : public IApplication {
     DECLARE_APP(SandboxApplication);
@@ -43,6 +47,16 @@ public:
         };
     }
 
+    AudioSourceHandle load_sound(const std::string &filepath) {
+        auto handle = m_servers.audio->load_source(filepath);
+        if (!handle) {
+            LOG_WARN("Failed to load audio source {}", filepath);
+            return {};
+        }
+        LOG_INFO("Loaded load audio source {}", filepath);
+        return handle;
+    }
+
     void on_init() override {
         m_texture = m_servers.asset.get_texture("test.png");
 
@@ -52,6 +66,17 @@ public:
 
         m_camera.zoom = 0.8f;
         m_camera.anchor = Camera2D::AnchorMode::CENTER;
+
+        m_audio_source = load_sound(AUDIO_FILEPATH);
+        if (m_audio_source) {
+            float pitch_r = Random::randf_range(0.9f, 1.1f);
+            m_bgm_voice = m_servers.audio->play_audio(m_audio_source, {.volume = 0.2f, .pitch = pitch_r});
+            if (m_servers.audio->is_audio_playing(m_bgm_voice)) {
+                LOG_TRACE("playing voice!");
+            }
+        }
+
+        m_click_sound = load_sound("click.ogg");
     }
 
     void on_update(UpdateContext &ctx) override {
@@ -76,6 +101,11 @@ public:
         if (m_servers.input.is_mouse_button_just_pressed(Input::Mouse::Buttons::LEFT)) {
             float speed_scale = Random::randf_range(0.85f, 1.2f);
             m_entities.emplace_back(Vec2(mouse_pos), speed_scale);
+
+            /* play click sound effect */
+            if (m_click_sound) {
+                m_servers.audio->play_audio(m_click_sound);
+            }
         }
         if (m_servers.input.is_mouse_button_just_released(Input::Mouse::Buttons::RIGHT)) {
             LOG_TRACE("Walked");
@@ -135,6 +165,11 @@ public:
 
         m_camera.position.x = std::floor(m_entities[0].pos.x);
         m_camera.position.y = std::floor(m_entities[0].pos.y);
+
+        /* poor man's looping approach */
+        if (!m_servers.audio->is_audio_playing(m_bgm_voice)) {
+            m_bgm_voice = m_servers.audio->play_audio(m_audio_source, {.volume = 0.2f, .pitch = 1.0f});
+        }
     }
 
     void on_draw(RenderContext &ctx) override {
@@ -180,6 +215,8 @@ public:
 
     void on_close() override {
         LOG_INFO("Application ended!");
+
+        m_servers.audio->unload_source(m_audio_source);
     }
 
     [[nodiscard]]
@@ -192,6 +229,11 @@ private:
     std::vector<Entity> m_entities;
     TextureRef m_texture;
     Camera2D m_camera;
+
+    AudioSourceHandle m_audio_source;
+    AudioSourceHandle m_click_sound;
+
+    VoiceHandle m_bgm_voice;
 
     ViewContext2D m_view_context;
 };

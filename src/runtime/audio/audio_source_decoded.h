@@ -6,8 +6,19 @@
 #include <vector>
 
 class AudioSourceDecoded : public IAudioSource {
+private:
+    struct PrivateTag {};
+    AudioSourceDecoded() = default;
+
 public:
-    AudioSourceDecoded(const std::filesystem::path &path);
+    explicit AudioSourceDecoded([[maybe_unused]] PrivateTag tag) {};
+    ~AudioSourceDecoded() override;
+
+    [[nodiscard]]
+    static std::shared_ptr<AudioSourceDecoded> open(const std::filesystem::path &path);
+
+    bool decode(const std::filesystem::path &path);
+
     AudioSourceInfo info() const override;
     std::unique_ptr<IAudioSourceInstance> create_instance() override;
 

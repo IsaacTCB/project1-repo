@@ -51,6 +51,7 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
         IApplication::Servers{
             .input = m_input_service,
             .asset = m_asset_service.value(),
+            .audio = m_audio_system,
         },
         m_platform));
     if (!m_app) {
@@ -58,9 +59,11 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
         exit(-1);
     }
 
-    ApplicationConfig config;
-    m_app->configure(config);
-    m_app_config = config;
+    {
+        ApplicationConfig config;
+        m_app->configure(config);
+        m_app_config = std::move(config);
+    }
 
     /* initialize fps counter */
     m_fps = {};
@@ -225,7 +228,7 @@ void EngineRuntime::update(float delta) {
         return;
     }
 
-#if defined(DEBUG)
+#ifdef DEBUG
     /* update caption debug info */
     if (new_second) {
         const auto &render_size = m_view.get_layout().render_viewport.size;
@@ -256,6 +259,7 @@ void EngineRuntime::update(float delta) {
         }
     }
 
+    m_audio_system->update();
     m_input_service.update();
 
     for (const auto &event : m_platform.event.span<EventInput>()) {
@@ -296,6 +300,7 @@ void EngineRuntime::close() {
     m_app.reset();
 
     m_audio_system->close();
+    m_audio_system.reset();
 
     m_input_service.close();
     m_asset_service.reset();
