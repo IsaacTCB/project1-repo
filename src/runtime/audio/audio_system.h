@@ -63,7 +63,7 @@ private:
         /* SPSC command queue:
          * - produced by Game thread.
          * - consumed by Audio thread. */
-        SpscQueue<PlaySoundCommand, AudioLimits::MAX_VOICES> commands;
+        SpscQueue<PlaySoundCommand, AudioLimits::COMMAND_QUEUE_CAPACITY> commands;
     } m_audio_thread;
 
     VoiceController m_voice_controller;

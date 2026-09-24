@@ -59,7 +59,7 @@ public:
             return tail - head;
         }
 
-        return Capacity - (head + tail);
+        return Capacity - head + tail;
     }
 
 private:
