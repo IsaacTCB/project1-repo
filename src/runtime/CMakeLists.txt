@@ -23,5 +23,11 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/external/stb_image external/stb_image)
 target_link_libraries(runtime PRIVATE stb_image)
 
 # vorbis
-add_subdirectory(${PROJECT_SOURCE_DIR}/external/vorbis external/vorbis)
-target_link_libraries(runtime PRIVATE vorbisfile)
+find_package(vorbis)
+if(vorbis_FOUND)
+    target_link_libraries(runtime PRIVATE Vorbis::vorbisfile)
+else()
+    add_subdirectory(${PROJECT_SOURCE_DIR}/external/vorbis external/vorbis)
+    target_link_libraries(runtime PRIVATE Vorbis::vorbisfile)
+endif()
+
