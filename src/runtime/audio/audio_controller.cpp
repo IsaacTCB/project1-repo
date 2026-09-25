@@ -4,6 +4,7 @@
 
 #include "audio_handles.h"
 #include "audio_source.h"
+#include "core/assertion.h"
 
 VoiceHandle VoiceController::claim(const PlayDesc &desc) {
     for (size_t i = 0; i < m_slots.size(); ++i) {
@@ -25,6 +26,7 @@ VoiceHandle VoiceController::claim(const PlayDesc &desc) {
 
 IAudioSourceInstance *VoiceController::attach(VoiceHandle handle, std::unique_ptr<IAudioSourceInstance> instance) {
     auto *slot = get_slot_from_handle(handle);
+    ASSERT(slot, "Attempted to attach into a non-existent handle");
     slot->instance = std::move(instance);
     return slot->instance.get();
 }
@@ -32,6 +34,7 @@ IAudioSourceInstance *VoiceController::attach(VoiceHandle handle, std::unique_pt
 void VoiceController::force_release(VoiceHandle handle) {
     if (auto *slot = get_slot_from_handle(handle)) {
         slot->state.store(VoiceState::FREE, std::memory_order_release);
+        slot->generation.fetch_add(1, std::memory_order_relaxed);
         slot->instance.reset();
     }
 }
@@ -39,6 +42,7 @@ void VoiceController::force_release(VoiceHandle handle) {
 void VoiceController::force_release_all() {
     for (auto &slot : m_slots) {
         slot.state.store(VoiceState::FREE, std::memory_order_release);
+        slot.generation.fetch_add(1, std::memory_order_relaxed);
         slot.instance.reset();
     }
 }

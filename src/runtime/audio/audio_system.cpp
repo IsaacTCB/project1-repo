@@ -20,6 +20,9 @@ AudioSystem::~AudioSystem() {
 }
 
 void AudioSystem::init() {
+    m_audio_thread.mixer.set_voice_controller(m_voice_controller);
+    m_buffer.fill(0.0f);
+
     m_ad->open({
         .format = AudioFormat::F32,
         .sample_rate = SAMPLE_RATE,
@@ -31,8 +34,6 @@ void AudioSystem::init() {
         this);
 
     m_ad->start();
-
-    m_audio_thread.mixer.set_voice_controller(m_voice_controller);
 }
 
 void AudioSystem::close() {
