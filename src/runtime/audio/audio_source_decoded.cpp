@@ -18,8 +18,9 @@ std::shared_ptr<AudioSourceDecoded> AudioSourceDecoded::open(const std::filesyst
 }
 
 bool AudioSourceDecoded::decode(const std::filesystem::path &path) {
+    const auto *path_str = reinterpret_cast<const char *>(path.c_str());
     OggVorbis_File vf;
-    if (ov_fopen(path.c_str(), &vf) < 0) {
+    if (ov_fopen(path_str, &vf) < 0) {
         return false;
     }
 

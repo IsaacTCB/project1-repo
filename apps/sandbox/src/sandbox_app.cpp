@@ -8,8 +8,8 @@
 #include "core/math/random.h"
 #include "core/math/vec2.h"
 #include "core/math/vec2i.h"
-
 #include "core/view_context_2d.h"
+
 #include "runtime/app/application.h"
 #include "runtime/app/context/frame_context.h"
 #include "runtime/asset_service.h"
@@ -19,7 +19,7 @@
 
 #include "entity.h"
 
-static constexpr std::string AUDIO_FILEPATH = "audio.ogg";
+#define AUDIO_FILEPATH "audio.ogg"
 
 class SandboxApplication : public IApplication {
     DECLARE_APP(SandboxApplication);
@@ -215,7 +215,13 @@ public:
     void on_close() override {
         LOG_INFO("Application ended!");
 
-        m_servers.audio->unload_source(m_audio_source);
+        if (m_audio_source) {
+            m_servers.audio->unload_source(m_audio_source);
+        }
+
+        if (m_click_sound) {
+            m_servers.audio->unload_source(m_click_sound);
+        }
     }
 
     [[nodiscard]]
