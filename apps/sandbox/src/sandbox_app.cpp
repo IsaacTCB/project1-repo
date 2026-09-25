@@ -108,6 +108,7 @@ public:
         }
         if (m_servers.input.is_mouse_button_just_released(Input::Mouse::Buttons::RIGHT)) {
             LOG_TRACE("Walked");
+            m_servers.audio->set_audio_volume(m_bgm_voice, Random::randf_range(0.5f, 1.5f));
         }
 
         Vec2 move{};

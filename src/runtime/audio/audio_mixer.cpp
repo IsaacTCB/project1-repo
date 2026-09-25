@@ -8,12 +8,22 @@
 #include <cstdint>
 #include <span>
 
+#include "core/math/base.h"
+
 static constexpr uint32_t FIXED_POINT_BITS = 24;
 static constexpr uint64_t FIXED_POINT_ONE = 1ull << FIXED_POINT_BITS;
 static constexpr uint64_t FIXED_POINT_MASK = FIXED_POINT_ONE - 1;
 
+static constexpr float VOLUME_RAMP_SECONDS = 0.010f;
+static constexpr float VOLUME_GAIN_STEP =
+    1.0f / (VOLUME_RAMP_SECONDS * static_cast<float>(AudioLimits::OUTPUT_SAMPLE_RATE));
+
 AudioMixer::AudioMixer() {
     m_voices = std::make_unique<std::array<VoicePlaybackState, AudioLimits::MAX_VOICES>>();
+}
+
+static inline float approach(float from, float to, float max_delta) {
+    return from + std::clamp(to - from, -max_delta, max_delta);
 }
 
 struct ResamplePcmDesc {
@@ -33,8 +43,11 @@ struct ResamplePcmDesc {
     size_t dst_frames;
 
     /* gain, volume, etc. */
-    float gain_l;
-    float gain_r;
+    float &gain_l;
+    float &gain_r;
+    float gain_target_l;
+    float gain_target_r;
+    float gain_step;
 };
 
 template <size_t SrcChannels>
@@ -57,6 +70,10 @@ static size_t resample_pcm(const ResamplePcmDesc &desc) {
 
         const auto t = static_cast<float>(desc.position & FIXED_POINT_MASK) /
                        static_cast<float>(FIXED_POINT_ONE);
+
+        /* update gain */
+        desc.gain_l = approach(desc.gain_l, desc.gain_target_l, desc.gain_step);
+        desc.gain_r = approach(desc.gain_r, desc.gain_target_r, desc.gain_step);
 
         float *out = desc.dst + (produced * 2);
         if constexpr (SrcChannels == 1) {
@@ -114,6 +131,12 @@ void AudioMixer::create_voice(VoiceCreateDesc &&desc) {
         .position = 0,
         .channels = info.channels,
         .sample_rate = info.sample_rate,
+
+        .gain_l = 0.0f,
+        .gain_r = 0.0f,
+        .gain_init = true,
+
+        .stopping = false,
     };
 }
 
@@ -155,8 +178,20 @@ void AudioMixer::render_frames(std::span<float> out, size_t frames) {
         }
 
         const auto params = m_voice_controller->params(v.handle_index);
-
         if (params.stop_requested) {
+            v.stopping = true;
+        }
+
+        /* define gain values */
+        const float gain_target_l = v.stopping ? 0.0f : params.volume;
+        const float gain_target_r = v.stopping ? 0.0f : params.volume;
+        if (v.gain_init) {
+            v.gain_l = gain_target_l;
+            v.gain_r = gain_target_r;
+            v.gain_init = false;
+        }
+
+        if (v.stopping && is_zero_approx(v.gain_l) && is_zero_approx(v.gain_r)) {
             end_voice(v);
             continue;
         }
@@ -189,8 +224,11 @@ void AudioMixer::render_frames(std::span<float> out, size_t frames) {
                 .dst_frames = frames - produced,
 
                 /* gain, volume, etc. */
-                .gain_l = params.volume,
-                .gain_r = params.volume,
+                .gain_l = v.gain_l,
+                .gain_r = v.gain_r,
+                .gain_target_l = gain_target_l,
+                .gain_target_r = gain_target_r,
+                .gain_step = VOLUME_GAIN_STEP,
             };
 
             size_t n = 0;

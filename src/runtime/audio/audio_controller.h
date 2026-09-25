@@ -35,6 +35,8 @@ public:
     [[nodiscard]]
     bool is_playing(VoiceHandle voice_handle) const;
 
+    void set_volume_gain(VoiceHandle voice_handle, float volume);
+
     void update();
 
 private:

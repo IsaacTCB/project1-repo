@@ -51,6 +51,14 @@ public:
 
         size_t channels{};
         size_t sample_rate{};
+
+        /* gain & gain ramp */
+        float gain_l = 0.0f;
+        float gain_r = 0.0f;
+        bool gain_init = false;
+
+        /* flags */
+        bool stopping = false;
     };
 
 private:

@@ -104,3 +104,9 @@ bool VoiceController::is_playing(VoiceHandle voice_handle) const {
     }
     return false;
 }
+
+void VoiceController::set_volume_gain(VoiceHandle voice_handle, float volume) {
+    if (auto *slot = get_slot_from_handle(voice_handle)) {
+        slot->volume.store(volume, std::memory_order_release);
+    }
+}

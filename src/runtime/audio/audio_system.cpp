@@ -111,6 +111,10 @@ bool AudioSystem::is_audio_playing(VoiceHandle voice) const {
     return m_voice_controller.is_playing(voice);
 }
 
+void AudioSystem::set_audio_volume(VoiceHandle voice, float volume) {
+    m_voice_controller.set_volume_gain(voice, volume);
+}
+
 std::span<float> AudioSystem::render_audio(size_t requested_frames) {
     /* process spsc commands */
     PlaySoundCommand cmd;

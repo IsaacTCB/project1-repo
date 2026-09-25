@@ -40,6 +40,8 @@ public:
     [[nodiscard]]
     bool is_audio_playing(VoiceHandle voice) const;
 
+    void set_audio_volume(VoiceHandle voice, float volume);
+
 private:
     std::span<float> render_audio(size_t requested_frames);
 
