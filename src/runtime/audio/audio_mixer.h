@@ -26,7 +26,7 @@ public:
     }
 
     void create_voice(VoiceCreateDesc &&desc);
-    void render_frames(std::span<float> out, size_t frames, size_t freq);
+    void render_frames(std::span<float> out, size_t frames);
 
     struct VoicePlaybackState {
         IAudioSourceInstance *instance = nullptr;

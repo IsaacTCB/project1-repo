@@ -16,47 +16,68 @@ AudioMixer::AudioMixer() {
     m_voices = std::make_unique<std::array<VoicePlaybackState, AudioLimits::MAX_VOICES>>();
 }
 
-template <size_t SrcChannels>
-static size_t resample_pcm(const float *base, size_t start, size_t capacity, uint64_t valid_frames, bool eof, uint64_t &position, uint64_t step, float *dst, size_t dst_frames, float gain) {
-    size_t produced = 0;
-    for (; produced < dst_frames; ++produced) {
-        const auto idx = static_cast<size_t>(position >> FIXED_POINT_BITS);
-        if (idx >= valid_frames) {
-            break;
-        }
-        if (!eof && idx + 1 >= valid_frames) {
-            break;
-        }
-        const bool has_next = (idx + 1) < valid_frames;
+struct ResamplePcmDesc {
+    /* scratch buffer */
+    const float *base;
+    size_t start;
+    size_t capacity;
+    uint64_t valid_frames;
+    bool eof;
 
-        const float *s0 = base + (((start + idx) % capacity) * SrcChannels);
+    /* position */
+    uint64_t &position;
+    uint64_t step;
+
+    /* output */
+    float *dst;
+    size_t dst_frames;
+
+    /* gain, volume, etc. */
+    float gain_l;
+    float gain_r;
+};
+
+template <size_t SrcChannels>
+static size_t resample_pcm(const ResamplePcmDesc &desc) {
+    size_t produced = 0;
+    for (; produced < desc.dst_frames; ++produced) {
+        const auto idx = static_cast<size_t>(desc.position >> FIXED_POINT_BITS);
+        if (idx >= desc.valid_frames) {
+            break;
+        }
+        if (!desc.eof && idx + 1 >= desc.valid_frames) {
+            break;
+        }
+        const bool has_next = (idx + 1) < desc.valid_frames;
+
+        const float *s0 = desc.base + (((desc.start + idx) % desc.capacity) * SrcChannels);
         const float *s1 = has_next
-                            ? base + ((((start + idx) + 1) % capacity) * SrcChannels)
+                            ? desc.base + ((((desc.start + idx) + 1) % desc.capacity) * SrcChannels)
                             : s0;
 
-        const auto t = static_cast<float>(position & FIXED_POINT_MASK) /
+        const auto t = static_cast<float>(desc.position & FIXED_POINT_MASK) /
                        static_cast<float>(FIXED_POINT_ONE);
 
-        float *out = dst + (produced * 2);
+        float *out = desc.dst + (produced * 2);
         if constexpr (SrcChannels == 1) {
-            const float sample = (s0[0] + ((s1[0] - s0[0]) * t)) * gain;
-            out[0] += sample;
-            out[1] += sample;
+            const float sample = (s0[0] + ((s1[0] - s0[0]) * t));
+            out[0] += sample * desc.gain_l;
+            out[1] += sample * desc.gain_r;
         } else {
-            out[0] += (s0[0] + ((s1[0] - s0[0]) * t)) * gain;
-            out[1] += (s0[1] + ((s1[1] - s0[1]) * t)) * gain;
+            out[0] += (s0[0] + ((s1[0] - s0[0]) * t)) * desc.gain_l;
+            out[1] += (s0[1] + ((s1[1] - s0[1]) * t)) * desc.gain_r;
         }
 
-        position += step;
+        desc.position += desc.step;
     }
 
     return produced;
 }
 
-static uint64_t get_step_rate(size_t src_freq, size_t dst_freq, float pitch = 1.0f) {
+static uint64_t get_step_rate(size_t src_freq, float pitch = 1.0f) {
     double step_f =
         static_cast<double>(src_freq) /
-        static_cast<double>(dst_freq);
+        static_cast<double>(AudioLimits::OUTPUT_SAMPLE_RATE);
 
     step_f *= pitch;
 
@@ -125,7 +146,7 @@ static void drop_consumed(AudioMixer::VoicePlaybackState &v) {
     v.position -= uint64_t{drop} << FIXED_POINT_BITS;
 }
 
-void AudioMixer::render_frames(std::span<float> out, size_t frames, size_t freq) {
+void AudioMixer::render_frames(std::span<float> out, size_t frames) {
     std::fill_n(out.begin(), frames * AudioLimits::OUTPUT_CHANNELS, 0.0f);
 
     for (auto &v : *m_voices) {
@@ -140,7 +161,7 @@ void AudioMixer::render_frames(std::span<float> out, size_t frames, size_t freq)
             continue;
         }
 
-        const uint64_t step = get_step_rate(v.sample_rate, freq, params.pitch);
+        const uint64_t step = get_step_rate(v.sample_rate, params.pitch);
 
         size_t produced = 0;
         while (produced < frames) {
@@ -151,19 +172,34 @@ void AudioMixer::render_frames(std::span<float> out, size_t frames, size_t freq)
 
             float *dst = out.data() + (produced * 2);
 
+            const ResamplePcmDesc resample_desc{
+                /* scratch buffer */
+                .base = v.scratch.data(),
+                .start = v.start,
+                .capacity = SCRATCH_FRAMES,
+                .valid_frames = v.valid,
+                .eof = v.eof,
+
+                /* position */
+                .position = v.position,
+                .step = step,
+
+                /* output */
+                .dst = dst,
+                .dst_frames = frames - produced,
+
+                /* gain, volume, etc. */
+                .gain_l = params.volume,
+                .gain_r = params.volume,
+            };
+
             size_t n = 0;
             switch (v.channels) {
                 case 1:
-                    n = resample_pcm<1>(
-                        v.scratch.data(), v.start, SCRATCH_FRAMES,
-                        v.valid, v.eof, v.position, step, dst, frames - produced,
-                        params.volume);
+                    n = resample_pcm<1>(resample_desc);
                     break;
                 case 2:
-                    n = resample_pcm<2>(
-                        v.scratch.data(), v.start, SCRATCH_FRAMES,
-                        v.valid, v.eof, v.position, step, dst, frames - produced,
-                        params.volume);
+                    n = resample_pcm<2>(resample_desc);
                     break;
                 default:
                     break;

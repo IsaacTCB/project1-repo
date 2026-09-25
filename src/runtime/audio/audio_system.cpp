@@ -126,7 +126,7 @@ std::span<float> AudioSystem::render_audio(size_t requested_frames) {
 
     /* mix all voices into buffer */
     m_audio_thread.mixer.render_frames(
-        m_buffer, frames, SAMPLE_RATE);
+        m_buffer, frames);
 
     /* after mixing is done, apply hard-limiter */
     for (auto &sample : m_buffer) {
