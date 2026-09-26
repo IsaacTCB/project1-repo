@@ -12,6 +12,7 @@
 #include "runtime/audio/audio_handles.h"
 #include "spsc_queue.h"
 
+#include "decoders/mp3_audio_decoder.h"
 #include "decoders/vorbis_audio_decoder.h"
 
 AudioSystem::AudioSystem(std::unique_ptr<IAudioDevice> ad)
@@ -62,6 +63,8 @@ AudioSourceHandle AudioSystem::load_source(const std::filesystem::path &path) {
     std::unique_ptr<IAudioDecoder> decoder;
     if (path.extension() == ".ogg") {
         decoder = std::unique_ptr<IAudioDecoder>(new Vorbis_AudioDecoder(path));
+    } else if (path.extension() == ".mp3") {
+        decoder = std::unique_ptr<IAudioDecoder>(new MP3_AudioDecoder(path));
     }
 
     if (!decoder) {

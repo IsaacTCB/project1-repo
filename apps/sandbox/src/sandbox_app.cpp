@@ -19,7 +19,7 @@
 
 #include "entity.h"
 
-#define AUDIO_FILEPATH "audio.ogg"
+#define AUDIO_FILEPATH "test.mp3"
 
 class SandboxApplication : public IApplication {
     DECLARE_APP(SandboxApplication);

@@ -2,6 +2,7 @@ include(engine_utils)
 
 set(RUNTIME_SOURCES
     audio/audio_system.cpp
+    audio/decoders/mp3_audio_decoder.cpp
     audio/decoders/vorbis_audio_decoder.cpp
     audio/audio_controller.cpp
     audio/audio_source_decoded.cpp
@@ -32,3 +33,7 @@ else()
     target_link_libraries(runtime PRIVATE Vorbis::vorbisfile)
 endif()
 
+# dr_libs (wav & mp3), header-only
+add_library(dr_libs INTERFACE)
+target_include_directories(dr_libs SYSTEM INTERFACE ${PROJECT_SOURCE_DIR}/external/dr_libs)
+target_link_libraries(runtime PRIVATE dr_libs)

@@ -2,7 +2,6 @@
 
 #include <cstdint>
 #include <cstdio>
-#include <ogg/config_types.h>
 #include <utility>
 
 #include "core/assertion.h"
