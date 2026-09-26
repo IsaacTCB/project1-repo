@@ -128,7 +128,7 @@ VoiceHandle AudioSystem::play_audio(AudioSourceHandle source_handle, const PlayD
         return VoiceHandle{};
     }
 
-    auto voice_handle = m_voice_controller.claim(desc);
+    auto voice_handle = m_voice_controller.claim(desc, source_handle);
     if (!voice_handle) {
         return VoiceHandle{};
     }

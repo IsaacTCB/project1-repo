@@ -64,6 +64,6 @@ public:
 
 private:
     std::array<T, Capacity> m_data{};
-    std::atomic<size_t> m_tail{0};
-    std::atomic<size_t> m_head{0};
+    alignas(64) std::atomic<size_t> m_tail{0};
+    alignas(64) std::atomic<size_t> m_head{0};
 };

@@ -24,7 +24,7 @@ public:
     void mark_finished(size_t idx) override;
 
 public:
-    VoiceHandle claim(const PlayDesc &desc);
+    VoiceHandle claim(const PlayDesc &desc, Handle source_handle);
     void force_release_all();
     void force_release(VoiceHandle handle);
     IAudioSourceInstance *attach(VoiceHandle handle, std::unique_ptr<IAudioSourceInstance> instance);

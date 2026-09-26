@@ -6,7 +6,7 @@
 #include "audio_source.h"
 #include "core/assertion.h"
 
-VoiceHandle VoiceController::claim(const PlayDesc &desc) {
+VoiceHandle VoiceController::claim(const PlayDesc &desc, Handle source_handle) {
     for (size_t i = 0; i < m_slots.size(); ++i) {
         auto &slot = m_slots[i];
 
@@ -16,6 +16,8 @@ VoiceHandle VoiceController::claim(const PlayDesc &desc) {
 
             slot.volume.store(desc.volume, std::memory_order_relaxed);
             slot.pitch.store(desc.pitch, std::memory_order_relaxed);
+
+            slot.source_handle.store(source_handle.value(), std::memory_order_relaxed);
 
             const size_t gen = slot.generation.load(std::memory_order_relaxed);
             return Handle::from_index_gen(i, gen);
