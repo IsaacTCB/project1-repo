@@ -6,9 +6,13 @@
 #include <span>
 
 #include "audio_controller.h"
+#include "audio_decoder.h"
 #include "audio_mixer.h"
 #include "audio_source_decoded.h"
+#include "runtime/audio/audio_handles.h"
 #include "spsc_queue.h"
+
+#include "decoders/vorbis_audio_decoder.h"
 
 AudioSystem::AudioSystem(std::unique_ptr<IAudioDevice> ad)
     : m_ad(std::move(ad)) {}
@@ -53,9 +57,20 @@ void AudioSystem::update() {
     m_voice_controller.update();
 }
 
-AudioSourceHandle AudioSystem::load_source(const std::filesystem::path &filepath) {
+AudioSourceHandle AudioSystem::load_source(const std::filesystem::path &path) {
+    /* detect audio from extension */
+    std::unique_ptr<IAudioDecoder> decoder;
+    if (path.extension() == ".ogg") {
+        decoder = std::unique_ptr<IAudioDecoder>(new Vorbis_AudioDecoder(path));
+    }
+
+    if (!decoder) {
+        /* unrecognized extension or unsupported format */
+        return AudioSourceHandle{};
+    }
+
     auto source = std::static_pointer_cast<IAudioSource>(
-        AudioSourceDecoded::open(filepath));
+        AudioSourceDecoded::open(std::move(decoder)));
 
     if (!source) {
         return AudioSourceHandle{};

@@ -9,56 +9,39 @@
  *       Source       *
  * ================== */
 
-std::shared_ptr<AudioSourceDecoded> AudioSourceDecoded::open(const std::filesystem::path &path) {
+std::shared_ptr<AudioSourceDecoded> AudioSourceDecoded::open(std::unique_ptr<IAudioDecoder> decoder) {
     auto source = std::make_shared<AudioSourceDecoded>(PrivateTag{});
-    if (!source->decode(path)) {
+    if (!source->decode(std::move(decoder))) {
         return {};
     }
     return source;
 }
 
-bool AudioSourceDecoded::decode(const std::filesystem::path &path) {
-    const auto path_str = path.generic_string();
-    OggVorbis_File vf;
-    if (ov_fopen(path_str.c_str(), &vf) < 0) {
+bool AudioSourceDecoded::decode(std::unique_ptr<IAudioDecoder> decoder) {
+    if (!decoder->open()) {
         return false;
     }
 
-    m_info.channels = vf.vi->channels;
-    m_info.sample_rate = vf.vi->rate;
-    m_info.frame_count = ov_pcm_total(&vf, -1);
+    const auto &info = decoder->info();
+    m_info = {
+        .channels = info.channels,
+        .sample_rate = info.sample_rate,
+        .frame_count = info.frame_count,
+    };
 
     const size_t sample_count = m_info.frame_count * m_info.channels;
     m_pcm.resize(sample_count);
 
-    uint64_t frames_written = 0;
-    while (frames_written < m_info.frame_count) {
-        float **pcm = nullptr;
-        int bitstream = 0;
-
-        const int requested = static_cast<int>(
-            std::min<uint64_t>(m_info.frame_count - frames_written, 4096));
-
-        const long result = ov_read_float(&vf, &pcm, requested, &bitstream);
-
-        if (result <= 0) {
-            break;
-        }
-        if (static_cast<uint64_t>(bitstream) != 0) {
-            break;
-        }
-
-        for (long frame = 0; frame < result; ++frame) {
-            for (uint64_t channel = 0; channel < m_info.channels; ++channel) {
-                m_pcm[((frames_written + static_cast<uint64_t>(frame)) * m_info.channels) + channel] =
-                    pcm[channel][frame];
-            }
-        }
-
-        frames_written += static_cast<uint64_t>(result);
+    const uint64_t frames = decoder->read_frames(m_pcm, m_info.frame_count);
+    if (frames == 0) {
+        return false;
     }
 
-    ov_clear(&vf);
+    /* the reported length can be slightly off, keep whatever was actually decoded */
+    if (frames < m_info.frame_count) {
+        m_info.frame_count = frames;
+        m_pcm.resize(frames * m_info.channels);
+    }
     return true;
 }
 

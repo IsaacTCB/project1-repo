@@ -1,9 +1,10 @@
 #include "audio_source.h"
 
 #include <cstdint>
-#include <filesystem>
 #include <memory>
 #include <vector>
+
+#include "audio_decoder.h"
 
 class AudioSourceDecoded : public IAudioSource {
 private:
@@ -14,9 +15,7 @@ public:
     explicit AudioSourceDecoded([[maybe_unused]] PrivateTag tag) {};
 
     [[nodiscard]]
-    static std::shared_ptr<AudioSourceDecoded> open(const std::filesystem::path &path);
-
-    bool decode(const std::filesystem::path &path);
+    static std::shared_ptr<AudioSourceDecoded> open(std::unique_ptr<IAudioDecoder> decoder);
 
     AudioSourceInfo info() const override;
     std::unique_ptr<IAudioSourceInstance> create_instance() override;
@@ -24,6 +23,9 @@ public:
 protected:
     std::span<const float> pcm() const { return std::span{m_pcm}; }
     friend class AudioSourceDecodedInstance;
+
+private:
+    bool decode(std::unique_ptr<IAudioDecoder> decoder);
 
 private:
     AudioSourceInfo m_info;

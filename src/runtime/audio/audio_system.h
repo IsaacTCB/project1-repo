@@ -31,7 +31,7 @@ public:
 
     void update();
 
-    AudioSourceHandle load_source(const std::filesystem::path &filepath);
+    AudioSourceHandle load_source(const std::filesystem::path &path);
     void unload_source(AudioSourceHandle handle);
 
     VoiceHandle play_audio(AudioSourceHandle source, const PlayDesc &desc = {});
