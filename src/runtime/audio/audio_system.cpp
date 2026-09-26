@@ -122,6 +122,33 @@ void AudioSystem::unload_source(AudioSourceHandle handle) {
     m_voice_controller.stop_voices_of_source(handle);
 }
 
+std::optional<AudioSourceInfo> AudioSystem::get_source_info(AudioSourceHandle handle) const {
+    if (const auto *source = m_sources.get(handle)) {
+        return (*source)->info();
+    }
+    return std::nullopt;
+}
+
+uint64_t AudioSystem::get_source_length_frames(AudioSourceHandle handle) const {
+    const auto info = get_source_info(handle);
+    return info ? info->frame_count : 0;
+}
+
+double AudioSystem::get_source_length_seconds(AudioSourceHandle handle) const {
+    const auto info = get_source_info(handle);
+    return info ? info->duration_seconds() : 0.0;
+}
+
+size_t AudioSystem::get_source_sample_rate(AudioSourceHandle handle) const {
+    const auto info = get_source_info(handle);
+    return info ? info->sample_rate : 0;
+}
+
+size_t AudioSystem::get_source_channels(AudioSourceHandle handle) const {
+    const auto info = get_source_info(handle);
+    return info ? info->channels : 0;
+}
+
 VoiceHandle AudioSystem::play_audio(AudioSourceHandle source_handle, const PlayDesc &desc) {
     auto *source = m_sources.get(source_handle);
     if (!source) {

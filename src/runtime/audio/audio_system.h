@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <span>
 
 #include "audio_controller.h"
@@ -33,6 +34,18 @@ public:
 
     AudioSourceHandle load_source(const std::filesystem::path &path);
     void unload_source(AudioSourceHandle handle);
+
+    /* source queries, return empty/0 if the handle is invalid */
+    [[nodiscard]]
+    std::optional<AudioSourceInfo> get_source_info(AudioSourceHandle handle) const;
+    [[nodiscard]]
+    uint64_t get_source_length_frames(AudioSourceHandle handle) const;
+    [[nodiscard]]
+    double get_source_length_seconds(AudioSourceHandle handle) const;
+    [[nodiscard]]
+    size_t get_source_sample_rate(AudioSourceHandle handle) const;
+    [[nodiscard]]
+    size_t get_source_channels(AudioSourceHandle handle) const;
 
     VoiceHandle play_audio(AudioSourceHandle source_handle, const PlayDesc &desc = {});
     void stop_audio(VoiceHandle voice);
