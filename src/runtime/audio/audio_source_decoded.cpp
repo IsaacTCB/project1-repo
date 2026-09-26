@@ -57,10 +57,10 @@ bool AudioSourceDecoded::decode(std::unique_ptr<IAudioDecoder> decoder) {
 
     /* the reported length can be slightly off, keep whatever was actually decoded */
     if (frames_remaining > 0) {
-        m_info.frame_count = m_info.frame_count - frames_remaining;
-        LOG_TRACE("stripped {} bytes from pcm", frames_remaining * m_info.channels * sizeof(float));
+        m_info.frame_count -= frames_remaining;
         m_pcm.resize(m_info.frame_count * m_info.channels);
         m_pcm.shrink_to_fit();
+        LOG_TRACE("stripped {} bytes from pcm", frames_remaining * m_info.channels * sizeof(float));
     }
     return m_info.frame_count > 0 && m_info.channels > 0;
 }
