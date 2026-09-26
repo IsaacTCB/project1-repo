@@ -99,7 +99,7 @@ uint32_t AudioSourceDecodedInstance::read(std::span<float> output) {
 }
 
 bool AudioSourceDecodedInstance::seek(uint64_t frame) {
-    if (m_position > m_source->m_info.frame_count) {
+    if (frame > m_source->m_info.frame_count) {
         return false;
     }
 
