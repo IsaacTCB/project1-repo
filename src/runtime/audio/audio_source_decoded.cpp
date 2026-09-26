@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <vorbis/vorbisfile.h>
 
+#include "core/logger.h"
+
 /* ================== *
  *       Source       *
  * ================== */
@@ -32,17 +34,35 @@ bool AudioSourceDecoded::decode(std::unique_ptr<IAudioDecoder> decoder) {
     const size_t sample_count = m_info.frame_count * m_info.channels;
     m_pcm.resize(sample_count);
 
-    const uint64_t frames = decoder->read_frames(m_pcm, m_info.frame_count);
-    if (frames == 0) {
-        return false;
+    /* decode up until frames_remaining or an error happens */
+    uint64_t frames_remaining = m_info.frame_count;
+    while (frames_remaining > 0) {
+        const uint64_t offset =
+            (m_info.frame_count - frames_remaining) * m_info.channels;
+
+        const uint64_t frames = decoder->read_frames(
+            std::span{
+                m_pcm.begin() + offset,
+                m_pcm.size() - offset,
+            },
+            frames_remaining);
+
+        if (frames == 0) {
+            /* either EOF, decoder error or format error */
+            break;
+        }
+
+        frames_remaining -= frames;
     }
 
     /* the reported length can be slightly off, keep whatever was actually decoded */
-    if (frames < m_info.frame_count) {
-        m_info.frame_count = frames;
-        m_pcm.resize(frames * m_info.channels);
+    if (frames_remaining > 0) {
+        m_info.frame_count = m_info.frame_count - frames_remaining;
+        LOG_TRACE("stripped {} bytes from pcm", frames_remaining * m_info.channels * sizeof(float));
+        m_pcm.resize(m_info.frame_count * m_info.channels);
+        m_pcm.shrink_to_fit();
     }
-    return true;
+    return m_info.frame_count > 0 && m_info.channels > 0;
 }
 
 AudioSourceInfo AudioSourceDecoded::info() const {

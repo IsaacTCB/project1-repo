@@ -46,11 +46,7 @@ bool MP3_AudioDecoder::open() {
     m_info.channels = static_cast<size_t>(m_mp3.channels);
     m_info.sample_rate = static_cast<size_t>(m_mp3.sampleRate);
 
-    drmp3_uint64 total = m_mp3.totalPCMFrameCount;
-    if (total == DRMP3_UINT64_MAX) {
-        total = drmp3_get_pcm_frame_count(&m_mp3);
-    }
-
+    drmp3_uint64 total = drmp3_get_pcm_frame_count(&m_mp3);
     m_info.frame_count = total;
 
     return true;
