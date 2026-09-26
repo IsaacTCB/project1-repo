@@ -4,6 +4,7 @@ set(RUNTIME_SOURCES
     audio/audio_system.cpp
     audio/decoders/mp3_audio_decoder.cpp
     audio/decoders/vorbis_audio_decoder.cpp
+    audio/decoders/wav_audio_decoder.cpp
     audio/audio_controller.cpp
     audio/audio_source_decoded.cpp
     audio/audio_mixer.cpp

@@ -1,7 +1,6 @@
 #include "mp3_audio_decoder.h"
 
 #include <cstdint>
-#include <cstdio>
 
 /* TODO: move this into external/ */
 #define DR_MP3_IMPLEMENTATION
@@ -96,7 +95,7 @@ size_t drmp3_read_callback(void *userdata, void *ptr, size_t size) {
     auto *file = static_cast<std::ifstream *>(userdata);
     const auto out = std::span(static_cast<char *>(ptr), size);
     file->read(out.data(), out.size());
-    return size == 0 ? 0 : file->gcount();
+    return file->gcount();
 }
 
 drmp3_bool32 drmp3_seek_callback(void *userdata, int offset, drmp3_seek_origin whence) {

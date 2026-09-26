@@ -75,7 +75,7 @@ public:
             }
         }
 
-        m_click_sound = load_sound("click.ogg");
+        m_click_sound = load_sound("click.wav");
     }
 
     void on_update(UpdateContext &ctx) override {

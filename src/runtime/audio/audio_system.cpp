@@ -7,13 +7,14 @@
 
 #include "audio_controller.h"
 #include "audio_decoder.h"
+#include "audio_handles.h"
 #include "audio_mixer.h"
 #include "audio_source_decoded.h"
-#include "runtime/audio/audio_handles.h"
 #include "spsc_queue.h"
 
 #include "decoders/mp3_audio_decoder.h"
 #include "decoders/vorbis_audio_decoder.h"
+#include "decoders/wav_audio_decoder.h"
 
 AudioSystem::AudioSystem(std::unique_ptr<IAudioDevice> ad)
     : m_ad(std::move(ad)) {}
@@ -58,15 +59,41 @@ void AudioSystem::update() {
     m_voice_controller.update();
 }
 
-AudioSourceHandle AudioSystem::load_source(const std::filesystem::path &path) {
-    /* detect audio from extension */
-    std::unique_ptr<IAudioDecoder> decoder;
-    if (path.extension() == ".ogg") {
-        decoder = std::unique_ptr<IAudioDecoder>(new Vorbis_AudioDecoder(path));
-    } else if (path.extension() == ".mp3") {
-        decoder = std::unique_ptr<IAudioDecoder>(new MP3_AudioDecoder(path));
+/**
+ * @brief Creates a audio file decoder from filepath extension
+ *
+ * For example:
+ *   .wav -> WAV_AudioDecoder
+ *   .ogg -> Vorbis_AudioDecoder
+ *   .mp3 -> MP3_AudioDecoder
+ *
+ * @param path The filepath into the file
+ * @return a unique ptr object with a IAudioDecoder instance.
+ */
+static std::unique_ptr<IAudioDecoder> get_decoder_from_path(const std::filesystem::path &path) {
+    /* convert to lowercase (for case insensitive check) */
+    std::string extension = path.extension();
+    std::ranges::transform(extension, extension.begin(), [](unsigned char c) {
+        return std::tolower(c);
+    });
+
+    /* try to detect decoder from extension name */
+    if (extension == ".wav") {
+        return std::unique_ptr<IAudioDecoder>(new WAV_AudioDecoder(path));
+    }
+    if (extension == ".ogg") {
+        return std::unique_ptr<IAudioDecoder>(new Vorbis_AudioDecoder(path));
+    }
+    if (extension == ".mp3") {
+        return std::unique_ptr<IAudioDecoder>(new MP3_AudioDecoder(path));
     }
 
+    /* failed, return nullptr */
+    return {};
+}
+
+AudioSourceHandle AudioSystem::load_source(const std::filesystem::path &path) {
+    std::unique_ptr<IAudioDecoder> decoder = get_decoder_from_path(path);
     if (!decoder) {
         /* unrecognized extension or unsupported format */
         return AudioSourceHandle{};
