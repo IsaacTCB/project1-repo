@@ -122,9 +122,9 @@ void AudioSystem::unload_source(AudioSourceHandle handle) {
     m_voice_controller.stop_voices_of_source(handle);
 }
 
-VoiceHandle AudioSystem::play_audio(AudioSourceHandle source, const PlayDesc &desc) {
-    auto *source_ = m_sources.get(source);
-    if (!source_) {
+VoiceHandle AudioSystem::play_audio(AudioSourceHandle source_handle, const PlayDesc &desc) {
+    auto *source = m_sources.get(source_handle);
+    if (!source) {
         return VoiceHandle{};
     }
 
@@ -133,7 +133,7 @@ VoiceHandle AudioSystem::play_audio(AudioSourceHandle source, const PlayDesc &de
         return VoiceHandle{};
     }
 
-    auto *inst = m_voice_controller.attach(voice_handle, (*source_)->create_instance());
+    auto *inst = m_voice_controller.attach(voice_handle, (*source)->create_instance());
     const bool queued = m_audio_thread.commands.try_emplace(PlaySoundCommand{
         .handle_index = voice_handle.index(),
         .instance = inst,

@@ -34,7 +34,7 @@ public:
     AudioSourceHandle load_source(const std::filesystem::path &path);
     void unload_source(AudioSourceHandle handle);
 
-    VoiceHandle play_audio(AudioSourceHandle source, const PlayDesc &desc = {});
+    VoiceHandle play_audio(AudioSourceHandle source_handle, const PlayDesc &desc = {});
     void stop_audio(VoiceHandle voice);
 
     [[nodiscard]]
