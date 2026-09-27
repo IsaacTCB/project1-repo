@@ -41,6 +41,9 @@ public:
     DECLARE_SERVER(IDisplayServer)
 
 public:
+    /* HACK: We don't have a proper audio platform server
+     * interface, so we wire it up here. Obviously this is
+     * bad, and should be fixed asap. */
     virtual std::unique_ptr<IAudioDevice> get_audio_device() = 0;
 
     /**
