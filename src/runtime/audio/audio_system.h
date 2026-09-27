@@ -52,8 +52,11 @@ public:
 
     [[nodiscard]]
     bool is_audio_playing(VoiceHandle voice) const;
+    [[nodiscard]]
+    bool is_audio_looping(VoiceHandle voice) const;
 
     void set_audio_volume(VoiceHandle voice, float volume);
+    void set_audio_looping(VoiceHandle voice, bool looping);
 
 private:
     std::span<float> render_audio(size_t requested_frames);

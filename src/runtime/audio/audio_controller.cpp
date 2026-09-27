@@ -16,6 +16,7 @@ VoiceHandle VoiceController::claim(const PlayDesc &desc, Handle source_handle) {
 
             slot.volume.store(desc.volume, std::memory_order_relaxed);
             slot.pitch.store(desc.pitch, std::memory_order_relaxed);
+            slot.looping.store(desc.looping, std::memory_order_relaxed);
 
             slot.source_handle.store(source_handle.value(), std::memory_order_relaxed);
 
@@ -70,6 +71,7 @@ VoiceParams VoiceController::params(size_t idx) const {
         .volume = slot.volume.load(std::memory_order_acquire),
         .pitch = slot.pitch.load(std::memory_order_acquire),
         .stop_requested = slot.stop_request.load(std::memory_order_acquire),
+        .looping = slot.looping.load(std::memory_order_acquire),
     };
 }
 
@@ -103,6 +105,8 @@ VoiceController::VoiceSlot *VoiceController::get_slot_from_handle(Handle handle)
     return &slot;
 }
 
+/* Voice Getters */
+
 bool VoiceController::is_playing(VoiceHandle voice_handle) const {
     if (const auto *slot = get_slot_from_handle(voice_handle)) {
         return (slot->state.load(std::memory_order_acquire) == VoiceState::PLAYING &&
@@ -111,8 +115,26 @@ bool VoiceController::is_playing(VoiceHandle voice_handle) const {
     return false;
 }
 
+bool VoiceController::is_looping(VoiceHandle voice_handle) const {
+    if (const auto *slot = get_slot_from_handle(voice_handle)) {
+        /* FIXME: this getter does not care about voice state */
+        return slot->looping.load(std::memory_order_acquire);
+    }
+    return false;
+}
+
+/* Voice Setters */
+
+void VoiceController::set_looping(VoiceHandle voice_handle, bool looping) {
+    if (auto *slot = get_slot_from_handle(voice_handle)) {
+        /* FIXME: this setter does not care about voice state */
+        slot->looping.store(looping, std::memory_order_release);
+    }
+}
+
 void VoiceController::set_volume_gain(VoiceHandle voice_handle, float volume) {
     if (auto *slot = get_slot_from_handle(voice_handle)) {
+        /* FIXME: this setter does not care about voice state */
         slot->volume.store(volume, std::memory_order_release);
     }
 }

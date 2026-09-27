@@ -140,7 +140,11 @@ void AudioMixer::create_voice(VoiceCreateDesc &&desc) {
     };
 }
 
-static void fill_scratch(AudioMixer::VoicePlaybackState &v) {
+static void fill_scratch(AudioMixer::VoicePlaybackState &v, bool looping) {
+    if (v.instance->at_loop_end()) {
+        v.instance->resolve_loop(looping);
+    }
+
     while (!v.eof && v.valid < AudioMixer::SCRATCH_FRAMES) {
         const size_t write_pos = (v.start + v.valid) % AudioMixer::SCRATCH_FRAMES;
         const size_t contiguous = std::min<size_t>(
@@ -151,7 +155,9 @@ static void fill_scratch(AudioMixer::VoicePlaybackState &v) {
             std::span(v.scratch.data() + (write_pos * v.channels), contiguous * v.channels));
 
         if (got == 0) {
-            v.eof = true;
+            if (!v.instance->at_loop_end()) {
+                v.eof = true;
+            }
             break;
         }
 
@@ -202,7 +208,7 @@ void AudioMixer::render_frames(std::span<float> out, size_t frames) {
         while (produced < frames) {
             /* fill entire scratch buffer only when needed it */
             if (v.valid <= (frames - produced)) {
-                fill_scratch(v);
+                fill_scratch(v, params.looping);
             }
 
             float *dst = out.data() + (produced * 2);

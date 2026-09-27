@@ -13,6 +13,7 @@
 #include "runtime/app/application.h"
 #include "runtime/app/context/frame_context.h"
 #include "runtime/asset_service.h"
+#include "runtime/audio/audio_controller.h"
 #include "runtime/audio/audio_system.h"
 #include "runtime/camera_2d_utils.h"
 #include "runtime/input_service.h"
@@ -67,9 +68,22 @@ public:
         m_camera.anchor = Camera2D::AnchorMode::CENTER;
 
         m_audio_source = load_sound(AUDIO_FILEPATH);
+
         if (m_audio_source) {
-            float pitch_r = Random::randf_range(0.9f, 1.1f);
-            m_bgm_voice = m_servers.audio->play_audio(m_audio_source, {.volume = 0.2f, .pitch = pitch_r});
+            auto ch = m_servers.audio->get_source_length_seconds(m_audio_source);
+            LOG_TRACE("song is {}s long", ch);
+
+            m_bgm_voice = m_servers.audio->play_audio(m_audio_source,
+                {
+                    .volume = 0.2f,
+                    .pitch = 1.0f,
+                    .looping = true,
+                    .loop_points = LoopPointsFrames{
+                        .start = 1394,
+                        .end = 0,
+                    },
+                });
+
             if (m_servers.audio->is_audio_playing(m_bgm_voice)) {
                 LOG_TRACE("playing voice!");
             }
@@ -93,7 +107,22 @@ public:
         }
 
         if (m_servers.input.is_key_just_released(Input::Key::Scancode::SPACE)) {
-            LOG_TRACE("Undamn");
+            if (m_servers.audio->is_audio_playing(m_bgm_voice)) {
+                const bool looping = m_servers.audio->is_audio_looping(m_bgm_voice);
+                LOG_INFO("Toggling looping {}...", looping ? "off" : "on");
+                m_servers.audio->set_audio_looping(m_bgm_voice, !looping);
+            } else {
+                m_bgm_voice = m_servers.audio->play_audio(m_audio_source,
+                    {
+                        .volume = 0.2f,
+                        .pitch = 1.0f,
+                        .looping = true,
+                        .loop_points = LoopPointsFrames{
+                            .start = 1394,
+                            .end = 0,
+                        },
+                    });
+            }
         }
 
         Vec2 mouse_pos = get_mouse_coords();
@@ -108,7 +137,12 @@ public:
         }
         if (m_servers.input.is_mouse_button_just_released(Input::Mouse::Buttons::RIGHT)) {
             LOG_TRACE("Walked");
-            m_servers.audio->set_audio_volume(m_bgm_voice, Random::randf_range(0.5f, 1.5f));
+
+            if (m_servers.audio->is_audio_playing(m_bgm_voice)) {
+                float new_volume = Random::randf_range(0.5f, 1.0f);
+                LOG_TRACE("Setting music volume to {}%...", static_cast<int>(new_volume * 100.0f));
+                m_servers.audio->set_audio_volume(m_bgm_voice, new_volume);
+            }
         }
 
         Vec2 move{};
@@ -165,11 +199,6 @@ public:
 
         m_camera.position.x = std::floor(m_entities[0].pos.x);
         m_camera.position.y = std::floor(m_entities[0].pos.y);
-
-        /* poor man's looping approach */
-        if (!m_servers.audio->is_audio_playing(m_bgm_voice)) {
-            m_bgm_voice = m_servers.audio->play_audio(m_audio_source, {.volume = 0.2f, .pitch = 1.0f});
-        }
     }
 
     void on_draw(RenderContext &ctx) override {

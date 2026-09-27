@@ -1,7 +1,9 @@
 #include "audio_system.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <span>
 
@@ -9,6 +11,7 @@
 #include "audio_decoder.h"
 #include "audio_handles.h"
 #include "audio_mixer.h"
+#include "audio_source.h"
 #include "audio_source_decoded.h"
 #include "spsc_queue.h"
 
@@ -92,6 +95,33 @@ static std::unique_ptr<IAudioDecoder> get_decoder_from_path(const std::filesyste
     return {};
 }
 
+/**
+ * @brief converts user-facing LoopPointsDesc into internal AudioLoopPoints type
+ *
+ * @param desc LoopPointsDesc object to convert from
+ * @param info AudioSource information for sample rate query
+ *
+ * @return A AudioLoopPoints object
+ */
+static AudioLoopPoints to_audio_loop_points(const LoopPointsDesc &points, const AudioSourceInfo &info) {
+    if (const auto *frames = std::get_if<LoopPointsFrames>(&points)) {
+        return {.begin = frames->start, .end = frames->end};
+    }
+
+    const auto &seconds = std::get<LoopPointsSeconds>(points);
+    const auto to_frames = [&](double s) -> size_t {
+        if (s <= 0.0) {
+            return 0;
+        }
+        const double frames = std::round(s * static_cast<double>(info.sample_rate));
+        return frames >= static_cast<double>(info.frame_count)
+                 ? info.frame_count
+                 : static_cast<size_t>(frames);
+    };
+
+    return {.begin = to_frames(seconds.start), .end = to_frames(seconds.end)};
+}
+
 AudioSourceHandle AudioSystem::load_source(const std::filesystem::path &path) {
     std::unique_ptr<IAudioDecoder> decoder = get_decoder_from_path(path);
     if (!decoder) {
@@ -160,7 +190,13 @@ VoiceHandle AudioSystem::play_audio(AudioSourceHandle source_handle, const PlayD
         return VoiceHandle{};
     }
 
-    auto *inst = m_voice_controller.attach(voice_handle, (*source)->create_instance());
+    auto instance = (*source)->create_instance();
+
+    instance->set_loop_points(desc.loop_points
+                                  ? to_audio_loop_points(*desc.loop_points, (*source)->info())
+                                  : AudioLoopPoints{});
+
+    auto *inst = m_voice_controller.attach(voice_handle, std::move(instance));
     const bool queued = m_audio_thread.commands.try_emplace(PlaySoundCommand{
         .handle_index = voice_handle.index(),
         .instance = inst,
@@ -177,6 +213,7 @@ VoiceHandle AudioSystem::play_audio(AudioSourceHandle source_handle, const PlayD
 }
 
 void AudioSystem::stop_audio(VoiceHandle voice) {
+    ASSERT(m_voice_controller.is_playing(voice), "'voice' must be a valid voice!");
     m_voice_controller.stop_voice(voice);
 }
 
@@ -184,8 +221,19 @@ bool AudioSystem::is_audio_playing(VoiceHandle voice) const {
     return m_voice_controller.is_playing(voice);
 }
 
+bool AudioSystem::is_audio_looping(VoiceHandle voice) const {
+    ASSERT(m_voice_controller.is_playing(voice), "'voice' must be a valid voice!");
+    return m_voice_controller.is_looping(voice);
+}
+
 void AudioSystem::set_audio_volume(VoiceHandle voice, float volume) {
+    ASSERT(m_voice_controller.is_playing(voice), "'voice' must be a valid voice!");
     m_voice_controller.set_volume_gain(voice, volume);
+}
+
+void AudioSystem::set_audio_looping(VoiceHandle voice, bool looping) {
+    ASSERT(m_voice_controller.is_playing(voice), "'voice' must be a valid voice!");
+    m_voice_controller.set_looping(voice, looping);
 }
 
 std::span<float> AudioSystem::render_audio(size_t requested_frames) {

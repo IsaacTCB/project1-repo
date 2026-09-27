@@ -6,6 +6,8 @@ struct VoiceParams {
     float volume;
     float pitch;
     bool stop_requested;
+
+    bool looping;
 };
 
 class IVoiceControls {

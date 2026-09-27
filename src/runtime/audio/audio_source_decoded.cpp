@@ -2,6 +2,7 @@
 
 #include "audio_source.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <vorbis/vorbisfile.h>
 
@@ -79,23 +80,37 @@ std::unique_ptr<IAudioSourceInstance> AudioSourceDecoded::create_instance() {
  * ================== */
 
 AudioSourceDecodedInstance::AudioSourceDecodedInstance(const std::shared_ptr<AudioSourceDecoded> &source)
-    : m_source(source) {}
+    : m_source(source) {
+    set_loop_points({.begin = 0, .end = source->m_info.frame_count});
+}
 
 uint32_t AudioSourceDecodedInstance::read(std::span<float> output) {
-    auto frames_requested = static_cast<uint32_t>(output.size() / m_source->info().channels);
-    auto frames_available = static_cast<uint32_t>(m_source->info().frame_count - m_position);
-    uint32_t frames_to_read = std::min(frames_requested, frames_available);
+    if (m_at_loop_end) {
+        return 0;
+    }
 
     size_t channels = m_source->m_info.channels;
 
-    /* copy pcm samples */
-    const auto pcm = m_source->pcm();
-    for (size_t i = 0; i < frames_to_read * channels; ++i) {
-        output[i] = pcm[(m_position * channels) + i];
+    const bool stop_at_loop = m_has_loop && m_position < m_loop_points.end;
+    const uint64_t end = stop_at_loop ? m_loop_points.end : m_source->m_info.frame_count;
+
+    if (m_position >= end) {
+        return 0; /* eof */
     }
 
+    uint64_t frames_requested = output.size() / channels;
+    uint64_t frames_to_read = std::min(frames_requested, end - m_position);
+
+    /* copy pcm samples */
+    const auto pcm = m_source->pcm();
+    std::copy_n(pcm.data() + (m_position * channels), frames_to_read * channels, output.data());
     m_position += frames_to_read;
-    return frames_to_read;
+
+    if (stop_at_loop && m_position == m_loop_points.end) {
+        m_at_loop_end = true;
+    }
+
+    return static_cast<uint32_t>(frames_to_read);
 }
 
 bool AudioSourceDecodedInstance::seek(uint64_t frame) {
@@ -109,4 +124,11 @@ bool AudioSourceDecodedInstance::seek(uint64_t frame) {
 
 uint64_t AudioSourceDecodedInstance::position() {
     return m_position;
+}
+
+void AudioSourceDecodedInstance::resolve_loop(bool wrap) {
+    m_at_loop_end = false;
+    if (wrap) {
+        m_position = m_loop_points.begin;
+    }
 }

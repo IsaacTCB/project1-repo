@@ -6,15 +6,33 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
+#include <variant>
 
 #include "audio_handles.h"
 #include "audio_limits.h"
 #include "audio_source.h"
 #include "voice_controls.h"
 
+/* loop points in pcm frames of the source (end of 0 == source frame count) */
+struct LoopPointsFrames {
+    uint64_t start = 0;
+    uint64_t end = 0;
+};
+
+/* loop points in seconds (end of 0.0 == source length) */
+struct LoopPointsSeconds {
+    double start = 0.0;
+    double end = 0.0;
+};
+
+using LoopPointsDesc = std::variant<LoopPointsFrames, LoopPointsSeconds>;
+
 struct PlayDesc {
     float volume = 1.0f;
     float pitch = 1.0f;
+    bool looping = false;
+    std::optional<LoopPointsDesc> loop_points{};
 };
 
 class VoiceController : public IVoiceControls {
@@ -34,7 +52,10 @@ public:
 
     [[nodiscard]]
     bool is_playing(VoiceHandle voice_handle) const;
+    [[nodiscard]]
+    bool is_looping(VoiceHandle voice_handle) const;
 
+    void set_looping(VoiceHandle voice_handle, bool looping);
     void set_volume_gain(VoiceHandle voice_handle, float volume);
 
     void update();
@@ -55,6 +76,7 @@ private:
         std::atomic<bool> stop_request{false};
         std::atomic<float> volume{0.0f};
         std::atomic<float> pitch{0.0f};
+        std::atomic<bool> looping{false};
         std::atomic<size_t> generation{0};
 
         /* audio source handle, used by stop_voices_of_source() */
