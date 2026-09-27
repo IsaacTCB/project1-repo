@@ -5,14 +5,37 @@
 
 /* Constructor tests */
 
-TEST(SpscQueueConstructorTest, DefaultConstructor) {
-    SpscQueue<int, 16> queue;
+class SpscQueueTest : public testing::Test {
+protected:
+    static constexpr size_t CAPACITY = 16;
+
+protected:
+    SpscQueueTest() = default;
+
+    SpscQueue<int, CAPACITY + 1> queue;
+};
+
+TEST_F(SpscQueueTest, DefaultConstructorIsEmpty) {
     EXPECT_EQ(queue.size(), 0);
     EXPECT_EQ(queue.empty(), true);
+}
 
-    int temp = 103;
+TEST_F(SpscQueueTest, EmptyReturnsFalseWhenItemsArePresent) {
+    const size_t item = 16;
+    queue.try_push(item);
+    EXPECT_EQ(queue.empty(), false);
+}
+
+TEST_F(SpscQueueTest, PoppingFilledQueueReturnsTrue) {
+    queue.try_emplace(5);
+
+    int temp;
+    EXPECT_EQ(queue.try_pop(temp), true);
+}
+
+TEST_F(SpscQueueTest, PoppingEmptyQueueReturnsFalse) {
+    int temp;
     EXPECT_EQ(queue.try_pop(temp), false);
-    EXPECT_EQ(temp, 103);
 }
 
 TEST(SpscQueueFifoTest, FifoCheck) {
