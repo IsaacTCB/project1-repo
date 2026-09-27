@@ -18,9 +18,9 @@ public:
     [[nodiscard]]
     VoiceParams params([[maybe_unused]] size_t idx) const override {
         return {
+            .stop_requested = false,
             .volume = m_volume,
             .pitch = 1.0f,
-            .stop_requested = false,
             .looping = m_looping,
         };
     }

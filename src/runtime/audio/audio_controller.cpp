@@ -68,9 +68,9 @@ void VoiceController::stop_voices_of_source(Handle source_handle) {
 VoiceParams VoiceController::params(size_t idx) const {
     const auto &slot = m_slots[idx];
     return {
+        .stop_requested = slot.stop_request.load(std::memory_order_acquire),
         .volume = slot.volume.load(std::memory_order_acquire),
         .pitch = slot.pitch.load(std::memory_order_acquire),
-        .stop_requested = slot.stop_request.load(std::memory_order_acquire),
         .looping = slot.looping.load(std::memory_order_acquire),
     };
 }
