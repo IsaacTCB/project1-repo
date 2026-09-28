@@ -19,6 +19,9 @@ public:
     AudioMixer();
 
     static constexpr size_t SCRATCH_FRAMES = 4 * 512 * 2;
+    static constexpr float VOLUME_RAMP_SECONDS = 0.010f;
+    static constexpr float VOLUME_GAIN_STEP =
+        1.0f / (VOLUME_RAMP_SECONDS * static_cast<float>(AudioLimits::OUTPUT_SAMPLE_RATE));
 
 public:
     void set_voice_controller(IVoiceControls &voice_controller) {

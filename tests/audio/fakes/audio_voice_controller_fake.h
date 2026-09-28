@@ -18,7 +18,7 @@ public:
     [[nodiscard]]
     VoiceParams params([[maybe_unused]] size_t idx) const override {
         return {
-            .stop_requested = false,
+            .stop_requested = m_stop_requested,
             .volume = m_volume,
             .pitch = 1.0f,
             .looping = m_looping,
@@ -31,6 +31,10 @@ public:
 
     void set_looping(bool looping) {
         m_looping = looping;
+    }
+
+    void set_stop_request(bool to_stop) {
+        m_stop_requested = to_stop;
     }
 
     void release_claim(size_t idx) {
@@ -71,5 +75,6 @@ private:
     std::array<std::unique_ptr<IAudioSourceInstance>, AudioLimits::MAX_VOICES> m_instances;
     std::array<bool, AudioLimits::MAX_VOICES> m_marked_finished;
     bool m_looping = false;
+    bool m_stop_requested = false;
     float m_volume = 1.0f;
 };

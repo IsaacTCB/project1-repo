@@ -3,9 +3,11 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <memory>
 
+#include "runtime/audio/audio_limits.h"
 #include "runtime/audio/audio_mixer.h"
 #include "runtime/audio/audio_source.h"
 #include "runtime/audio/audio_source_decoded.h"
@@ -75,6 +77,19 @@ void expect_audio_near(std::span<const float> actual, std::span<const float> exp
     }
 }
 
+TEST_F(AudioMixerTest, NoActiveVoicesProducesSilence) {
+    constexpr size_t RENDER_FRAMES = 50;
+    constexpr size_t PCM_COUNT = RENDER_FRAMES * AudioLimits::OUTPUT_CHANNELS;
+
+    std::array<float, PCM_COUNT> expected;
+    expected.fill(0.0f);
+
+    std::array<float, PCM_COUNT> buffer;
+    m_mixer.render_frames(buffer, RENDER_FRAMES);
+
+    expect_audio_near(buffer, expected, 0.0f);
+}
+
 TEST_F(AudioMixerTest, MixingMonoVoicesWorks) {
     constexpr size_t RENDER_FRAMES = 50;
     constexpr size_t PCM_COUNT = RENDER_FRAMES * AudioLimits::OUTPUT_CHANNELS;
@@ -118,7 +133,9 @@ TEST_F(AudioMixerTest, MixingStereoVoicesWorks) {
     expect_audio_near(buffer, expected, 0.01f);
 }
 
-TEST_F(AudioMixerTest, PcmValueIsHalvedByVolume) {
+TEST_F(AudioMixerTest, InitialVolumeIsAppliedWithoutRamp) {
+    /* TODO: create tests for applying volumes with ramps */
+
     constexpr size_t RENDER_FRAMES = 50;
     constexpr size_t PCM_COUNT = RENDER_FRAMES * AudioLimits::OUTPUT_CHANNELS;
 
@@ -205,43 +222,84 @@ constexpr auto expected_const_signal(float value, size_t frames) {
     return arr;
 }
 
-/* TODO: Make this use fixture just like the other tests */
-TEST(AudioMixer, OutputsSilenceAfterSourceEnds) {
-    auto decoder = std::make_unique<ConstSignal_AudioDecoder>(ConstSignalDesc{
-        .value = 1.0f,
-        .length = 10,
-        .channels = 1,
-        .sample_rate = AudioLimits::OUTPUT_SAMPLE_RATE,
-    });
-    auto source = AudioSourceDecoded::open(std::move(decoder));
-
-    AudioMixer mixer{};
-
-    /* create & attach voice controller */
-    TestVoiceControls controls;
-    mixer.set_voice_controller(controls);
-
+TEST_F(AudioMixerTest, OutputsSilenceAfterSourceEnds) {
     /* create instance */
-    auto idx = controls.claim();
-    ASSERT_TRUE(idx.has_value()) << "Failed to claim audio voice";
-    auto *inst = controls.attach(*idx, source->create_instance());
-    ASSERT_TRUE(inst) << "Failed to instantiate audio source";
-
-    mixer.create_voice({
-        .instance = inst,
-        .handle_index = *idx,
-    });
+    auto voice = add_voice(get_signal(1.0f, 10));
+    ASSERT_TRUE(voice);
 
     /* render to buffer */
     std::array<float, 50> buf;
-    mixer.render_frames(buf, buf.size() / AudioLimits::OUTPUT_CHANNELS);
+    m_mixer.render_frames(buf, buf.size() / AudioLimits::OUTPUT_CHANNELS);
 
     /* compare results */
+
     std::array<float, 50> expected = expected_const_signal<50>(1.0f, 10);
     expect_audio_near(buf, expected, 0.0001f);
+}
 
-    /* check if source flagged as finished by the mixer */
-    EXPECT_EQ(controls.was_marked_finished(*idx), true);
+TEST_F(AudioMixerTest, MarksFinishedWhenSourceEnds) {
+    /* create instance */
+    auto voice = add_voice(get_signal(1.0f, 10));
+    ASSERT_TRUE(voice);
+
+    /* render to buffer */
+    std::array<float, 50> buf;
+    m_mixer.render_frames(buf, buf.size() / AudioLimits::OUTPUT_CHANNELS);
+
+    /* check if voice is flagged as finished */
+    EXPECT_TRUE(m_controller.was_marked_finished(*voice));
+}
+
+TEST_F(AudioMixerTest, StopRequestEventuallyMarksVoiceFinished) {
+    constexpr size_t BUFFER_FRAMES = 25;
+    constexpr size_t BUFFER_SIZE = BUFFER_FRAMES * 2;
+
+    /* create instance */
+    auto voice = add_voice(get_signal(1.0f, 1));
+
+    /* loop to ensure that this voice wont stop by itself */
+    m_controller.set_looping(true);
+
+    /* run an iteration first */
+    std::array<float, BUFFER_SIZE> buf;
+    m_mixer.render_frames(buf, BUFFER_FRAMES);
+    ASSERT_FALSE(m_controller.was_marked_finished(*voice));
+
+    /* flags voice to stop, begin ramp curve process */
+    m_controller.set_stop_request(true);
+
+    /* mixer uses a ramp curve to prevent audio clicks.
+     * The drawback is that killing a voice takes a
+     * few milliseconds before marking as finished */
+    constexpr auto VOLUME_RAMP_FRAMES = static_cast<size_t>(
+        AudioMixer::VOLUME_RAMP_SECONDS * static_cast<float>(AudioLimits::OUTPUT_SAMPLE_RATE));
+    constexpr size_t MAX_ITERATIONS = (VOLUME_RAMP_FRAMES + BUFFER_FRAMES - 1) / BUFFER_FRAMES;
+
+    /* ensure that voice isn't marked as finished here */
+    for (size_t i = 0; i < MAX_ITERATIONS; ++i) {
+        m_mixer.render_frames(buf, buf.size() / AudioLimits::OUTPUT_CHANNELS);
+        EXPECT_FALSE(m_controller.was_marked_finished(*voice)) << "iteration: " << i << " of " << MAX_ITERATIONS;
+    }
+
+    /* check if voice is flagged as finished */
+    m_mixer.render_frames(buf, buf.size() / AudioLimits::OUTPUT_CHANNELS);
+    EXPECT_TRUE(m_controller.was_marked_finished(*voice)) << "last iteration";
+}
+
+TEST_F(AudioMixerTest, DontMarkVoiceFinishedIfSourceIsNotOver) {
+    constexpr size_t MIXER_FRAMES = 50;
+    constexpr size_t MIXER_BUFFER_SIZE = MIXER_FRAMES * AudioLimits::OUTPUT_CHANNELS;
+
+    /* create instance that's too long for a single mixer iteration */
+    auto voice = add_voice(get_signal(1.0f, MIXER_FRAMES * 2));
+    ASSERT_TRUE(voice);
+
+    /* run iteration, this shouldn't kill voice */
+    std::array<float, MIXER_BUFFER_SIZE> buf;
+    m_mixer.render_frames(buf, buf.size() / AudioLimits::OUTPUT_CHANNELS);
+
+    /* check if voice is flagged as finished */
+    EXPECT_FALSE(m_controller.was_marked_finished(*voice));
 }
 
 // TEST(AudioTest, ConstSignalSelfTest) {

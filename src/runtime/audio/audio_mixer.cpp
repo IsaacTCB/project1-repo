@@ -14,10 +14,6 @@ static constexpr uint32_t FIXED_POINT_BITS = 24;
 static constexpr uint64_t FIXED_POINT_ONE = 1ull << FIXED_POINT_BITS;
 static constexpr uint64_t FIXED_POINT_MASK = FIXED_POINT_ONE - 1;
 
-static constexpr float VOLUME_RAMP_SECONDS = 0.010f;
-static constexpr float VOLUME_GAIN_STEP =
-    1.0f / (VOLUME_RAMP_SECONDS * static_cast<float>(AudioLimits::OUTPUT_SAMPLE_RATE));
-
 AudioMixer::AudioMixer() {
     m_voices = std::make_unique<std::array<VoicePlaybackState, AudioLimits::MAX_VOICES>>();
 }
