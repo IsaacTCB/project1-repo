@@ -52,11 +52,11 @@ public:
         };
     }
 
-    AudioSourceHandle load_sound(const std::string &filepath) {
-        auto handle = m_servers.audio->load_source(filepath);
-        if (!handle) {
+    AudioSourceRef load_sound(const std::string &filepath) {
+        auto handle = m_servers.asset.get_audio_source(filepath);
+        if (!handle.get()) {
             LOG_WARN("Failed to load audio source {}", filepath);
-            return {};
+            return AudioSourceRef{};
         }
         LOG_INFO("Loaded load audio source {}", filepath);
         return handle;
@@ -73,12 +73,11 @@ public:
         m_camera.anchor = Camera2D::AnchorMode::CENTER;
 
         m_audio_source = load_sound(AUDIO_FILEPATH);
-
-        if (m_audio_source) {
-            auto ch = m_servers.audio->get_source_length_seconds(m_audio_source);
+        if (m_audio_source.get()) {
+            auto ch = m_servers.audio->get_source_length_seconds(m_audio_source.get());
             LOG_TRACE("song is {:.1f}s long", ch);
 
-            m_bgm_voice = m_servers.audio->play_audio(m_audio_source,
+            m_bgm_voice = m_servers.audio->play_audio(m_audio_source.get(),
                 {
                     .volume = 0.2f,
                     .pitch = 1.0f,
@@ -114,13 +113,15 @@ public:
                 LOG_INFO("Toggling looping {}...", looping ? "off" : "on");
                 m_servers.audio->set_audio_looping(m_bgm_voice, !looping);
             } else {
-                m_bgm_voice = m_servers.audio->play_audio(m_audio_source,
+                m_bgm_voice = m_servers.audio->play_audio(m_audio_source.get(),
                     {
                         .volume = 0.2f,
                         .pitch = 1.0f,
                         .looping = true,
                         .loop_points = AUDIO_LOOP_POINTS,
                     });
+
+                LOG_TRACE("playing bgm...");
             }
         }
 
@@ -130,8 +131,8 @@ public:
             m_entities.emplace_back(Vec2(mouse_pos), speed_scale);
 
             /* play click sound effect */
-            if (m_click_sound) {
-                m_servers.audio->play_audio(m_click_sound);
+            if (m_click_sound.get()) {
+                m_servers.audio->play_audio(m_click_sound.get());
             }
         }
         if (m_servers.input.is_mouse_button_just_released(Input::Mouse::Buttons::RIGHT)) {
@@ -243,14 +244,6 @@ public:
 
     void on_close() override {
         LOG_INFO("Application ended!");
-
-        if (m_audio_source) {
-            m_servers.audio->unload_source(m_audio_source);
-        }
-
-        if (m_click_sound) {
-            m_servers.audio->unload_source(m_click_sound);
-        }
     }
 
     [[nodiscard]]
@@ -264,8 +257,8 @@ private:
     TextureRef m_texture;
     Camera2D m_camera;
 
-    AudioSourceHandle m_audio_source;
-    AudioSourceHandle m_click_sound;
+    AudioSourceRef m_audio_source;
+    AudioSourceRef m_click_sound;
 
     VoiceHandle m_bgm_voice;
 

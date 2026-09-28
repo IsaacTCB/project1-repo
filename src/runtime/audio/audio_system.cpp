@@ -7,6 +7,8 @@
 #include <memory>
 #include <span>
 
+#include "core/assertion.h"
+
 #include "audio_controller.h"
 #include "audio_decoder.h"
 #include "audio_handles.h"
@@ -122,33 +124,34 @@ static AudioLoopPoints to_audio_loop_points(const LoopPointsDesc &points, const 
     return {.begin = to_frames(seconds.start), .end = to_frames(seconds.end)};
 }
 
-AudioSourceHandle AudioSystem::load_source(const std::filesystem::path &path) {
-    std::unique_ptr<IAudioDecoder> decoder = get_decoder_from_path(path);
+std::shared_ptr<IAudioSource> AudioSystem::get_source_from_path(const std::filesystem::path &filepath) {
+    /* find out which decoder type this is from */
+    std::unique_ptr<IAudioDecoder> decoder = get_decoder_from_path(filepath);
     if (!decoder) {
-        /* unrecognized extension or unsupported format */
-        return AudioSourceHandle{};
+        return {};
     }
 
-    auto source = std::static_pointer_cast<IAudioSource>(
+    /* load the file */
+    return std::static_pointer_cast<IAudioSource>(
         AudioSourceDecoded::open(std::move(decoder)));
+}
 
+AudioSourceHandle AudioSystem::load_source(std::shared_ptr<IAudioSource> source) {
     if (!source) {
-        return AudioSourceHandle{};
+        return {};
     }
-
     return m_sources.emplace(std::move(source));
 }
 
 void AudioSystem::unload_source(AudioSourceHandle handle) {
     auto *source = m_sources.get(handle);
-    ASSERT(source, "Tried to unload non-existent source");
     if (!source) {
+        ASSERT(false, "Tried to unload non-existent audio source");
         return;
     }
 
-    m_sources.remove(handle);
-
     /* flag all voices to stop */
+    m_sources.remove(handle);
     m_voice_controller.stop_voices_of_source(handle);
 }
 
@@ -182,6 +185,7 @@ size_t AudioSystem::get_source_channels(AudioSourceHandle handle) const {
 VoiceHandle AudioSystem::play_audio(AudioSourceHandle source_handle, const PlayDesc &desc) {
     auto *source = m_sources.get(source_handle);
     if (!source) {
+        ASSERT(false, "Attempted to play_audio() with an invalid source_handle");
         return VoiceHandle{};
     }
 
@@ -191,11 +195,11 @@ VoiceHandle AudioSystem::play_audio(AudioSourceHandle source_handle, const PlayD
     }
 
     auto instance = (*source)->create_instance();
-
     instance->set_loop_points(desc.loop_points
                                   ? to_audio_loop_points(*desc.loop_points, (*source)->info())
                                   : AudioLoopPoints{});
 
+    /* bind audio instance to voice handle */
     auto *inst = m_voice_controller.attach(voice_handle, std::move(instance));
     const bool queued = m_audio_thread.commands.try_emplace(PlaySoundCommand{
         .handle_index = voice_handle.index(),

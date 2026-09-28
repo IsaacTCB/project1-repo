@@ -32,7 +32,12 @@ public:
 
     void update();
 
-    AudioSourceHandle load_source(const std::filesystem::path &path);
+    /* TODO: the audio system shouldn't be assuming filesystem
+     * behavior. This function is therefore temporary and is only
+     * used to implement the asset ref system */
+    std::shared_ptr<IAudioSource> get_source_from_path(const std::filesystem::path &filepath);
+
+    AudioSourceHandle load_source(std::shared_ptr<IAudioSource> source);
     void unload_source(AudioSourceHandle handle);
 
     /* source queries, return empty/0 if the handle is invalid */

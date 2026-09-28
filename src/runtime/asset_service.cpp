@@ -6,11 +6,13 @@
 #include "core/logger.h"
 
 #include "runtime/asset_cache.h"
+#include "runtime/audio/audio_handles.h"
 #include "runtime/image/decoder.h"
 #include "runtime/renderer/render_handles.h"
 
 struct AssetService::Impl {
     AssetCache<TextureHandle> textures;
+    AssetCache<AudioSourceHandle> audio_sources;
 };
 
 AssetService::AssetService() = default;
@@ -27,6 +29,15 @@ AssetService::AssetService(const Provider &provider)
         this->unload_texture(handle);
     };
     m_impl->textures.set_load_callbacks(texture_load_fn, texture_unload_fn);
+
+    /* config audio callbacks */
+    auto audio_source_load_fn = [this](std::string_view path) {
+        return this->load_audio_source(path);
+    };
+    auto audio_source_unload_fn = [this](auto handle) {
+        this->unload_audio_source(handle);
+    };
+    m_impl->audio_sources.set_load_callbacks(audio_source_load_fn, audio_source_unload_fn);
 }
 
 AssetService::~AssetService() {
@@ -41,6 +52,10 @@ void AssetService::clear() {
 
 TextureRef AssetService::get_texture(std::string_view path) {
     return m_impl->textures.get(path);
+}
+
+AudioSourceRef AssetService::get_audio_source(std::string_view path) {
+    return m_impl->audio_sources.get(path);
 }
 
 /* Loaders */
@@ -63,4 +78,23 @@ void AssetService::unload_texture(TextureHandle handle) const {
     ASSERT(m_provider.renderer.unload_texture);
     ASSERT(handle, "Attempted to destroy an invalid handle");
     m_provider.renderer.unload_texture(handle, m_provider.renderer.userdata);
+}
+
+AudioSourceHandle AssetService::load_audio_source(std::string_view path) const {
+    ASSERT(m_provider.audio.load_source);
+
+    void *userdata = m_provider.audio.userdata;
+
+    LOG_TRACE("loading audio source at \"{}\"...", path);
+    auto source = m_provider.audio.get_audio_source_from_file(path, userdata);
+    return source
+             ? m_provider.audio.load_source(source, userdata)
+             : AudioSourceHandle{};
+}
+
+void AssetService::unload_audio_source(AudioSourceHandle handle) const {
+    LOG_TRACE("unloading audio source {}...", handle);
+    ASSERT(m_provider.audio.unload_source);
+    ASSERT(handle, "Attempted to destroy an invalid handle");
+    m_provider.audio.unload_source(handle, m_provider.audio.userdata);
 }

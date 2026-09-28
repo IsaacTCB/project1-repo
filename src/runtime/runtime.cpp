@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <memory>
 #include <optional>
+#include <string_view>
 
 #include "core/assertion.h"
 #include "core/events/input_events.h"
@@ -23,6 +24,7 @@
 #include "platform_services.h"
 #include "runtime/app/application.h"
 #include "runtime/app/context/frame_context.h"
+#include "runtime/audio/audio_handles.h"
 #include "runtime/system/view/view_system_2d.h"
 #include "server/display_server.h"
 #include "server/os_server.h"
@@ -91,6 +93,7 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     /* initialize asset service */
     m_asset_service.reset();
     m_asset_service.emplace(::AssetService::Provider{
+        /* Renderer2D handles */
         .renderer = {
             .load_texture = [](ImageData &image, void *userdata) -> TextureHandle {
                 ASSERT(userdata);
@@ -104,7 +107,29 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
             },
             .userdata = &(*m_renderer),
         },
+
+        /* Audio handles */
+        .audio = {
+            .load_source = [](std::shared_ptr<IAudioSource> &image, void *userdata) -> AudioSourceHandle {
+                ASSERT(userdata);
+                auto *audio = static_cast<AudioSystem *>(userdata);
+                return audio->load_source(image);
+            },
+            .unload_source = [](AudioSourceHandle source, void *userdata) -> void {
+                ASSERT(userdata);
+                auto *audio = static_cast<AudioSystem *>(userdata);
+                audio->unload_source(source);
+            },
+            .get_audio_source_from_file = [](const std::string_view path, void *userdata) -> std::shared_ptr<IAudioSource> {
+                ASSERT(userdata);
+                auto *audio = static_cast<AudioSystem *>(userdata);
+                return audio->get_source_from_path(path);
+            },
+
+            .userdata = m_audio_system.get(),
+        },
     });
+
     /* poll window size */
     auto &display = m_platform.display;
     Vec2i display_size = display.get_size(m_window);
