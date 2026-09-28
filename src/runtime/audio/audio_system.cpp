@@ -75,7 +75,7 @@ void AudioSystem::update() {
  */
 static std::unique_ptr<IAudioDecoder> get_decoder_from_path(const std::filesystem::path &path) {
     /* convert to lowercase (for case insensitive check) */
-    std::string extension = path.extension();
+    std::string extension = path.extension().generic_string();
     std::ranges::transform(extension, extension.begin(), [](unsigned char c) {
         return std::tolower(c);
     });
