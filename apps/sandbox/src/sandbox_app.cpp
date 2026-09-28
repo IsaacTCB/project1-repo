@@ -20,7 +20,12 @@
 
 #include "entity.h"
 
-#define AUDIO_FILEPATH "test.mp3"
+#define AUDIO_FILEPATH "test.ogg"
+
+constexpr auto AUDIO_LOOP_POINTS = LoopPointsFrames{
+    .start = 460239,
+    .end = 0,
+};
 
 class SandboxApplication : public IApplication {
     DECLARE_APP(SandboxApplication);
@@ -71,17 +76,14 @@ public:
 
         if (m_audio_source) {
             auto ch = m_servers.audio->get_source_length_seconds(m_audio_source);
-            LOG_TRACE("song is {}s long", ch);
+            LOG_TRACE("song is {:.1f}s long", ch);
 
             m_bgm_voice = m_servers.audio->play_audio(m_audio_source,
                 {
                     .volume = 0.2f,
                     .pitch = 1.0f,
                     .looping = true,
-                    .loop_points = LoopPointsFrames{
-                        .start = 1394,
-                        .end = 0,
-                    },
+                    .loop_points = AUDIO_LOOP_POINTS,
                 });
 
             if (m_servers.audio->is_audio_playing(m_bgm_voice)) {
@@ -117,10 +119,7 @@ public:
                         .volume = 0.2f,
                         .pitch = 1.0f,
                         .looping = true,
-                        .loop_points = LoopPointsFrames{
-                            .start = 1394,
-                            .end = 0,
-                        },
+                        .loop_points = AUDIO_LOOP_POINTS,
                     });
             }
         }
