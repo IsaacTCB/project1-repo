@@ -57,7 +57,7 @@ public:
     }
 
     void draw_color_ex(Color color, const Vec2i &position, const Vec2i &size, const Vec2 &anchor, float rotation) {
-        draw_texture_ex(Handle{}, color, position, size, anchor, rotation);
+        draw_texture_ex(TextureHandle{}, color, position, size, anchor, rotation);
     }
 
     void draw_color(Color color, const Vec2i &position, const Vec2i &size) {

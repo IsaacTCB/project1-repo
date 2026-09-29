@@ -5,10 +5,11 @@
 
 #include "core/math/vec2i.h"
 #include "core/math/vec3.h"
-#include "core/utils/handles.h"
+#include "core/utils/handle_pool.h"
 #include "core/viewport.h"
 #include "graphics/api/render_device.h"
 #include "graphics/api/render_device_factory.h"
+#include "graphics/api/render_device_handles.h"
 #include "graphics/api/vertex_layout.h"
 
 #include "gl_context.h"
@@ -158,12 +159,12 @@ private:
         MatrixHandle model{};
     } m_bound_matrices{};
 
-    HandlePool<GL_TextureStorage> m_textures;
-    HandlePool<GL_SamplerStorage> m_samplers;
-    HandlePool<GL_PipelineStorage> m_pipelines;
-    HandlePool<GL_BufferStorage> m_buffers;
-    HandlePool<GL_MatrixStorage> m_matrices;
-    HandlePool<GL_RenderTargetStorage> m_targets;
+    HandlePool<GL_TextureStorage, TextureHandle> m_textures;
+    HandlePool<GL_SamplerStorage, SamplerHandle> m_samplers;
+    HandlePool<GL_PipelineStorage, PipelineHandle> m_pipelines;
+    HandlePool<GL_BufferStorage, BufferHandle> m_buffers;
+    HandlePool<GL_MatrixStorage, MatrixHandle> m_matrices;
+    HandlePool<GL_RenderTargetStorage, RenderTargetHandle> m_targets;
 };
 
 class GL_IRenderDeviceFactory : public IRenderDeviceFactory {

@@ -2,4 +2,5 @@
 
 #include "core/utils/handles.h"
 
-using TextureHandle = Handle;
+struct TextureTag;
+using TextureHandle = Handle<TextureTag>;
