@@ -7,6 +7,7 @@
 #include "core/assertion.h"
 #include "core/logger.h"
 #include "core/math/vec2i.h"
+#include "core/utils/handle_pool.h"
 #include "core/utils/handles.h"
 #include "renderer/api/render_handles.h"
 
@@ -14,7 +15,7 @@ struct SDL3Renderer::Impl {
     SDL_Window *window;
     SDL_Renderer *renderer;
 
-    HandlePool<SDL_Texture *> texture_pool;
+    HandlePool<SDL_Texture *, TextureHandle> texture_pool;
 };
 
 SDL3Renderer::SDL3Renderer(DisplayWindowHandle &window_data)
@@ -91,7 +92,7 @@ TextureHandle SDL3Renderer::load_texture(ImageData &image) {
 
     SDL_DestroySurface(surface);
     SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
-    return m_impl->texture_pool.emplace(texture);
+    return handle_cast<TextureHandle>(m_impl->texture_pool.emplace(texture));
 }
 
 void SDL3Renderer::destroy_texture(TextureHandle handle) {

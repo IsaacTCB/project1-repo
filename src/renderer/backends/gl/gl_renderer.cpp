@@ -10,8 +10,10 @@
 
 #include "core/camera.h"
 #include "core/logger.h"
+#include "core/utils/handle_pool.h"
 #include "core/view_context_2d.h"
 #include "core/viewport.h"
+#include "renderer/api/render_handles.h"
 #include "renderer/api/render_queue.h"
 
 #include <glad/gl.h>
@@ -22,7 +24,7 @@ static bool s_glad_loaded = false;
 
 struct GLRenderer::Impl {
     GLContext context;
-    HandlePool<GLTexture> texture_pool;
+    HandlePool<GLTexture, TextureHandle> texture_pool;
     std::unique_ptr<GLShader> shader;
     glm::mat4 proj;
     GLTexture white_texture;

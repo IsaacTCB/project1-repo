@@ -49,7 +49,7 @@ public:
     }
 
     void draw_color(Color color, const Vec2i &position, const Vec2i &size) {
-        draw_texture_blended(Handle{}, color, position, size);
+        draw_texture_blended(TextureHandle{}, color, position, size);
     }
 
 private:
