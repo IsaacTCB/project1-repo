@@ -3,15 +3,15 @@
 #include <cstdint>
 #include <format>
 #include <limits>
-#include <optional>
-#include <queue>
 #include <type_traits>
-#include <vector>
 
-#include "../assertion.h"
+struct HandleCaster;
 
+template <typename Tag>
 struct Handle {
 public:
+    using tag = Tag;
+
     using StorageType = uint32_t;
     static_assert(std::is_unsigned_v<StorageType> &&
                   std::is_integral_v<StorageType> &&
@@ -20,15 +20,15 @@ public:
 public:
     constexpr Handle() = default;
 
-    [[nodiscard]] static constexpr Handle from_index_gen(size_t index, size_t gen) noexcept {
+    [[nodiscard]] static constexpr Handle<Tag> from_index_gen(size_t index, size_t gen) noexcept {
         if (index > INDEX_MAX || index == INDEX_INVALID) {
-            return Handle{};
+            return Handle<Tag>{};
         }
 
         auto converted_idx = static_cast<StorageType>(index) + 1;
         auto value = static_cast<StorageType>(converted_idx << GENERATION_BITS);
         value |= gen & GENERATION_MASK;
-        return Handle{value};
+        return Handle<Tag>{value};
     }
 
     [[nodiscard]] static constexpr Handle from_index(size_t index) noexcept {
@@ -71,6 +71,13 @@ public:
 public:
     /* Conversion operators */
 
+    /* Provides implicit conversion to ErasedHandle, aka Handle<void> */
+    [[nodiscard]] constexpr operator Handle<void>() const noexcept
+        requires(!std::is_void_v<Tag>)
+    {
+        return Handle<void>{m_value};
+    }
+
     [[nodiscard]] constexpr explicit operator StorageType() const noexcept {
         return value();
     }
@@ -81,13 +88,8 @@ public:
 
 public:
     /* Comparison operators */
-
-    constexpr bool operator==(const Handle &other) const noexcept {
-        return this->m_value == other.m_value;
-    }
-
-    constexpr bool operator!=(const Handle &other) const noexcept {
-        return !(*this == other);
+    friend constexpr bool operator==(const Handle &a, const Handle &b) noexcept {
+        return a.m_value == b.m_value;
     }
 
 public:
@@ -116,202 +118,58 @@ private:
         : m_value(value) {}
 
     StorageType m_value;
+    friend HandleCaster;
 };
 
-template <>
-struct std::formatter<Handle> : std::formatter<std::string_view> {
-    auto format(const Handle &vec, format_context &ctx) const {
+template struct Handle<void>;
+using ErasedHandle = Handle<void>;
+
+/* template specialization */
+template <typename T>
+struct is_handle : std::false_type {};
+template <typename Tag>
+struct is_handle<Handle<Tag>> : std::true_type {};
+template <typename T>
+inline constexpr bool is_handle_v = is_handle<T>::value;
+
+/* HandleCaster has permission for casting two handle types */
+struct HandleCaster {
+    template <typename To, typename Tag>
+    [[nodiscard]] static constexpr To cast(Handle<Tag> from) noexcept {
+        return To{from.m_value};
+    }
+};
+
+/**
+ * @brief Provides explicit casting between handle types.
+ *
+ * @code
+ *
+ * Handle<UselessHandle> a;
+ * auto b = handle_cast<TextureHandle>(b);
+ *
+ * @endcode
+ *
+ * @param from Handle to cast from
+ * @return The newly casted handle type.
+ */
+template <typename To, typename Tag>
+    requires is_handle_v<To>
+[[nodiscard]] constexpr To handle_cast(Handle<Tag> from) noexcept {
+    static_assert(std::is_same_v<typename To::StorageType,
+        typename Handle<Tag>::StorageType>);
+    return HandleCaster::cast<To>(from);
+}
+
+template <typename Tag>
+struct std::formatter<Handle<Tag>> : std::formatter<std::string_view> {
+    auto format(const Handle<Tag> &h, format_context &ctx) const {
         std::string s;
-        if (vec.valid()) {
-            s = std::format("({}:{})", vec.index(), vec.gen());
+        if (h.valid()) {
+            s = std::format("({}:{})", h.index(), h.gen());
         } else {
             s = "(null)";
         }
         return formatter<std::string_view>::format(s, ctx);
-    }
-};
-
-template <typename T>
-class HandlePool;
-
-template <typename T>
-class HandleDestructor {
-public:
-    ~HandleDestructor() {
-        if (this->valid()) {
-            m_pool->remove(m_handle);
-        }
-    }
-
-    HandleDestructor(HandleDestructor &&other) noexcept
-        : m_pool(other.m_pool),
-          m_object(other.m_object),
-          m_handle(other.m_handle) {
-        other.m_pool = nullptr;
-        other.m_object = nullptr;
-        other.m_handle = Handle{};
-    }
-
-    HandleDestructor &operator=(HandleDestructor &&rhs) noexcept {
-        if (this == &rhs) {
-            return *this;
-        }
-
-        m_pool = rhs.m_pool;
-        m_object = rhs.m_object;
-        m_handle = rhs.m_handle;
-
-        rhs.m_pool = nullptr;
-        rhs.m_object = nullptr;
-        rhs.m_handle = Handle{};
-
-        return *this;
-    }
-
-    HandleDestructor(HandleDestructor &other) = delete;
-    HandleDestructor &operator=(HandleDestructor &rhs) = delete;
-
-    [[nodiscard]] bool valid() const noexcept {
-        return (m_pool && m_object && m_handle);
-    }
-
-public:
-    [[nodiscard]] explicit operator bool() const noexcept {
-        return valid();
-    }
-
-    [[nodiscard]] operator T *() const {
-        return m_object;
-    }
-
-    [[nodiscard]] T *operator->() const {
-        ASSERT(m_object, "Attempted to access object from an invalid HandleDestructor<T>!");
-        return m_object;
-    }
-
-private:
-    explicit HandleDestructor() = default;
-    explicit HandleDestructor(HandlePool<T> *pool, T *object, Handle handle)
-        : m_pool(pool), m_object(object), m_handle(handle) {}
-
-    HandlePool<T> *m_pool{};
-    T *m_object{};
-    Handle m_handle;
-    friend HandlePool<T>;
-};
-
-template <typename T>
-class HandlePool {
-public:
-    template <typename... Args>
-    Handle emplace(Args &&...args) {
-        Slot *slot = reserve_slot();
-        slot->data.emplace(std::forward<Args>(args)...);
-        return slot->next_handle;
-    }
-
-    const T *get(Handle handle) const {
-        const Slot *slot = get_slot(handle);
-        return slot ? &slot->data.value()
-                    : nullptr;
-    }
-
-    T *get(Handle handle) {
-        const auto *const_this = static_cast<const HandlePool<T> *>(this);
-        return const_cast<T *>(
-            const_this->get(handle));
-    }
-
-    /** @brief Gets handle using RAII principles.
-     *
-     * @param handle Handle to obtain handle from. Must be an object that exists!
-     *
-     * @return RAII-styled object that automatically calls this->remove() on destructor. */
-    HandleDestructor<T> get_and_destroy(Handle handle) {
-        T *obj = this->get(handle);
-        return obj ? HandleDestructor<T>{this, obj, handle}
-                   : HandleDestructor<T>{};
-    }
-
-    [[nodiscard]]
-    bool has(Handle handle) const {
-        return get_slot(handle) != nullptr;
-    }
-
-    void remove(Handle handle) {
-        Slot *slot = const_cast<Slot *>(this->get_slot(handle));
-        if (!slot) {
-            ASSERT(slot, "Attempted to remove a non-existing handle!");
-            return;
-        }
-
-        slot->next_handle = slot->next_handle.inc_gen();
-        slot->data.reset();
-
-        auto index = static_cast<size_t>(slot - m_pool.data());
-        m_available_slots.emplace(index);
-    }
-
-    void clear() {
-        m_pool.clear();
-        while (!m_available_slots.empty()) {
-            m_available_slots.pop();
-        }
-    }
-
-private:
-    struct Slot {
-        std::optional<T> data;
-        Handle next_handle;
-    };
-    std::vector<Slot> m_pool;
-    std::queue<size_t> m_available_slots;
-
-private:
-    [[nodiscard]]
-    Slot *reserve_slot() {
-        Slot *slot = nullptr;
-        if (!m_available_slots.empty()) {
-            /* recycle available slot */
-            size_t index = m_available_slots.front();
-            m_available_slots.pop();
-            slot = &m_pool.at(index);
-        } else {
-            /* allocate new slot */
-            size_t index = m_pool.size();
-            if (auto handle = Handle::from_index(index); handle) {
-                m_pool.emplace_back();
-                slot = &m_pool.at(index);
-                slot->next_handle = handle;
-            } else {
-                ASSERT(false, "Handle::from_index() failed! Attempted to allocate invalid handle!")
-            }
-        }
-        return slot;
-    }
-
-    [[nodiscard]]
-    const Slot *get_slot(Handle handle) const {
-        if (!handle) {
-            return nullptr;
-        }
-
-        size_t index = handle.index();
-        ASSERT(index != Handle::INDEX_INVALID);
-
-        if (index >= m_pool.size()) {
-            return nullptr;
-        }
-
-        const Slot &slot = m_pool.at(index);
-        if (!slot.data.has_value()) {
-            return nullptr;
-        }
-
-        if (slot.next_handle != handle) {
-            return nullptr;
-        }
-
-        return &slot;
     }
 };

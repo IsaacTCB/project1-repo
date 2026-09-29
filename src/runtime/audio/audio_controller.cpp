@@ -6,7 +6,7 @@
 #include "audio_source.h"
 #include "core/assertion.h"
 
-VoiceHandle VoiceController::claim(const PlayDesc &desc, Handle source_handle) {
+VoiceHandle VoiceController::claim(const PlayDesc &desc, AudioSourceHandle source_handle) {
     for (size_t i = 0; i < m_slots.size(); ++i) {
         auto &slot = m_slots[i];
 
@@ -21,10 +21,10 @@ VoiceHandle VoiceController::claim(const PlayDesc &desc, Handle source_handle) {
             slot.source_handle.store(source_handle.value(), std::memory_order_relaxed);
 
             const size_t gen = slot.generation.load(std::memory_order_relaxed);
-            return Handle::from_index_gen(i, gen);
+            return VoiceHandle::from_index_gen(i, gen);
         }
     }
-    return Handle{};
+    return VoiceHandle{};
 }
 
 IAudioSourceInstance *VoiceController::attach(VoiceHandle handle, std::unique_ptr<IAudioSourceInstance> instance) {
@@ -56,7 +56,7 @@ void VoiceController::stop_voice(VoiceHandle handle) {
     }
 }
 
-void VoiceController::stop_voices_of_source(Handle source_handle) {
+void VoiceController::stop_voices_of_source(AudioSourceHandle source_handle) {
     for (auto &slot : m_slots) {
         if (slot.state.load(std::memory_order_acquire) == VoiceState::PLAYING &&
             slot.source_handle.load(std::memory_order_acquire) == source_handle.value()) {
@@ -92,7 +92,7 @@ void VoiceController::update() {
     }
 }
 
-VoiceController::VoiceSlot *VoiceController::get_slot_from_handle(Handle handle) {
+VoiceController::VoiceSlot *VoiceController::get_slot_from_handle(VoiceHandle handle) {
     if (!handle || handle.index() >= m_slots.size()) {
         return nullptr;
     }

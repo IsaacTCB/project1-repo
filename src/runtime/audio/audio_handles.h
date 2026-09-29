@@ -2,5 +2,10 @@
 
 #include "core/utils/handles.h"
 
-using AudioSourceHandle = Handle;
-using VoiceHandle = Handle;
+/* tags */
+struct AudioSourceTag;
+struct VoiceTag;
+
+/* handle aliases */
+using AudioSourceHandle = Handle<AudioSourceTag>;
+using VoiceHandle = Handle<VoiceTag>;

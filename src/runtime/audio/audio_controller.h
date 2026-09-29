@@ -42,13 +42,13 @@ public:
     void mark_finished(size_t idx) override;
 
 public:
-    VoiceHandle claim(const PlayDesc &desc, Handle source_handle);
+    VoiceHandle claim(const PlayDesc &desc, AudioSourceHandle source_handle);
     void force_release_all();
     void force_release(VoiceHandle handle);
     IAudioSourceInstance *attach(VoiceHandle handle, std::unique_ptr<IAudioSourceInstance> instance);
 
     void stop_voice(VoiceHandle handle);
-    void stop_voices_of_source(Handle source_handle);
+    void stop_voices_of_source(AudioSourceHandle source_handle);
 
     [[nodiscard]]
     bool is_playing(VoiceHandle voice_handle) const;
@@ -80,10 +80,10 @@ private:
         std::atomic<size_t> generation{0};
 
         /* audio source handle, used by stop_voices_of_source() */
-        std::atomic<Handle::StorageType> source_handle{0};
+        std::atomic<AudioSourceHandle::StorageType> source_handle{0};
     };
 
-    [[nodiscard]] VoiceSlot *get_slot_from_handle(Handle handle);
+    [[nodiscard]] VoiceSlot *get_slot_from_handle(VoiceHandle handle);
     [[nodiscard]] const VoiceSlot *get_slot_from_handle(VoiceHandle handle) const {
         return const_cast<VoiceController *>(this)->get_slot_from_handle(handle);
     }

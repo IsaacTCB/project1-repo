@@ -94,8 +94,8 @@ TEST_F(AudioControllerTest, IsPlayingReturnsFalseOnMarkFinished) {
 }
 
 TEST_F(AudioControllerTest, StopAllVoicesWithHandle) {
-    const Handle handle1 = Handle::from_index(0);
-    const Handle handle2 = Handle::from_index(1);
+    const AudioSourceHandle handle1 = AudioSourceHandle::from_index(0);
+    const AudioSourceHandle handle2 = AudioSourceHandle::from_index(1);
 
     std::vector<VoiceHandle> voices_of_handle1;
     std::vector<VoiceHandle> voices_of_handle2;

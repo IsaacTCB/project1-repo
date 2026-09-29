@@ -7,6 +7,8 @@
 #include <optional>
 #include <span>
 
+#include "core/utils/handle_pool.h"
+
 #include "audio_controller.h"
 #include "audio_device.h"
 #include "audio_handles.h"
@@ -91,5 +93,5 @@ private:
 
     VoiceController m_voice_controller;
 
-    HandlePool<std::shared_ptr<IAudioSource>> m_sources;
+    HandlePool<std::shared_ptr<IAudioSource>, AudioSourceHandle> m_sources;
 };

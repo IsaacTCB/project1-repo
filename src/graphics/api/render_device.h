@@ -7,17 +7,11 @@
 #include "core/math/vec2.h"
 #include "core/math/vec2i.h"
 #include "core/math/vec3.h"
-#include "core/utils/handles.h"
 #include "core/viewport.h"
 #include "runtime/renderer/render_handles.h"
 
+#include "render_device_handles.h"
 #include "vertex_layout.h"
-
-using SamplerHandle = Handle;
-using PipelineHandle = Handle;
-using BufferHandle = Handle;
-using MatrixHandle = Handle;
-using RenderTargetHandle = Handle;
 
 enum class IndexFormat {
     UINT32,
