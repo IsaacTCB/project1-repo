@@ -158,6 +158,7 @@ template <typename To, typename Tag>
 [[nodiscard]] constexpr To handle_cast(Handle<Tag> from) noexcept {
     static_assert(std::is_same_v<typename To::StorageType,
         typename Handle<Tag>::StorageType>);
+    static_assert(To::GENERATION_BITS == Handle<Tag>::GENERATION_BITS);
     return HandleCaster::cast<To>(from);
 }
 
