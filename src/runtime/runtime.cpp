@@ -12,6 +12,7 @@
 #include "core/input/keyboard.h"
 #include "core/logger.h"
 #include "core/math/color.h"
+#include "core/math/vec2.h"
 #include "core/math/vec2i.h"
 
 #include "platform/api/event_server.h"
@@ -367,6 +368,8 @@ void EngineRuntime::update(float delta) {
         if (const auto dockspace_viewport = get_dockspace_viewport(dockspace_id)) {
             m_view.set_output_rect(*dockspace_viewport);
         }
+
+        imgui_editor();
     }
 #endif
 
@@ -378,6 +381,107 @@ void EngineRuntime::update(float delta) {
 
     m_app->on_update(update_ctx);
 }
+
+#if ENABLE_IMGUI
+void EngineRuntime::imgui_editor() {
+    /* TODO: temporary code. Move it into its own special code. */
+    static bool s_menu_bar = true;
+    if (m_input_service.is_key_just_pressed(Input::Key::Scancode::F1)) {
+        s_menu_bar = !s_menu_bar;
+        LOG_TRACE("{} ImGui...", s_menu_bar ? "enabling" : "disabling");
+    }
+
+    static bool s_demo_open = false;
+    if (s_menu_bar) {
+        if (ImGui::BeginMainMenuBar()) {
+            if (ImGui::BeginMenu("Debug")) {
+                if (ImGui::MenuItem("Demo Window")) {
+                    s_demo_open = true;
+                }
+                ImGui::EndMenu();
+            }
+
+            ImGui::EndMainMenuBar();
+        }
+
+        if (ImGui::Begin("Details & Settings")) {
+            ImGui::TextWrapped("Adjust settings");
+
+            /* ================== *
+             *   Detail settings   *
+             * ================== */
+            ImGui::SeparatorText("Details");
+
+            const auto &layout = m_view.get_layout();
+            ImGui::Text("fps = %d", m_fps.fps);
+            ImGui::Text("render_device = %s", "Not implemented!");
+
+            /* ================= *
+             *   View settings   *
+             * ================= */
+            ImGui::SeparatorText("View");
+
+            /* Logical View size */
+            bool updated_view = false;
+            if (ImGui::DragFloat2("View Size", &m_app_config.view.logical_size.x, 1.0f, 1.0f, 10000.0f, "%.1f")) {
+                updated_view = true;
+            }
+
+            /* PresentationMode */
+            static const char *presentation_policy_items[] = {
+                "Disabled",
+                "Fixed Resolution",
+                "Logical View",
+            };
+            static const PresentationMode presentation_policy_lookup[] = {
+                PresentationMode::DISABLED,
+                PresentationMode::FIXED_RESOLUTION,
+                PresentationMode::LOGICAL_VIEW,
+            };
+            int presentation_mode = static_cast<int>(m_app_config.view.mode);
+            if (ImGui::Combo("Presentation Mode", &presentation_mode, presentation_policy_items, IM_ARRAYSIZE(presentation_policy_items))) {
+                m_app_config.view.mode = presentation_policy_lookup[presentation_mode];
+                updated_view = true;
+            }
+
+            /* AspectPolicy */
+            static const char *aspect_policy_items[] = {
+                "Ignore",
+                "Keep Width",
+                "Keep Height",
+                "Expand",
+            };
+            static const AspectPolicy aspect_policy_lookup[] = {
+                AspectPolicy::IGNORE,
+                AspectPolicy::KEEP_WIDTH,
+                AspectPolicy::KEEP_HEIGHT,
+                AspectPolicy::EXPAND,
+            };
+            int aspect_mode = static_cast<int>(m_app_config.view.aspect);
+            if (ImGui::Combo("Aspect Mode", &aspect_mode, aspect_policy_items, IM_ARRAYSIZE(aspect_policy_items))) {
+                m_app_config.view.aspect = aspect_policy_lookup[aspect_mode];
+                updated_view = true;
+            }
+            ImGui::Text("logical_size = %.0fx%.0f", layout.logical_size.x, layout.logical_size.y);
+            ImGui::Text("render_target_size = %dx%d", layout.render_target_size.x, layout.render_target_size.y);
+
+            if (updated_view) {
+                LOG_TRACE("updated view");
+                m_view.set_presentation({
+                    .logical_size = m_app_config.view.logical_size,
+                    .mode = m_app_config.view.mode,
+                    .aspect = m_app_config.view.aspect,
+                });
+            }
+        }
+        ImGui::End();
+
+        if (s_demo_open) {
+            ImGui::ShowDemoWindow(&s_demo_open);
+        }
+    }
+}
+#endif
 
 void EngineRuntime::render() {
     if (m_exit_requested) {
@@ -403,31 +507,6 @@ void EngineRuntime::render() {
 #if ENABLE_IMGUI
     /* build ImGui data and render it */
     if (m_imgui) {
-        /* TODO: temporary code. Move it into its own special code. */
-        static bool s_menu_bar = false;
-        if (m_input_service.is_key_just_pressed(Input::Key::Scancode::F1)) {
-            s_menu_bar = !s_menu_bar;
-            LOG_TRACE("{} ImGui...", s_menu_bar ? "enabling" : "disabling");
-        }
-
-        static bool s_demo_open = false;
-        if (s_menu_bar) {
-            if (ImGui::BeginMainMenuBar()) {
-                if (ImGui::BeginMenu("Debug")) {
-                    if (ImGui::MenuItem("Demo Window")) {
-                        s_demo_open = true;
-                    }
-                    ImGui::EndMenu();
-                }
-
-                ImGui::EndMainMenuBar();
-            }
-
-            if (s_demo_open) {
-                ImGui::ShowDemoWindow(&s_demo_open);
-            }
-        }
-
         ImGui::Render();
         m_imgui->render();
     }
