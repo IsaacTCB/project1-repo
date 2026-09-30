@@ -69,8 +69,6 @@ private:
      */
     bool count_fps(float delta);
 
-    void render_frame(RenderContext &ctx);
-
 private:
     PlatformServices m_platform;
 
@@ -81,6 +79,10 @@ private:
     RenderQueue m_queue;
 
     std::unique_ptr<AudioSystem> m_audio_system;
+#if ENABLE_IMGUI
+    std::unique_ptr<IImGuiBackend> m_imgui;
+#endif
+
     ViewSystem m_view;
 
     struct FpsCounter {
@@ -94,4 +96,6 @@ private:
 
     std::unique_ptr<IApplication> m_app;
     ApplicationConfig m_app_config;
+
+    bool m_exit_requested = false;
 };

@@ -7,21 +7,23 @@ constexpr Vec2i MAX_RENDER_TARGET_SIZE = {16384, 16384};
 
 static Vec2 calculate_logical_size(Vec2i output_size, const ViewPresentationProps &settings);
 static Vec2i calculate_render_target_size(Vec2i output_size, Vec2 logical_size, const ViewPresentationProps &settings);
-static Viewport calculate_presentation_rect(Vec2i output_size, Vec2i render_target_size, const ViewPresentationProps &settings);
+static Viewport calculate_presentation_rect(const Viewport &output_rect, Vec2i render_target_size, const ViewPresentationProps &settings);
 
 void ViewSystem::calculate_layout() {
     m_layout = {};
+    const Vec2i output_size = m_output_rect.size;
+
     m_layout.logical_size = calculate_logical_size(
-        m_output_size,
+        output_size,
         m_presentation);
 
     m_layout.render_target_size = calculate_render_target_size(
-        m_output_size,
+        output_size,
         m_layout.logical_size,
         m_presentation);
 
     m_layout.presentation_rect = calculate_presentation_rect(
-        m_output_size,
+        m_output_rect,
         m_layout.render_target_size,
         m_presentation);
 
@@ -132,13 +134,12 @@ static Vec2i calculate_render_target_size(Vec2i output_size, Vec2 logical_size, 
     return output_size;
 }
 
-static Viewport calculate_presentation_rect(Vec2i output_size, Vec2i render_target_size, const ViewPresentationProps &settings) {
+static Viewport calculate_presentation_rect(const Viewport &output_rect, Vec2i render_target_size, const ViewPresentationProps &settings) {
+    const Vec2i output_size = output_rect.size;
+
     if (settings.mode == PresentationMode::DISABLED ||
         settings.aspect == AspectPolicy::IGNORE) {
-        return Viewport{
-            .position = {0, 0},
-            .size = output_size,
-        };
+        return output_rect;
     }
 
     const Vec2 ratio = Vec2{output_size} / Vec2{render_target_size};
@@ -153,7 +154,7 @@ static Viewport calculate_presentation_rect(Vec2i output_size, Vec2i render_targ
     }
 
     const Vec2i size = Vec2i{Vec2{render_target_size} * scale};
-    const Vec2i pos = (output_size - size) / 2;
+    const Vec2i pos = output_rect.position + ((output_size - size) / 2);
 
     return {
         .position = pos,

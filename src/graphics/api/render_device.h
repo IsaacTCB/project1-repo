@@ -126,6 +126,7 @@ protected:
 public:
     virtual void begin_frame() = 0;
     virtual void end_frame() = 0;
+    virtual void present() = 0;
 
     virtual void begin_pass(const RenderPassApplyDesc &pass_desc) = 0;
     virtual void end_pass() = 0;

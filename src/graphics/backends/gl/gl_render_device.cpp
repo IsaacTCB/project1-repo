@@ -210,10 +210,7 @@ GL_RenderDevice::~GL_RenderDevice() = default;
  *      Frames       *
  * ================= */
 
-void GL_RenderDevice::begin_frame() {}
-
-void GL_RenderDevice::end_frame() {
-    /* TODO: flush */
+void GL_RenderDevice::present() {
     m_ctx->swap_buffers();
 }
 

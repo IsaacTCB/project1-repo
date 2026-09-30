@@ -19,6 +19,19 @@ include(engine_utils)
 add_subdirectory(src/core core)
 add_library(engine::core ALIAS core)
 
+set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui)
+if(ENGINE_ENABLE_IMGUI)
+    add_library(imgui STATIC
+        ${IMGUI_DIR}/imgui.cpp
+        ${IMGUI_DIR}/imgui_draw.cpp
+        ${IMGUI_DIR}/imgui_tables.cpp
+        ${IMGUI_DIR}/imgui_widgets.cpp
+        ${IMGUI_DIR}/imgui_demo.cpp
+        ${IMGUI_DIR}/backends/imgui_impl_null.cpp
+    )
+    target_include_directories(imgui PUBLIC ${IMGUI_DIR} ${IMGUI_DIR}/backends)
+endif()
+
 add_subdirectory(src/runtime runtime)
 add_library(engine::runtime ALIAS runtime)
 

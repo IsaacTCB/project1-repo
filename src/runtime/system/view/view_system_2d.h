@@ -3,6 +3,7 @@
 #include "core/math/vec2.h"
 #include "core/math/vec2i.h"
 #include "core/view_layout.h"
+#include "core/viewport.h"
 
 #include <cstdint>
 
@@ -27,8 +28,11 @@ struct ViewPresentationProps {
 
 class ViewSystem {
 public:
-    void set_output_size(Vec2i size) {
-        m_output_size = size;
+    void set_output_rect(const Viewport &rect) {
+        if (rect.position == m_output_rect.position && rect.size == m_output_rect.size) {
+            return;
+        }
+        m_output_rect = rect;
         m_dirty = true;
     }
 
@@ -50,8 +54,8 @@ private:
 
 private:
     ViewPresentationProps m_presentation;
-    Vec2i m_output_size;
+    Viewport m_output_rect{};
 
     ViewLayout m_layout;
-    bool m_dirty;
+    bool m_dirty = true;
 };

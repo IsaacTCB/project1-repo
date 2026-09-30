@@ -36,6 +36,7 @@ public:
      * ================== */
 
     void render_frame(const RenderContext &ctx);
+    void present();
 
     /* ================== *
      *  Texture Actions   *

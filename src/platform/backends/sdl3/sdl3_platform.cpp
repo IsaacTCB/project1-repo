@@ -1,5 +1,6 @@
 #include "sdl3_platform.h"
 
+#include <SDL3/SDL_init.h>
 #include <cstdint>
 
 #include "sdl3_common.h"
@@ -12,6 +13,11 @@
 #include "core/logger.h"
 #include "runtime/app/application.h"
 #include "runtime/platform_services.h"
+
+#if ENABLE_IMGUI
+#include <backends/imgui_impl_sdl3.h>
+#include <imgui.h>
+#endif
 
 class ApplicationHandler final : public IApplicationHandler {
 public:
@@ -89,7 +95,51 @@ SDL_AppResult SDL3_PlatformImpl::iterate() {
     return SDL_APP_CONTINUE;
 }
 
+#if ENABLE_IMGUI
+/**
+ * @brief Used to filter out input events from
+ * propagating into the runtime layer while ImGui
+ * is focused.
+ *
+ * This function explicitly ignores release events
+ * so that runtime doesn't think a key is being
+ * held forever.
+ *
+ * @param event Current SDL event being processed
+ * @return Returns true if ImGui uses this event.
+ */
+static bool imgui_captures_event(const SDL_Event &event) {
+    if (!ImGui::GetCurrentContext()) {
+        return false;
+    }
+
+    const ImGuiIO &io = ImGui::GetIO();
+    switch (event.type) {
+        case SDL_EVENT_KEY_DOWN:
+            return io.WantCaptureKeyboard;
+        case SDL_EVENT_MOUSE_MOTION:
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+        case SDL_EVENT_MOUSE_WHEEL:
+            return io.WantCaptureMouse;
+        default:
+            return false;
+    }
+}
+#endif
+
 SDL_AppResult SDL3_PlatformImpl::event(SDL_Event &event) {
+#if ENABLE_IMGUI
+    if (ImGui::GetCurrentContext() && ImGui::GetIO().BackendPlatformUserData) {
+        ImGui_ImplSDL3_ProcessEvent(&event);
+    }
+
+    if (imgui_captures_event(event)) {
+        /* early exit, don't propagate event
+         * into runtime */
+        return SDL_APP_CONTINUE;
+    }
+#endif
+
     switch (event.type) {
         case SDL_EVENT_QUIT:
             m_event_server.submit<EventPlatformExited>();

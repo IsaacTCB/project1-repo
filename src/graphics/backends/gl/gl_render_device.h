@@ -84,8 +84,9 @@ public:
     ~GL_RenderDevice() override;
 
 public:
-    void begin_frame() override;
-    void end_frame() override;
+    void begin_frame() override {}
+    void end_frame() override {}
+    void present() override;
 
     void begin_pass(const RenderPassApplyDesc &pass_desc) override;
     void end_pass() override;
