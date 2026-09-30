@@ -31,6 +31,7 @@
 
 #if ENABLE_IMGUI
 #include "runtime/debug/imgui_backend.h"
+#include "runtime/debug/imgui_style.h"
 #include <imgui.h>
 #include <imgui_internal.h>
 
@@ -123,14 +124,7 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-
-    ImGuiStyle &style = ImGui::GetStyle();
-    ImGui::StyleColorsDark(&style);
-    style.WindowTitleAlign.x = 0.5f;
-    style.WindowMenuButtonPosition = ImGuiDir_Right;
-    style.WindowRounding = 4;
-    style.FrameRounding = 2;
-    style.Colors[ImGuiCol_WindowBg].z *= 0.6f;
+    ImGuiCustomStyles::apply_dark_mode(ImGui::GetStyle());
 
     /* open ImGui backend */
     m_imgui = m_platform.display.create_imgui_backend(m_window);

@@ -15,7 +15,10 @@ target_link_libraries(runtime PRIVATE core)
 engine_add_module(runtime)
 
 if(ENGINE_ENABLE_IMGUI)
-    target_sources(runtime PRIVATE debug/imgui_backend.cpp)
+    target_sources(runtime PRIVATE
+        debug/imgui_backend.cpp
+        debug/imgui_style.cpp
+    )
     target_link_libraries(runtime PUBLIC imgui)
 endif()
 
