@@ -6,6 +6,7 @@
 
 #include "core/math/vec2i.h"
 #include "graphics/api/render_device_factory.h"
+#include "runtime/debug/imgui_backend.h"
 
 #include "server_macros.inl"
 
@@ -67,4 +68,7 @@ public:
 
     [[nodiscard]]
     virtual std::unique_ptr<IRenderDeviceFactory> get_render_factory(DisplayWindowHandle handle) = 0;
+
+    [[nodiscard]]
+    virtual std::unique_ptr<IImGuiBackend> create_imgui_backend(DisplayWindowHandle handle) = 0;
 };

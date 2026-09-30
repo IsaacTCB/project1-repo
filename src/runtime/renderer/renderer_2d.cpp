@@ -130,6 +130,10 @@ void Renderer2D::render_frame(const RenderContext &ctx) {
     m_rd->end_frame();
 }
 
+void Renderer2D::present() {
+    m_rd->present();
+}
+
 void Renderer2D::render_frame_pass(const RenderContext &ctx) {
     RenderPassApplyDesc pass_desc;
     if (m_enabled_render_targets) {

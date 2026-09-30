@@ -5,6 +5,7 @@
 
 #include "core/logger.h"
 #include "graphics/api/render_device_factory.h"
+#include "runtime/debug/imgui_backend.h"
 #include "runtime/renderer/renderer_2d.h"
 #include "runtime/server/display_server.h"
 
@@ -75,6 +76,13 @@ private:
         auto *spec = m_registry.get(handle.props.api);
         auto *factory = spec ? spec->create(static_cast<SDL_Window *>(handle.raw_window_handle)) : nullptr;
         return std::unique_ptr<IRenderDeviceFactory>{factory};
+    }
+
+    [[nodiscard]]
+    std::unique_ptr<IImGuiBackend> create_imgui_backend(DisplayWindowHandle handle) override {
+        auto *spec = m_registry.get(handle.props.api);
+        auto *backend = spec ? spec->get_imgui_backend(static_cast<SDL_Window *>(handle.raw_window_handle)) : nullptr;
+        return std::unique_ptr<IImGuiBackend>{backend};
     }
 
 private:

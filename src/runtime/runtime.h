@@ -68,8 +68,6 @@ private:
      */
     bool count_fps(float delta);
 
-    void render_frame(RenderContext &ctx);
-
 private:
     PlatformServices m_platform;
 
@@ -78,6 +76,10 @@ private:
     DisplayWindowHandle m_window;
     std::optional<Renderer2D> m_renderer;
     RenderQueue m_queue;
+
+#if ENABLE_IMGUI
+    std::unique_ptr<IImGuiBackend> m_imgui;
+#endif
 
     ViewSystem m_view;
 
@@ -92,4 +94,6 @@ private:
 
     std::unique_ptr<IApplication> m_app;
     ApplicationConfig m_app_config;
+
+    bool m_exit_requested = false;
 };

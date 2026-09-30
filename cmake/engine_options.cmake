@@ -13,5 +13,11 @@ set(TARGET_NAME "game" CACHE STRING "The application's desired target name")
 # ==================
 option(ENGINE_BUILD_TESTS "Build test suite" ${PROJECT_IS_TOP_LEVEL})
 option(ENGINE_BUILD_EXAMPLES "Build built-in engine examples" ${PROJECT_IS_TOP_LEVEL})
+if(CMAKE_BUILD_TYPE MATCHES "^(Release|MinSizeRel)$")
+    set(ENGINE_ENABLE_IMGUI_DEFAULT OFF)
+else()
+    set(ENGINE_ENABLE_IMGUI_DEFAULT ON)
+endif()
+option(ENGINE_ENABLE_IMGUI "Enable ImGui interface" ${ENGINE_ENABLE_IMGUI_DEFAULT})
 
 set(OPTIONS_LOADED_ TRUE)

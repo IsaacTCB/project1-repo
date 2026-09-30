@@ -14,6 +14,12 @@ add_library(runtime STATIC ${RUNTIME_SOURCES})
 target_link_libraries(runtime PRIVATE core)
 engine_add_module(runtime)
 
+if(ENGINE_ENABLE_IMGUI)
+    target_sources(runtime PRIVATE debug/imgui_backend.cpp)
+    target_link_libraries(runtime PUBLIC imgui)
+endif()
+
+
 # stb_image
 add_subdirectory(${PROJECT_SOURCE_DIR}/external/stb_image external/stb_image)
 target_link_libraries(runtime PRIVATE stb_image)

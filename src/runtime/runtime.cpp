@@ -8,6 +8,7 @@
 #include "core/events/input_events.h"
 #include "core/events/platform_events.h"
 #include "core/events/window_events.h"
+#include "core/input/keyboard.h"
 #include "core/logger.h"
 #include "core/math/color.h"
 
@@ -26,6 +27,11 @@
 #include "runtime/system/view/view_system_2d.h"
 #include "server/display_server.h"
 #include "server/os_server.h"
+
+#if ENABLE_IMGUI
+#include "runtime/debug/imgui_backend.h"
+#include <imgui.h>
+#endif
 
 EngineRuntime::EngineRuntime(const PlatformServices &platform)
     : m_platform(platform) {
@@ -75,6 +81,29 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
         exit(-1);
     }
 
+#if ENABLE_IMGUI
+    /* open ImGui context and configure it */
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+
+    ImGui::StyleColorsDark();
+
+    /* open ImGui backend */
+    m_imgui = m_platform.display.create_imgui_backend(m_window);
+    if (m_imgui && !m_imgui->init()) {
+        LOG_WARN("ImGui backend unavailable, ImGui output will be discarded");
+
+        /* ImGui backend failed, fallback to null backend */
+        m_imgui.reset(imgui_create_null_backend());
+        ASSERT(m_imgui);
+        bool result = m_imgui->init();
+        ASSERT(result, "Failed to initialize fallback ImGui NULL backend");
+    }
+#endif
+
     m_view.set_presentation({
         .logical_size = m_app_config.view.logical_size,
         .mode = m_app_config.view.mode,
@@ -99,8 +128,7 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
         },
     });
     /* poll window size */
-    auto &display = m_platform.display;
-    Vec2i display_size = display.get_size(m_window);
+    Vec2i display_size = m_platform.display.get_size(m_window);
     LOG_INFO("display size: {0}", display_size);
     m_view.set_output_size(display_size);
     m_input_service.init();
@@ -218,6 +246,7 @@ void EngineRuntime::update(float delta) {
     /* close application if requested */
     if (!m_platform.event.span<EventPlatformExited>().empty()) {
         m_platform.os.exit_app();
+        m_exit_requested = true;
         return;
     }
 
@@ -258,6 +287,13 @@ void EngineRuntime::update(float delta) {
         m_input_service.event(event);
     }
 
+#if ENABLE_IMGUI
+    if (m_imgui) {
+        m_imgui->new_frame();
+        ImGui::NewFrame();
+    }
+#endif
+
     /* update it */
     UpdateContext update_ctx{
         .frame = build_frame_context(delta),
@@ -268,6 +304,11 @@ void EngineRuntime::update(float delta) {
 }
 
 void EngineRuntime::render() {
+    if (m_exit_requested) {
+        /* fixes ImGui assertion on app exit. */
+        return;
+    }
+
     m_queue.clear();
 
     /* build render frame! */
@@ -279,12 +320,43 @@ void EngineRuntime::render() {
     };
 
     m_app->on_draw(render);
-    render_frame(render);
-}
+    ASSERT(render.view_context, "View context must be built every frame!");
 
-void EngineRuntime::render_frame(RenderContext &ctx) {
-    ASSERT(ctx.view_context, "View context must be built every frame!");
-    m_renderer->render_frame(ctx);
+    m_renderer->render_frame(render);
+
+#if ENABLE_IMGUI
+    /* build ImGui data and render it */
+    if (m_imgui) {
+        /* TODO: temporary code. Move it into its own special code. */
+        static bool s_menu_bar = false;
+        if (m_input_service.is_key_just_pressed(Input::Key::Scancode::F1)) {
+            s_menu_bar = !s_menu_bar;
+        }
+
+        static bool s_demo_open = false;
+        if (s_menu_bar) {
+            if (ImGui::BeginMainMenuBar()) {
+                if (ImGui::BeginMenu("Debug")) {
+                    if (ImGui::MenuItem("Demo Window")) {
+                        s_demo_open = true;
+                    }
+                    ImGui::EndMenu();
+                }
+
+                ImGui::EndMainMenuBar();
+            }
+
+            if (s_demo_open) {
+                ImGui::ShowDemoWindow(&s_demo_open);
+            }
+        }
+
+        ImGui::Render();
+        m_imgui->render();
+    }
+#endif
+
+    m_renderer->present();
 }
 
 void EngineRuntime::close() {
@@ -293,6 +365,15 @@ void EngineRuntime::close() {
 
     m_input_service.close();
     m_asset_service.reset();
+
+#if ENABLE_IMGUI
+    /* close ImGui backend & context */
+    if (m_imgui) {
+        m_imgui->shutdown();
+        m_imgui.reset();
+    }
+    ImGui::DestroyContext();
+#endif
 
     m_renderer.reset();
     m_platform.display.close_display(m_window);

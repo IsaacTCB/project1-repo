@@ -7,6 +7,7 @@
 
 #include "core/assertion.h"
 #include "graphics/api/render_device_factory.h"
+#include "runtime/debug/imgui_backend.h"
 
 #include <SDL3/SDL.h>
 
@@ -49,6 +50,7 @@ private:
 struct SDL_FactorySpecs {
     uint32_t (*get_flags)() = nullptr;
     IRenderDeviceFactory *(*create)(SDL_Window *window) = nullptr;
+    IImGuiBackend *(*get_imgui_backend)(SDL_Window *window) = nullptr;
 };
 
 BackendRegistry<SDL_FactorySpecs> get_backend_registry();
