@@ -68,6 +68,10 @@ private:
      */
     bool count_fps(float delta);
 
+#if ENABLE_IMGUI
+    void imgui_editor();
+#endif
+
 private:
     PlatformServices m_platform;
 
