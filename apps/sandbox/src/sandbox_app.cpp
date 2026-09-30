@@ -20,6 +20,10 @@
 
 #include "entity.h"
 
+#if ENABLE_IMGUI
+#include <imgui.h>
+#endif
+
 #define AUDIO_FILEPATH "test.ogg"
 
 constexpr auto AUDIO_LOOP_POINTS = LoopPointsFrames{
@@ -199,7 +203,66 @@ public:
 
         m_camera.position.x = std::floor(m_entities[0].pos.x);
         m_camera.position.y = std::floor(m_entities[0].pos.y);
+
+#if ENABLE_IMGUI
+        imgui_logic();
+#endif
     }
+
+#if ENABLE_IMGUI
+    void imgui_logic() {
+        ImGui::Begin("Audio Inspector");
+
+        std::string path{AUDIO_FILEPATH};
+        ImGui::InputText("Audio File", path.data(), path.size() + 1, ImGuiInputTextFlags_ReadOnly);
+
+        if (m_audio_source.get()) {
+            const auto info = m_servers.audio->get_source_info(m_audio_source.get());
+            ImGui::Text("channels = %zu", info->channels);
+            ImGui::Text("sample rate = %zu", info->sample_rate);
+            ImGui::Text("frame count = %zu", info->frame_count);
+            ImGui::Text("duration (seconds) = %.2fs", info->duration_seconds());
+        }
+
+        bool is_playing = m_bgm_voice && m_servers.audio->is_audio_playing(m_bgm_voice);
+        static float s_volume = 0.5f;
+
+        if (ImGui::Checkbox("Playing", &is_playing)) {
+            if (is_playing) {
+                m_bgm_voice = m_servers.audio->play_audio(m_audio_source.get(),
+                    {
+                        .volume = s_volume,
+                        .pitch = 1.0f,
+                        .looping = true,
+                        .loop_points = AUDIO_LOOP_POINTS,
+                    });
+            } else {
+                m_servers.audio->stop_audio(m_bgm_voice);
+                m_bgm_voice = {};
+            }
+        }
+
+        ImGui::SeparatorText("Audio Voice");
+
+        if (is_playing) {
+            bool looping = m_servers.audio->is_audio_looping(m_bgm_voice);
+            if (ImGui::Checkbox("Looping", &looping)) {
+                m_servers.audio->set_audio_looping(m_bgm_voice, looping);
+            }
+
+            auto loop_points = AUDIO_LOOP_POINTS;
+            ImGui::Text("loop start = %zu", loop_points.start);
+            ImGui::Text("loop end = %zu", loop_points.end);
+            if (ImGui::DragFloat("Volume", &s_volume, 0.01f, 0.0f, 10.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp)) {
+                m_servers.audio->set_audio_volume(m_bgm_voice, s_volume);
+            }
+        } else {
+            ImGui::TextWrapped("Audio voice not currently active!");
+        }
+
+        ImGui::End();
+    }
+#endif
 
     void on_draw(RenderContext &ctx) override {
         ctx.view_context = &m_view_context;
