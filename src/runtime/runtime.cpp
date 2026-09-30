@@ -88,8 +88,15 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     ImGuiIO &io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-    ImGui::StyleColorsDark();
+    ImGuiStyle &style = ImGui::GetStyle();
+    ImGui::StyleColorsDark(&style);
+    style.WindowTitleAlign.x = 0.5f;
+    style.WindowMenuButtonPosition = ImGuiDir_Right;
+    style.WindowRounding = 4;
+    style.FrameRounding = 2;
+    style.Colors[ImGuiCol_WindowBg].z *= 0.6f;
 
     /* open ImGui backend */
     m_imgui = m_platform.display.create_imgui_backend(m_window);
@@ -291,6 +298,9 @@ void EngineRuntime::update(float delta) {
     if (m_imgui) {
         m_imgui->new_frame();
         ImGui::NewFrame();
+
+        ImGuiID dockspace_id = ImGui::GetID("MyMainDockspace");
+        ImGui::DockSpaceOverViewport(dockspace_id, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
     }
 #endif
 
@@ -331,6 +341,7 @@ void EngineRuntime::render() {
         static bool s_menu_bar = false;
         if (m_input_service.is_key_just_pressed(Input::Key::Scancode::F1)) {
             s_menu_bar = !s_menu_bar;
+            LOG_TRACE("{} ImGui...", s_menu_bar ? "enabling" : "disabling");
         }
 
         static bool s_demo_open = false;
