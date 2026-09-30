@@ -11,6 +11,7 @@
 #include "core/input/keyboard.h"
 #include "core/logger.h"
 #include "core/math/color.h"
+#include "core/math/vec2i.h"
 
 #include "platform/api/event_server.h"
 
@@ -31,6 +32,39 @@
 #if ENABLE_IMGUI
 #include "runtime/debug/imgui_backend.h"
 #include <imgui.h>
+#include <imgui_internal.h>
+
+/**
+ * @brief Gets the dockspace's central node rectangle as a viewport.
+ *
+ * @return The dockspace's available viewport, or std::nullopt if the dockspace has no central node.
+ */
+static std::optional<Viewport> get_dockspace_viewport(ImGuiID dockspace_id) {
+    const ImGuiDockNode *central = ImGui::DockBuilderGetCentralNode(dockspace_id);
+    if (!central) {
+        return std::nullopt;
+    }
+
+    const auto origin = ImGui::GetMainViewport()->Pos;
+    Vec2i min = {
+        static_cast<int>(central->Pos.x - origin.x),
+        static_cast<int>(central->Pos.y - origin.y),
+    };
+    Vec2i max = {
+        static_cast<int>(central->Pos.x + central->Size.x - origin.x),
+        static_cast<int>(central->Pos.y + central->Size.y - origin.y),
+    };
+
+    const Vec2i size = max - min;
+    if (size.x <= 0 || size.y <= 0) {
+        return std::nullopt;
+    }
+
+    return Viewport{
+        .position = min,
+        .size = size,
+    };
+}
 #endif
 
 EngineRuntime::EngineRuntime(const PlatformServices &platform)
@@ -137,7 +171,7 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     /* poll window size */
     Vec2i display_size = m_platform.display.get_size(m_window);
     LOG_INFO("display size: {0}", display_size);
-    m_view.set_output_size(display_size);
+    m_view.set_output_rect({.position = {0, 0}, .size = display_size});
     m_input_service.init();
 
     /* initialize application */
@@ -278,7 +312,7 @@ void EngineRuntime::update(float delta) {
             }
 
             m_renderer->on_screen_resized(ptr->size);
-            m_view.set_output_size(ptr->size);
+            m_view.set_output_rect({.position = {0, 0}, .size = ptr->size});
         }
         if (std::get_if<EventWindowMaximized>(&event)) {
             LOG_TRACE("maximized");
@@ -300,7 +334,12 @@ void EngineRuntime::update(float delta) {
         ImGui::NewFrame();
 
         ImGuiID dockspace_id = ImGui::GetID("MyMainDockspace");
-        ImGui::DockSpaceOverViewport(dockspace_id, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
+        ImGui::DockSpaceOverViewport(dockspace_id, ImGui::GetMainViewport(),
+            ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoDockingOverCentralNode);
+
+        if (const auto dockspace_viewport = get_dockspace_viewport(dockspace_id)) {
+            m_view.set_output_rect(*dockspace_viewport);
+        }
     }
 #endif
 
