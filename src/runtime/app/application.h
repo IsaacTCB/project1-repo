@@ -16,6 +16,7 @@ struct ApplicationConfig {
         std::string caption = "Untitled";
         Vec2i size = {800, 600};
         bool resizable = false;
+        bool filter_textures = true;
 
     } display;
 
