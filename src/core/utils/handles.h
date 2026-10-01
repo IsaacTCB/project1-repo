@@ -1,9 +1,43 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <format>
 #include <limits>
 #include <type_traits>
+
+namespace HandleDefaults {
+
+/* Default internal data type used in handles. **MUST** be an integer type. */
+using StorageType = uint32_t;
+
+/* Dictates how wide the generation bit section should be. */
+static constexpr size_t GenerationBits = std::numeric_limits<StorageType>::digits / 2;
+
+}; // namespace HandleDefaults
+
+/**
+ * @brief Handle Metadata Class
+ *
+ * Provides basic configuration for handles via template
+ * specialization.
+ *
+ * @code
+ * template <>
+ * struct HandleMeta<AudioSourceTag> {
+ *     using StorageType = HandleDefaults::StorageType;
+ *     static constexpr size_t IndexBits = std::bit_width(AudioLimits::MAX_VOICES + 1);
+ *     static constexpr size_t GenerationBits = std::numeric_limits<StorageType>::digits - IndexBits;
+ * };
+ * @endcode
+ *
+ * @tparam Tag Which handle tag to configure.
+ */
+template <typename Tag>
+struct HandleMeta {
+    using StorageType = HandleDefaults::StorageType;
+    static constexpr size_t GenerationBits = HandleDefaults::GenerationBits;
+};
 
 struct HandleCaster;
 
@@ -12,7 +46,7 @@ struct Handle {
 public:
     using tag = Tag;
 
-    using StorageType = uint32_t;
+    using StorageType = HandleMeta<Tag>::StorageType;
     static_assert(std::is_unsigned_v<StorageType> &&
                   std::is_integral_v<StorageType> &&
                   std::numeric_limits<StorageType>::is_integer);
@@ -95,7 +129,7 @@ public:
 public:
     /* Split point between upper and lower bits */
     static constexpr StorageType GENERATION_BITS =
-        std::numeric_limits<StorageType>::digits / 2;
+        HandleMeta<Tag>::GenerationBits;
 
     /* Upper bits stores index */
     static constexpr auto INDEX_MASK = static_cast<StorageType>(
@@ -158,6 +192,7 @@ template <typename To, typename Tag>
 [[nodiscard]] constexpr To handle_cast(Handle<Tag> from) noexcept {
     static_assert(std::is_same_v<typename To::StorageType,
         typename Handle<Tag>::StorageType>);
+    static_assert(To::GENERATION_BITS == Handle<Tag>::GENERATION_BITS);
     return HandleCaster::cast<To>(from);
 }
 
