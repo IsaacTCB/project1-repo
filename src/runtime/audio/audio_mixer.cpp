@@ -160,6 +160,7 @@ void AudioMixer::create_voice(VoiceCreateDesc &&desc) {
     v->handle_index = desc.handle_index;
     v->channels = info.channels;
     v->sample_rate = info.sample_rate;
+    v->gain_init = true;
 }
 
 static void fill_scratch(AudioMixer::VoicePlaybackState &v, bool looping) {
