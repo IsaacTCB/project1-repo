@@ -20,7 +20,7 @@ public:
     void init(size_t quad_count = 1000);
     void close();
 
-    void draw_rect(const Vec2 &pos, const Vec2 &size, const Vec2 &anchor, float rotation, Color color, TextureHandle texture);
+    void draw_rect(const Vec2 &pos, const Vec2 &size, const Vec2 &anchor, float rotation, Color color, TextureHandle texture, bool filter = true);
     void flush();
 
 private:

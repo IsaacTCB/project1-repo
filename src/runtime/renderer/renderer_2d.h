@@ -44,6 +44,9 @@ public:
 
     TextureHandle load_texture(ImageData &data);
     void destroy_texture(TextureHandle texture);
+    void set_filtering(bool filter) {
+        m_filter = filter;
+    }
 
     [[nodiscard]]
     const Viewport &get_viewport() const { return m_screen_viewport; };
@@ -67,6 +70,7 @@ private:
     bool m_enabled_render_targets{};
     RenderTargetHandle m_render_target{};
     Vec2i m_render_target_size{};
+    bool m_filter = false;
 
     std::optional<BatchBuilder2D> m_batch;
     std::unique_ptr<IRenderDevice> m_rd;

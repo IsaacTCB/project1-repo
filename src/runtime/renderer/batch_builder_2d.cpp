@@ -97,14 +97,14 @@ void BatchBuilder2D::set_batch_key(const BatchKey &key) {
     m_current_key.emplace(key);
 }
 
-void BatchBuilder2D::draw_rect(const Vec2 &pos, const Vec2 &size, const Vec2 &anchor, float rotation, Color color, TextureHandle texture) {
+void BatchBuilder2D::draw_rect(const Vec2 &pos, const Vec2 &size, const Vec2 &anchor, float rotation, Color color, TextureHandle texture, bool filter) {
     if (!can_fit_quad()) {
         flush();
     }
 
     set_batch_key({
         .texture = texture,
-        .sampler = m_state.samplers.linear,
+        .sampler = filter ? m_state.samplers.linear : m_state.samplers.nearest,
     });
 
     const auto index_base =

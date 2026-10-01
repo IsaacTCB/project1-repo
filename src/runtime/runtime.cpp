@@ -117,6 +117,10 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
         exit(-1);
     }
 
+    /* enable filtering */
+    m_renderer->set_filtering(
+        m_app_config.display.filter_textures);
+
 #if ENABLE_IMGUI
     /* open ImGui context and configure it */
     IMGUI_CHECKVERSION();
@@ -392,6 +396,18 @@ void EngineRuntime::imgui_editor() {
             bool updated_view = false;
             if (ImGui::DragFloat2("View Size", &m_app_config.view.logical_size.x, 1.0f, 1.0f, 10000.0f, "%.1f")) {
                 updated_view = true;
+            }
+
+            /* Filtering */
+            static const char *filtering_items[] = {
+                "Nearest",
+                "Bilinear",
+            };
+            static const bool filtering_lookup[] = {false, true};
+            int filtering_mode = static_cast<int>(m_app_config.display.filter_textures);
+            if (ImGui::Combo("Texture Filtering", &filtering_mode, filtering_items, IM_ARRAYSIZE(filtering_items))) {
+                m_app_config.display.filter_textures = filtering_lookup[filtering_mode];
+                m_renderer->set_filtering(m_app_config.display.filter_textures);
             }
 
             /* PresentationMode */
