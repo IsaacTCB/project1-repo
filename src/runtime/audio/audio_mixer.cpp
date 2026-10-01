@@ -4,6 +4,7 @@
 #include "voice_controls.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <span>
@@ -19,7 +20,11 @@ AudioMixer::AudioMixer() {
 }
 
 static inline float approach(float from, float to, float max_delta) {
-    return from + std::clamp(to - from, -max_delta, max_delta);
+    const float delta = to - from;
+    if (std::abs(delta) <= max_delta) {
+        return to;
+    }
+    return from + std::copysign(max_delta, delta);
 }
 
 struct ResamplePcmDesc {
@@ -27,7 +32,7 @@ struct ResamplePcmDesc {
     const float *base;
     size_t start;
     size_t capacity;
-    uint64_t valid_frames;
+    uint64_t valid_frames; /* how many frames is ready for consumption? */
     bool eof;
 
     /* position */
@@ -47,42 +52,71 @@ struct ResamplePcmDesc {
 };
 
 template <size_t SrcChannels>
+static inline void mix_frame(const ResamplePcmDesc &desc, uint64_t position, float gain_l, float gain_r, float *out) {
+    const auto idx = static_cast<size_t>(position >> FIXED_POINT_BITS);
+    const bool has_next = (idx + 1) < desc.valid_frames;
+
+    const size_t i0 = (desc.start + idx) % desc.capacity;
+    const size_t i1 = has_next ? ((i0 + 1) % desc.capacity) : i0;
+
+    const float *s0 = desc.base + (i0 * SrcChannels);
+    const float *s1 = desc.base + (i1 * SrcChannels);
+
+    const auto t = static_cast<float>(position & FIXED_POINT_MASK) *
+                   (1.0f / static_cast<float>(FIXED_POINT_ONE));
+
+    if constexpr (SrcChannels == 1) {
+        const float sample = (s0[0] + ((s1[0] - s0[0]) * t));
+        out[0] += sample * gain_l;
+        out[1] += sample * gain_r;
+    } else {
+        out[0] += (s0[0] + ((s1[0] - s0[0]) * t)) * gain_l;
+        out[1] += (s0[1] + ((s1[1] - s0[1]) * t)) * gain_r;
+    }
+}
+
+template <size_t SrcChannels>
 static size_t resample_pcm(const ResamplePcmDesc &desc) {
     size_t produced = 0;
-    for (; produced < desc.dst_frames; ++produced) {
-        const auto idx = static_cast<size_t>(desc.position >> FIXED_POINT_BITS);
-        if (idx >= desc.valid_frames) {
-            break;
-        }
-        if (!desc.eof && idx + 1 >= desc.valid_frames) {
-            break;
-        }
-        const bool has_next = (idx + 1) < desc.valid_frames;
 
-        const float *s0 = desc.base + (((desc.start + idx) % desc.capacity) * SrcChannels);
-        const float *s1 = has_next
-                            ? desc.base + ((((desc.start + idx) + 1) % desc.capacity) * SrcChannels)
-                            : s0;
-
-        const auto t = static_cast<float>(desc.position & FIXED_POINT_MASK) /
-                       static_cast<float>(FIXED_POINT_ONE);
-
-        /* update gain */
-        desc.gain_l = approach(desc.gain_l, desc.gain_target_l, desc.gain_step);
-        desc.gain_r = approach(desc.gain_r, desc.gain_target_r, desc.gain_step);
-
-        float *out = desc.dst + (produced * 2);
-        if constexpr (SrcChannels == 1) {
-            const float sample = (s0[0] + ((s1[0] - s0[0]) * t));
-            out[0] += sample * desc.gain_l;
-            out[1] += sample * desc.gain_r;
-        } else {
-            out[0] += (s0[0] + ((s1[0] - s0[0]) * t)) * desc.gain_l;
-            out[1] += (s0[1] + ((s1[1] - s0[1]) * t)) * desc.gain_r;
-        }
-
-        desc.position += desc.step;
+    uint64_t last = desc.valid_frames;
+    if (!desc.eof && last > 0) {
+        last--;
     }
+
+    /* load all variables into stack to avoid pointer jumping */
+    uint64_t position = desc.position;
+    float gain_l = desc.gain_l;
+    float gain_r = desc.gain_r;
+
+    const uint64_t end_position = last << FIXED_POINT_BITS;
+    if (position >= end_position) {
+        return 0;
+    }
+
+    const uint64_t available = ((end_position - 1 - position) / desc.step) + 1;
+    const auto frames = static_cast<size_t>(std::min<uint64_t>(available, desc.dst_frames));
+
+    /* special loop for when volume ramps are active */
+    for (; produced < frames && (gain_l != desc.gain_target_l || gain_r != desc.gain_target_r); ++produced) {
+        gain_l = approach(gain_l, desc.gain_target_l, desc.gain_step);
+        gain_r = approach(gain_r, desc.gain_target_r, desc.gain_step);
+        float *out = desc.dst + (produced * AudioLimits::OUTPUT_CHANNELS);
+        mix_frame<SrcChannels>(desc, position, gain_l, gain_r, out);
+        position += desc.step;
+    }
+
+    /* fast case scenario: we aren't processing a volume ramp */
+    for (; produced < frames; ++produced) {
+        float *out = desc.dst + (produced * AudioLimits::OUTPUT_CHANNELS);
+        mix_frame<SrcChannels>(desc, position, gain_l, gain_r, out);
+        position += desc.step;
+    }
+
+    /* commit variables */
+    desc.gain_l = gain_l;
+    desc.gain_r = gain_r;
+    desc.position = position;
 
     return produced;
 }
@@ -121,19 +155,11 @@ void AudioMixer::create_voice(VoiceCreateDesc &&desc) {
     }
 
     const auto info = desc.instance->source()->info();
-    *v = {
-        .instance = desc.instance,
-        .handle_index = desc.handle_index,
-        .position = 0,
-        .channels = info.channels,
-        .sample_rate = info.sample_rate,
-
-        .gain_l = 0.0f,
-        .gain_r = 0.0f,
-        .gain_init = true,
-
-        .stopping = false,
-    };
+    reset_voice(*v);
+    v->instance = desc.instance;
+    v->handle_index = desc.handle_index;
+    v->channels = info.channels;
+    v->sample_rate = info.sample_rate;
 }
 
 static void fill_scratch(AudioMixer::VoicePlaybackState &v, bool looping) {
@@ -261,5 +287,20 @@ void AudioMixer::render_frames(std::span<float> out, size_t frames) {
 
 void AudioMixer::end_voice(VoicePlaybackState &voice) {
     m_voice_controller->mark_finished(voice.handle_index);
-    voice = {};
+    reset_voice(voice);
+}
+
+void AudioMixer::reset_voice(VoicePlaybackState &voice) {
+    voice.instance = nullptr;
+    voice.handle_index = 0;
+    voice.eof = false;
+    voice.start = 0;
+    voice.valid = 0;
+    voice.position = 0;
+    voice.channels = 0;
+    voice.sample_rate = 0;
+    voice.gain_l = 0.0f;
+    voice.gain_r = 0.0f;
+    voice.gain_init = false;
+    voice.stopping = false;
 }

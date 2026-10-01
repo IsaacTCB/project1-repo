@@ -31,6 +31,8 @@ public:
     void create_voice(VoiceCreateDesc &&desc);
     void render_frames(std::span<float> out, size_t frames);
 
+    /* NOTE: if adding a new attribute here, make sure to also update
+     * ::reset_voice so that it gets reset properly. */
     struct VoicePlaybackState {
         IAudioSourceInstance *instance = nullptr;
 
@@ -70,5 +72,9 @@ private:
 
 private:
     void end_voice(VoicePlaybackState &voice);
+    /* Clears entire VoicePlaybackState struct without refilling
+     * scratch buffer with zeroes. Maybe if we remove the per-voice
+     * buffer entirely we could also remove this, too. */
+    void reset_voice(VoicePlaybackState &voice);
     VoicePlaybackState *find_free_voice();
 };
