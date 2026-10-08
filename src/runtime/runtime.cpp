@@ -1,6 +1,7 @@
 #include "runtime.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <memory>
 #include <optional>
 
@@ -13,7 +14,6 @@
 #include "core/math/color.h"
 #include "core/math/vec2.h"
 #include "core/math/vec2i.h"
-
 #include "platform/api/event_server.h"
 
 #include "renderer/render_handles.h"
@@ -26,14 +26,15 @@
 #include "platform_services.h"
 #include "runtime/app/application.h"
 #include "runtime/app/context/frame_context.h"
-#include "runtime/system/view/view_system_2d.h"
 #include "runtime/debug/sinks/file_log_sink.h"
+#include "runtime/system/view/view_system_2d.h"
 #include "server/display_server.h"
 #include "server/os_server.h"
 
 #if ENABLE_IMGUI
 #include "runtime/debug/imgui_backend.h"
 #include "runtime/debug/imgui_style.h"
+#include "runtime/debug/sinks/imgui_log_sink.h"
 #include <imgui.h>
 #include <imgui_internal.h>
 
@@ -89,6 +90,11 @@ static DisplayWindowProps get_window_props_from_config(const std::string &app_na
 
 void EngineRuntime::init(IApplicationHandler &app_handler) {
     Logger::get().add_sink(FileLogSink::open("runtime.log"));
+
+#if ENABLE_IMGUI
+    m_imgui_log_state = std::make_shared<ImGuiLogState>(1000);
+    Logger::get().add_sink(ImGuiLogSink::create(m_imgui_log_state));
+#endif
 
     m_asset_service.emplace(); /* HACK: asset service must be a valid object for .value() to work */
 
@@ -366,12 +372,15 @@ void EngineRuntime::imgui_editor() {
     }
 
     static bool s_demo_open = false;
+    static bool s_console_open = true;
+
     if (s_menu_bar) {
         if (ImGui::BeginMainMenuBar()) {
             if (ImGui::BeginMenu("Debug")) {
                 if (ImGui::MenuItem("Demo Window")) {
                     s_demo_open = true;
                 }
+                ImGui::MenuItem("Console", nullptr, &s_console_open);
                 ImGui::EndMenu();
             }
 
@@ -465,7 +474,101 @@ void EngineRuntime::imgui_editor() {
         if (s_demo_open) {
             ImGui::ShowDemoWindow(&s_demo_open);
         }
+
+        if (s_console_open) {
+            imgui_console();
+        }
     }
+}
+
+void EngineRuntime::imgui_console() {
+    ImGui::Begin("Console");
+
+    static ImGuiTextFilter s_console_filter;
+    static bool s_autoscroll = true;
+    static size_t s_generation = 0;
+
+    static const char *s_severity_items[] = {
+        "Trace",
+        "Info",
+        "Warn",
+        "Error",
+        "Critical",
+    };
+    static int s_severity_selected = LOG_SEVERITY_TRACE;
+
+    ImGui::Checkbox("Auto-scroll", &s_autoscroll);
+
+    ImGui::SameLine();
+    if (ImGui::Button("Clear")) {
+        m_imgui_log_state->clear();
+    }
+
+    ImGui::SameLine();
+    ImGui::PushItemWidth(80.0f);
+    ImGui::Combo("##console_log_severity", &s_severity_selected, s_severity_items, IM_ARRAYSIZE(s_severity_items));
+    ImGui::PopItemWidth();
+
+    ImGui::SameLine();
+    s_console_filter.Draw("##console_log_filter", ImGui::GetContentRegionAvail().x);
+
+    ImGui::BeginChild("##console_log");
+    m_imgui_log_state->for_each([](const ImGuiLogState::Line &line) {
+        const char *beg = line.string.begin().base();
+        const char *end = line.string.end().base();
+
+        if (line.severity < static_cast<LogSeverity>(s_severity_selected)) {
+            return;
+        }
+
+        if (!s_console_filter.PassFilter(beg, end)) {
+            return;
+        }
+
+        switch (line.severity) {
+            case LOG_SEVERITY_TRACE:
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.55f, 0.525f, 1.0f));
+                break;
+            case LOG_SEVERITY_WARNING:
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.98f, 0.8f, 0.05f, 1.0f));
+                break;
+            case LOG_SEVERITY_ERROR:
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.92f, 0.07f, 0.05f, 1.0f));
+                break;
+            case LOG_SEVERITY_CRITICAL:
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.92f, 0.98f, 0.96f, 1.0f));
+                break;
+            case LOG_SEVERITY_INFO:
+            default:
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.92f, 0.98f, 0.96f, 1.0f));
+                break;
+        }
+
+        if (line.severity == LOG_SEVERITY_CRITICAL) {
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImVec2 size = ImGui::CalcTextSize(line.string.c_str());
+
+            ImGui::GetWindowDrawList()->AddRectFilled(
+                pos,
+                ImVec2(pos.x + size.x, pos.y + size.y),
+                ImGui::ColorConvertFloat4ToU32(ImVec4(0.82f, 0.06f, 0.04f, 0.95f)));
+        }
+
+        ImGui::TextUnformatted(beg, end);
+
+        ImGui::PopStyleColor();
+    });
+
+    size_t gen = m_imgui_log_state->generation();
+    if (s_generation != gen) {
+        if (s_autoscroll) {
+            ImGui::SetScrollHereY(1.0f);
+        }
+        s_generation = gen;
+    }
+
+    ImGui::EndChild();
+    ImGui::End();
 }
 #endif
 

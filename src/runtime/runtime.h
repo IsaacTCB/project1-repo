@@ -70,6 +70,7 @@ private:
 
 #if ENABLE_IMGUI
     void imgui_editor();
+    void imgui_console();
 #endif
 
 private:
@@ -83,6 +84,7 @@ private:
 
 #if ENABLE_IMGUI
     std::unique_ptr<IImGuiBackend> m_imgui;
+    std::shared_ptr<class ImGuiLogState> m_imgui_log_state;
 #endif
 
     ViewSystem m_view;
