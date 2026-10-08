@@ -92,7 +92,7 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     Logger::get().add_sink(FileLogSink::open("runtime.log"));
 
 #if ENABLE_IMGUI
-    m_imgui_log_state = std::make_shared<ImGuiLogState>(1000);
+    m_imgui_log_state = std::make_shared<ImGuiLogState>(ImGuiLogState::DEFAULT_LINE_COUNT);
     Logger::get().add_sink(ImGuiLogSink::create(m_imgui_log_state));
 #endif
 
@@ -512,7 +512,7 @@ void EngineRuntime::imgui_console() {
     ImGui::SameLine();
     s_console_filter.Draw("##console_log_filter", ImGui::GetContentRegionAvail().x);
 
-    ImGui::BeginChild("##console_log");
+    ImGui::BeginChild("##console_log", ImVec2(0, 0), 0, ImGuiWindowFlags_HorizontalScrollbar);
     m_imgui_log_state->for_each([](const ImGuiLogState::Line &line) {
         const char *beg = line.string.begin().base();
         const char *end = line.string.end().base();

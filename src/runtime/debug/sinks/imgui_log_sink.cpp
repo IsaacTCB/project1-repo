@@ -1,5 +1,7 @@
 #include "imgui_log_sink.h"
 
+#include "core/logger.h"
+
 #include <memory>
 #include <utility>
 

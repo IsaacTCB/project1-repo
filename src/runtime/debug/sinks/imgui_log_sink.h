@@ -10,13 +10,15 @@
 
 class ImGuiLogState {
 public:
+    static constexpr size_t DEFAULT_LINE_COUNT = 2000;
+
     struct Line {
         std::string string;
         LogSeverity severity;
     };
 
 public:
-    explicit ImGuiLogState(size_t line_count = 2000)
+    explicit ImGuiLogState(size_t line_count = DEFAULT_LINE_COUNT)
         : m_max_lines(line_count), m_generation(0) {}
 
     ImGuiLogState() = delete;
