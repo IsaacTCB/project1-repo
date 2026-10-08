@@ -29,7 +29,7 @@ static inline std::string_view log_prefix(LogSeverity severity) {
         case LOG_SEVERITY_INFO:
             return "[INFO] ";
         case LOG_SEVERITY_WARNING:
-            return "[WARNING] ";
+            return "[WARN] ";
         case LOG_SEVERITY_ERROR:
             return "[ERROR] ";
         case LOG_SEVERITY_CRITICAL:
