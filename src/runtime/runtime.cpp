@@ -513,6 +513,8 @@ void EngineRuntime::imgui_console() {
     s_console_filter.Draw("##console_log_filter", ImGui::GetContentRegionAvail().x);
 
     ImGui::BeginChild("##console_log", ImVec2(0, 0), 0, ImGuiWindowFlags_HorizontalScrollbar);
+    ImGui::PushStyleVarY(ImGuiStyleVar_ItemSpacing, 2.0f);
+
     m_imgui_log_state->for_each([](const ImGuiLogState::Line &line) {
         const char *beg = line.string.begin().base();
         const char *end = line.string.end().base();
@@ -566,6 +568,8 @@ void EngineRuntime::imgui_console() {
         }
         s_generation = gen;
     }
+
+    ImGui::PopStyleVar();
 
     ImGui::EndChild();
     ImGui::End();

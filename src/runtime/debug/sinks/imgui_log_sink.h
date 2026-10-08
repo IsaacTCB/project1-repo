@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <deque>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <string_view>
 
@@ -24,6 +25,8 @@ public:
     ImGuiLogState() = delete;
 
     void push_line(LogSeverity severity, std::string_view log) {
+        auto lock = std::scoped_lock(m_mutex);
+
         m_deque.emplace_back(Line{
             .string = std::string{log},
             .severity = severity,
@@ -36,6 +39,8 @@ public:
     }
 
     void clear() {
+        auto lock = std::scoped_lock(m_mutex);
+
         m_deque.clear();
         m_generation++;
     }
@@ -52,6 +57,7 @@ public:
 
     template <typename Func>
     void for_each(Func &&func) {
+        auto lock = std::scoped_lock(m_mutex);
         for (const Line &line : m_deque) {
             func(line);
         }
@@ -59,6 +65,7 @@ public:
 
 private:
     std::deque<Line> m_deque;
+    std::mutex m_mutex;
     size_t m_max_lines;
     size_t m_generation;
 };
