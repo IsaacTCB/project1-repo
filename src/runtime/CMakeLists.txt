@@ -7,6 +7,7 @@ set(RUNTIME_SOURCES
     renderer/renderer_2d.cpp
     renderer/batch_builder_2d.cpp
     system/view/view_system_2d.cpp
+    debug/sinks/file_log_sink.cpp
     runtime.cpp
 )
 
