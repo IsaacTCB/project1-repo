@@ -23,6 +23,7 @@
 #include "platform_services.h"
 #include "runtime/app/application.h"
 #include "runtime/app/context/frame_context.h"
+#include "runtime/debug/sinks/file_log_sink.h"
 #include "server/display_server.h"
 #include "server/os_server.h"
 
@@ -44,6 +45,8 @@ static DisplayWindowProps get_window_props_from_config(const std::string &app_na
 }
 
 void EngineRuntime::init(IApplicationHandler &app_handler) {
+    Logger::get().add_sink(FileLogSink::open("runtime.log"));
+
     m_asset_service.emplace(); /* HACK: asset service must be a valid object for .value() to work */
 
     m_app = std::unique_ptr<IApplication>(app_handler.create_app(
@@ -59,7 +62,7 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
 
     ApplicationConfig config;
     m_app->configure(config);
-    m_app_config = config;
+    m_app_config = std::move(config);
 
     /* initialize fps counter */
     m_fps = {};
@@ -214,6 +217,8 @@ void EngineRuntime::close() {
 
     m_renderer.reset();
     m_platform.display.close_display(m_window);
+
+    Logger::get().flush();
 }
 
 FrameContext &EngineRuntime::build_frame_context(float delta) {

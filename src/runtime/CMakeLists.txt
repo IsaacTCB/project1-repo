@@ -4,6 +4,7 @@ set(RUNTIME_SOURCES
     asset_service.cpp
     input_service.cpp
     image/decoder.cpp
+    debug/sinks/file_log_sink.cpp
     runtime.cpp
 )
 
