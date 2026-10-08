@@ -4,6 +4,7 @@
 #include <format>
 #include <memory>
 #include <string_view>
+#include <vector>
 
 enum LogSeverity : uint8_t {
     LOG_SEVERITY_TRACE = 0,
@@ -11,6 +12,29 @@ enum LogSeverity : uint8_t {
     LOG_SEVERITY_WARNING,
     LOG_SEVERITY_ERROR,
     LOG_SEVERITY_CRITICAL,
+};
+
+enum class LogFeature : uint8_t {
+    SEVERITY,
+    DATETIME,
+    DATE,
+    TIME,
+    ARROW,
+};
+
+class ILogSink {
+public:
+    [[nodiscard]]
+    virtual std::span<const LogFeature> feature() const {
+        static constexpr LogFeature features[] = {
+            LogFeature::SEVERITY,
+        };
+        return features;
+    }
+
+    virtual ~ILogSink() = default;
+    virtual void push_line(LogSeverity severity, std::string_view string) = 0;
+    virtual void flush() = 0;
 };
 
 /**
@@ -27,7 +51,6 @@ public:
     using LogFn = void (*)(LogSeverity severity, std::string_view message);
 
     [[nodiscard]] static Logger &get();
-    static void close();
 
 public:
     Logger(const Logger &logger) = delete;
@@ -37,13 +60,27 @@ public:
     Logger &operator=(Logger &&other) = delete;
 
     /**
-     * @brief Override log callback
+     * @brief Adds a new sink into the logger
      *
-     * @param callback A callback function that prints onto something.
+     * The logger *owns* the sink.
+     *
+     * @param sink A valid sink.
      */
-    void set_log_callback(LogFn callback) noexcept {
-        m_callback = callback;
-    }
+    void add_sink(std::unique_ptr<ILogSink> sink);
+
+    /**
+     * @brief Overrides the default sink.
+     *
+     * Typically used to setup the main platform console sink.
+     *
+     * @param sink Sink to be applied
+     */
+    void set_sink_override(std::unique_ptr<ILogSink> sink);
+
+    /**
+     * @brief Resets the current sink override to the default one.
+     */
+    void reset_sink_override();
 
     /**
      * @brief Set the minimum severity needed for logging.
@@ -102,16 +139,18 @@ public:
         print(severity, "{}", std::forward<T>(value));
     }
 
+    void flush();
+
 private:
     Logger();
 
     void log(LogSeverity severity, std::string_view message);
 
 private:
-    LogFn m_callback;
     LogSeverity m_severity = LOG_SEVERITY_TRACE;
 
-    static std::unique_ptr<Logger> s_logger;
+    std::vector<std::unique_ptr<ILogSink>> m_sinks;
+    std::unique_ptr<ILogSink> m_sink_override;
 };
 
 #define LOG_TRACE(...) ::Logger::get().print(LOG_SEVERITY_TRACE, __VA_ARGS__)

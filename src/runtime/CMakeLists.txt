@@ -14,6 +14,7 @@ set(RUNTIME_SOURCES
     renderer/renderer_2d.cpp
     renderer/batch_builder_2d.cpp
     system/view/view_system_2d.cpp
+    debug/sinks/file_log_sink.cpp
     runtime.cpp
 )
 
@@ -25,6 +26,7 @@ if(ENGINE_ENABLE_IMGUI)
     target_sources(runtime PRIVATE
         debug/imgui_backend.cpp
         debug/imgui_style.cpp
+        debug/sinks/imgui_log_sink.cpp
     )
     target_link_libraries(runtime PUBLIC imgui)
 endif()

@@ -54,12 +54,12 @@ function(engine_create_application target_name)
     # target_link_libraries(${target_name} PRIVATE engine::core)
     # target_link_libraries(${target_name} PRIVATE engine::runtime)
 
-    if(EMSCRIPTEN)
-        target_compile_definitions(${target_name} PRIVATE USE_THREADS=0)
-        set_target_properties(${target_name} PROPERTIES SUFFIX ".html")
-    else()
-        target_compile_definitions(${target_name} PRIVATE USE_THREADS=1)
-    endif()
+    # if(EMSCRIPTEN)
+    #     target_compile_definitions(${target_name} PRIVATE USE_THREADS=0)
+    #     set_target_properties(${target_name} PROPERTIES SUFFIX ".html")
+    # else()
+    #     target_compile_definitions(${target_name} PRIVATE USE_THREADS=1)
+    # endif()
 
     if(MINGW)
         target_link_options(${target_name}
