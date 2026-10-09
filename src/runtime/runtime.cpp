@@ -549,8 +549,8 @@ void EngineRuntime::imgui_console() {
     ImGui::PushStyleVarY(ImGuiStyleVar_ItemSpacing, 2.0f);
 
     m_imgui_log_state->for_each([](const ImGuiLogState::Line &line) {
-        const char *beg = line.string.begin().base();
-        const char *end = line.string.end().base();
+        const char *beg = line.string.c_str();
+        const char *end = beg + line.string.size();
 
         if (line.severity < static_cast<LogSeverity>(s_severity_selected)) {
             return;
