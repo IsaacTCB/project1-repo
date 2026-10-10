@@ -1,6 +1,9 @@
 #pragma once
 
+#include <cstdint>
 #include <optional>
+#include <span>
+#include <string>
 
 #include "renderer/renderer_2d.h"
 
@@ -15,7 +18,16 @@
 
 class EngineRuntime {
 public:
+    enum class LaunchResult : uint8_t {
+        CONTINUE,
+        EXIT_OK,
+        EXIT_ERROR,
+    };
+
+public:
     explicit EngineRuntime(const PlatformServices &platform);
+
+    LaunchResult process_launch_args(std::span<char *const> args);
 
     void init(IApplicationHandler &app_handler);
     void update(float delta);
@@ -36,7 +48,7 @@ private:
      * @return True if the display and renderer were
      * initialized successfully, false otherwise
      */
-    bool init_display_and_renderer(const DisplayWindowProps &props);
+    bool init_display_and_renderer(const DisplayWindowProps &props, std::string_view backend = {});
 
     /**
      * @brief Tries to initialize window + renderer from the
@@ -49,7 +61,7 @@ private:
      * the window. `props.api` gets overwritten by backend.
      * @return True if the operation was successful, false otherwise.
      */
-    bool try_init_backend(const std::string &backend, const DisplayWindowProps &props);
+    bool try_init_backend(std::string_view backend, const DisplayWindowProps &props);
 
     /**
      * @brief Builds a new frame context and updates
@@ -86,6 +98,9 @@ private:
     std::unique_ptr<IImGuiBackend> m_imgui;
     std::shared_ptr<class ImGuiLogState> m_imgui_log_state;
 #endif
+
+    std::string m_program_name;
+    std::string m_preferred_backend;
 
     ViewSystem m_view;
 
