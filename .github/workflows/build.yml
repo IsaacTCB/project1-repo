@@ -1,0 +1,269 @@
+name: Build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Pinned vcpkg release (provides SDL3 3.4.x). Bumping this invalidates the vcpkg binary cache.
+  VCPKG_REF: 2026.07.29
+  CCACHE_VERSION: 4.14.1
+  CCACHE_MAXSIZE: 500M
+  CMAKE_TARGET: sandbox
+
+jobs:
+  # ===========================
+  #   Linux - GCC + Ninja
+  # ===========================
+  linux-gcc:
+    name: Linux GCC (${{ matrix.build_type }})
+    runs-on: ubuntu-latest
+    # Ubuntu runners don't ship SDL3 >= 3.4, Fedora does.
+    container: fedora:44
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Debug, Release]
+    env:
+      CCACHE_COMPRESS: true
+
+    steps:
+      # git/tar/zstd must exist before checkout (submodules) and cache actions run.
+      # nodejs is only needed when running locally with act (GitHub mounts its own node).
+      - name: Install packages
+        run: |
+          dnf install -y --setopt=install_weak_deps=False \
+            git tar zstd gcc gcc-c++ cmake ninja-build ccache SDL3-devel \
+            ${{ env.ACT && 'nodejs' || '' }}
+
+      # ${{ github.workspace }} resolves to the host path inside job containers.
+      - name: Set ccache paths
+        run: |
+          echo "CCACHE_DIR=$GITHUB_WORKSPACE/.ccache" >> "$GITHUB_ENV"
+          echo "CCACHE_BASEDIR=$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Restore ccache
+        uses: actions/cache@v6
+        with:
+          path: .ccache
+          key: ccache-linux-gcc-${{ matrix.build_type }}-${{ github.run_id }}
+          restore-keys: ccache-linux-gcc-${{ matrix.build_type }}-
+
+      - name: Configure
+        run: >
+          cmake -S . -B build/ci -G Ninja
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DCMAKE_C_COMPILER=gcc
+          -DCMAKE_CXX_COMPILER=g++
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          -DENGINE_BUILD_TESTS=OFF
+
+      - name: Build
+        run: |
+          ccache --zero-stats
+          cmake --build build/ci --target ${{ env.CMAKE_TARGET }} --parallel
+          ccache --show-stats
+
+  # ===========================
+  #   Windows - MSVC + Visual Studio
+  # ===========================
+  windows-msvc:
+    name: Windows MSVC (${{ matrix.build_type }})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Debug, Release]
+    env:
+      VCPKG_TRIPLET: x64-windows
+      VCPKG_ROOT: ${{ github.workspace }}/.vcpkg
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_COMPRESS: true
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - uses: actions/checkout@v7
+        with:
+          repository: microsoft/vcpkg
+          ref: ${{ env.VCPKG_REF }}
+          path: .vcpkg
+
+      - name: Bootstrap vcpkg
+        run: .vcpkg/bootstrap-vcpkg.bat -disableMetrics
+        shell: cmd
+
+      - name: Restore vcpkg binary cache
+        id: vcpkg-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: .vcpkg-cache
+          key: vcpkg-${{ env.VCPKG_TRIPLET }}-${{ env.VCPKG_REF }}-
+          restore-keys: vcpkg-${{ env.VCPKG_TRIPLET }}-${{ env.VCPKG_REF }}-
+
+      - name: Install SDL3
+        run: .vcpkg/vcpkg install sdl3 --triplet ${{ env.VCPKG_TRIPLET }} --clean-after-build
+
+      # Content-addressed key: only uploads when vcpkg actually built something new.
+      - name: Save vcpkg binary cache
+        uses: actions/cache/save@v6
+        with:
+          path: .vcpkg-cache
+          key: vcpkg-${{ env.VCPKG_TRIPLET }}-${{ env.VCPKG_REF }}-${{ hashFiles('.vcpkg-cache/**') }}
+
+      - name: Install ccache
+        shell: pwsh
+        run: |
+          $dir = "$env:RUNNER_TEMP/ccache"
+          $zip = "$env:RUNNER_TEMP/ccache.zip"
+          Invoke-WebRequest "https://github.com/ccache/ccache/releases/download/v$env:CCACHE_VERSION/ccache-$env:CCACHE_VERSION-windows-x86_64.zip" -OutFile $zip
+          Expand-Archive $zip -DestinationPath $dir
+          $exe = Get-ChildItem $dir -Recurse -Filter ccache.exe | Select-Object -First 1
+          # MSBuild invokes "cl.exe" from CLToolPath; a renamed ccache masquerades as the compiler.
+          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP/ccache-cl" | Out-Null
+          Copy-Item $exe.FullName "$env:RUNNER_TEMP/ccache-cl/cl.exe"
+          $exe.DirectoryName | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+
+      - name: Restore ccache
+        uses: actions/cache@v6
+        with:
+          path: .ccache
+          key: ccache-windows-msvc-${{ matrix.build_type }}-${{ github.run_id }}
+          restore-keys: ccache-windows-msvc-${{ matrix.build_type }}-
+
+      # No -G: CMake picks the newest Visual Studio installed on the runner.
+      # ccache requires /Z7 (Embedded) debug info instead of /Zi to cache MSVC objects.
+      - name: Configure
+        shell: pwsh
+        run: >
+          cmake -S . -B build/ci -A x64
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+          -DVCPKG_TARGET_TRIPLET="$env:VCPKG_TRIPLET"
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DCMAKE_POLICY_DEFAULT_CMP0141=NEW
+          -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded
+          -DCMAKE_VS_GLOBALS="CLToolExe=cl.exe;CLToolPath=$env:RUNNER_TEMP/ccache-cl;TrackFileAccess=false;UseMultiToolTask=true"
+          -DENGINE_BUILD_TESTS=OFF
+
+      - name: Build
+        shell: pwsh
+        run: |
+          ccache --zero-stats
+          cmake --build build/ci --target $env:CMAKE_TARGET --config ${{ matrix.build_type }} --parallel
+          ccache --show-stats
+
+  # ===========================
+  #   Windows - GCC (MinGW-w64) + Ninja
+  # ===========================
+  windows-gcc:
+    name: Windows GCC (${{ matrix.build_type }})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Debug, Release]
+    env:
+      VCPKG_TRIPLET: x64-mingw-static
+      VCPKG_DEFAULT_HOST_TRIPLET: x64-mingw-static
+      VCPKG_ROOT: ${{ github.workspace }}/.vcpkg
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_COMPRESS: true
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      # Up-to-date GCC toolchain (the runner's preinstalled MinGW lags behind for C++23).
+      - name: Setup MSYS2 (UCRT64)
+        id: msys2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: false
+          cache: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-ccache
+
+      - name: Add MinGW to PATH
+        shell: pwsh
+        run: '"${{ steps.msys2.outputs.msys2-location }}\ucrt64\bin" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH'
+
+      - uses: actions/checkout@v7
+        with:
+          repository: microsoft/vcpkg
+          ref: ${{ env.VCPKG_REF }}
+          path: .vcpkg
+
+      - name: Bootstrap vcpkg
+        run: .vcpkg/bootstrap-vcpkg.bat -disableMetrics
+        shell: cmd
+
+      # The MinGW compiler version is part of the cache key, so a toolchain update starts fresh.
+      - name: Get GCC version
+        id: gcc
+        shell: pwsh
+        run: '"version=$(gcc -dumpfullversion)" | Out-File -Append -Encoding utf8 $env:GITHUB_OUTPUT'
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache/restore@v6
+        with:
+          path: .vcpkg-cache
+          key: vcpkg-${{ env.VCPKG_TRIPLET }}-gcc${{ steps.gcc.outputs.version }}-${{ env.VCPKG_REF }}-
+          restore-keys: vcpkg-${{ env.VCPKG_TRIPLET }}-gcc${{ steps.gcc.outputs.version }}-${{ env.VCPKG_REF }}-
+
+      - name: Install SDL3
+        run: .vcpkg/vcpkg install sdl3 --triplet ${{ env.VCPKG_TRIPLET }} --clean-after-build
+
+      - name: Save vcpkg binary cache
+        uses: actions/cache/save@v6
+        with:
+          path: .vcpkg-cache
+          key: vcpkg-${{ env.VCPKG_TRIPLET }}-gcc${{ steps.gcc.outputs.version }}-${{ env.VCPKG_REF }}-${{ hashFiles('.vcpkg-cache/**') }}
+
+      - name: Restore ccache
+        uses: actions/cache@v6
+        with:
+          path: .ccache
+          key: ccache-windows-gcc-${{ matrix.build_type }}-${{ github.run_id }}
+          restore-keys: ccache-windows-gcc-${{ matrix.build_type }}-
+
+      - name: Configure
+        shell: pwsh
+        run: >
+          cmake -S . -B build/ci -G Ninja
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+          -DVCPKG_TARGET_TRIPLET="$env:VCPKG_TRIPLET"
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DCMAKE_C_COMPILER=gcc
+          -DCMAKE_CXX_COMPILER=g++
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          -DENGINE_BUILD_TESTS=OFF
+
+      - name: Build
+        shell: pwsh
+        run: |
+          ccache --zero-stats
+          cmake --build build/ci --target $env:CMAKE_TARGET --parallel
+          ccache --show-stats
