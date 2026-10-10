@@ -1,0 +1,163 @@
+#include "view_system_2d.h"
+
+#include <algorithm>
+#include <cmath>
+
+constexpr Vec2i MAX_RENDER_TARGET_SIZE = {16384, 16384};
+
+static Vec2 calculate_logical_size(Vec2i output_size, const ViewPresentationProps &settings);
+static Vec2i calculate_render_target_size(Vec2i output_size, Vec2 logical_size, const ViewPresentationProps &settings);
+static Viewport calculate_presentation_rect(const Viewport &output_rect, Vec2i render_target_size, const ViewPresentationProps &settings);
+
+void ViewSystem::calculate_layout() {
+    m_layout = {};
+    const Vec2i output_size = m_output_rect.size;
+
+    m_layout.logical_size = calculate_logical_size(
+        output_size,
+        m_presentation);
+
+    m_layout.render_target_size = calculate_render_target_size(
+        output_size,
+        m_layout.logical_size,
+        m_presentation);
+
+    m_layout.presentation_rect = calculate_presentation_rect(
+        m_output_rect,
+        m_layout.render_target_size,
+        m_presentation);
+
+    /* use the smallest size (fixes some problems with framebuffer memory
+     * allocation being too large depending on window size) */
+    m_layout.render_target_size = {
+        std::min(m_layout.render_target_size.x, m_layout.presentation_rect.size.x),
+        std::min(m_layout.render_target_size.y, m_layout.presentation_rect.size.y),
+    };
+
+    /* just in case... */
+    m_layout.render_target_size = {
+        std::clamp(m_layout.render_target_size.x, 2, MAX_RENDER_TARGET_SIZE.x),
+        std::clamp(m_layout.render_target_size.y, 2, MAX_RENDER_TARGET_SIZE.y),
+    };
+
+    /* setup render target's viewport */
+    m_layout.render_viewport = {
+        .position = {0, 0},
+        .size = m_layout.render_target_size,
+    };
+
+    m_layout.scale = Vec2{m_layout.presentation_rect.size} /
+                     Vec2{m_layout.render_target_size};
+}
+
+/* private */
+
+static Vec2 calculate_logical_size(Vec2i output_size, const ViewPresentationProps &settings) {
+    const auto output_width = static_cast<float>(output_size.x);
+    const auto output_height = static_cast<float>(output_size.y);
+
+    if (settings.mode == PresentationMode::DISABLED) {
+        return Vec2{output_size};
+    }
+
+    const float output_aspect =
+        output_width / output_height;
+
+    Vec2 result;
+    switch (settings.aspect) {
+        case AspectPolicy::KEEP_WIDTH:
+            result = {
+                settings.logical_size.x,
+                settings.logical_size.x / output_aspect,
+            };
+            break;
+
+        case AspectPolicy::KEEP_HEIGHT:
+            result = {
+                settings.logical_size.y * output_aspect,
+                settings.logical_size.y,
+            };
+            break;
+
+        case AspectPolicy::EXPAND: {
+            const float logical_aspect =
+                settings.logical_size.x / settings.logical_size.y;
+
+            if (output_aspect > logical_aspect) {
+                /* if screen is wider then expose more horizontally */
+                result = {
+                    settings.logical_size.y * output_aspect,
+                    settings.logical_size.y,
+                };
+                break;
+            }
+
+            /* if screen is taller then expose more vertically */
+            result = {
+                settings.logical_size.x,
+                settings.logical_size.x / output_aspect,
+            };
+            break;
+        }
+
+        case AspectPolicy::IGNORE:
+            result = settings.logical_size;
+            break;
+    }
+
+    /* fixed resolution must be divisible by 2 for
+     * steadier centered cameras (also reduces mixels) */
+    if (settings.mode == PresentationMode::FIXED_RESOLUTION) {
+        result = {
+            std::ceil(result.x / 2.0f) * 2.0f,
+            std::ceil(result.y / 2.0f) * 2.0f,
+        };
+    }
+
+    return result;
+}
+
+static Vec2i calculate_render_target_size(Vec2i output_size, Vec2 logical_size, const ViewPresentationProps &settings) {
+    switch (settings.mode) {
+        case PresentationMode::FIXED_RESOLUTION: {
+            return {
+                static_cast<int>(std::ceil(logical_size.x)),
+                static_cast<int>(std::ceil(logical_size.y)),
+            };
+        }
+
+        case PresentationMode::LOGICAL_VIEW:
+        case PresentationMode::DISABLED:
+            return output_size;
+    }
+
+    return output_size;
+}
+
+static Viewport calculate_presentation_rect(const Viewport &output_rect, Vec2i render_target_size, const ViewPresentationProps &settings) {
+    const Vec2i output_size = output_rect.size;
+
+    if (settings.mode == PresentationMode::DISABLED ||
+        settings.aspect == AspectPolicy::IGNORE) {
+        return output_rect;
+    }
+
+    const Vec2 ratio = Vec2{output_size} / Vec2{render_target_size};
+
+    float scale;
+    if (settings.aspect == AspectPolicy::KEEP_WIDTH) {
+        scale = ratio.x;
+    } else if (settings.aspect == AspectPolicy::KEEP_HEIGHT) {
+        scale = ratio.y;
+    } else {
+        scale = std::min(ratio.x, ratio.y);
+    }
+
+    const Vec2i size = Vec2i{Vec2{render_target_size} * scale};
+    const Vec2i pos = output_rect.position + ((output_size - size) / 2);
+
+    return {
+        .position = pos,
+        .size = size,
+    };
+}

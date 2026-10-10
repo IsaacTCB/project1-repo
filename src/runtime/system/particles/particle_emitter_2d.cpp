@@ -1,6 +1,9 @@
 #include "particle_emitter_2d.h"
 
 #include "core/math/vec2.h"
+#include "core/utils/handle_pool.h"
+
+#include "particle_handles.h"
 
 /* ===================== */
 /*    ParticleEmitter2D  */

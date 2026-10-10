@@ -1,10 +1,12 @@
 #pragma once
 
-#include "core/math/vec2.h"
-#include "core/utils/handles.h"
 #include <cstdint>
 
-using EmitterHandle = Handle;
+#include "core/math/vec2.h"
+#include "core/utils/handle_pool.h"
+#include "core/utils/handles.h"
+
+#include "particle_handles.h"
 
 class Vec2;
 class EmitterPool;
@@ -52,7 +54,7 @@ private:
 class EmitterPool {
 public:
     struct EmitterData {
-        Handle effect; /* effect particle handle */
+        EffectHandle effect; /* effect particle handle */
         Vec2 position;
         float rotation;
         uint32_t emission_rate;
@@ -100,5 +102,5 @@ protected:
     friend ParticleEmitter2D;
 
 private:
-    HandlePool<EmitterData> m_pool;
+    HandlePool<EmitterData, EmitterHandle> m_pool;
 };

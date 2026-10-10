@@ -4,8 +4,9 @@
 
 #include "core/math/color.h"
 #include "core/view_context_2d.h"
-#include "core/viewport.h"
-#include "renderer/api/render_queue.h"
+#include "core/view_layout.h"
+
+#include "runtime/renderer/render_queue.h"
 
 struct FrameContext {
     /**
@@ -20,9 +21,10 @@ struct FrameContext {
     uint32_t fps;
 
     /**
-     * @brief Current screen viewport for this frame
+     * @brief Non-owning pointer of the ViewLayout object
+     * for this frame.
      */
-    Viewport viewport;
+    const ViewLayout *view_layout;
 };
 
 struct UpdateContext {

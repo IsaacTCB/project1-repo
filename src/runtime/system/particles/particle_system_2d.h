@@ -9,13 +9,13 @@
 
 #include "core/math/color.h"
 #include "core/math/vec2.h"
+#include "core/utils/handle_pool.h"
 #include "core/utils/handles.h"
-#include "renderer/api/render_queue.h"
 
 #include "particle_emitter_2d.h"
 #include "runtime/asset_service.h"
+#include "runtime/renderer/render_queue.h"
 
-using EffectHandle = Handle;
 struct ParticleEffect2D {
     float lifetime_min;
     float lifetime_max;
@@ -106,7 +106,7 @@ private:
     size_t m_index{};
 
     EmitterPool m_emitters;
-    HandlePool<ParticleEffect2D> m_effects;
+    HandlePool<ParticleEffect2D, EffectHandle> m_effects;
 
     uint32_t m_seed;
 };

@@ -9,9 +9,6 @@
 #include "core/math/vec2.h"
 #include "core/math/vec2i.h"
 #include "core/view_context_2d.h"
-
-#include "renderer/api/render_queue.h"
-
 #include "runtime/app/application.h"
 #include "runtime/app/context/frame_context.h"
 #include "runtime/asset_service.h"
@@ -28,10 +25,23 @@ class SandboxApplication : public IApplication {
 
 public:
     void configure(ApplicationConfig &config) override {
+        constexpr Vec2i VIEWPORT_SIZE = {480, 270};
+
         config.display = {
             .caption = "Sandbox",
-            .size = {1280, 720},
+            .size = VIEWPORT_SIZE * 3,
             .resizable = true,
+        };
+
+        config.view = {
+            /* desired camera view size */
+            .logical_size = Vec2{VIEWPORT_SIZE},
+
+            /* pixelated viewport, results in a retro feel. */
+            .mode = PresentationMode::FIXED_RESOLUTION,
+
+            /* viewport expands to fill the window's total width */
+            .aspect = AspectPolicy::KEEP_HEIGHT,
         };
     }
 
@@ -81,7 +91,8 @@ public:
          * by the on_render() function! this way
          * we don't need to waste time building
          * the same view context twice */
-        m_view_context = Camera2DUtils::build_view_context(m_camera, ctx.frame.viewport);
+        m_view_context = Camera2DUtils::build_view_context(
+            m_camera, *ctx.frame.view_layout);
 
         if (m_servers.input.is_key_just_pressed(Input::Key::Scancode::SPACE)) {
             LOG_TRACE("Damn");
@@ -169,8 +180,8 @@ public:
             entity.pos.y += ((move.x * cam_sin) + (cam_cos * move.y)) * (PLAYER_SPEED * delta) * entity.speed_scale;
         }
 
-        m_camera.position.x = std::floor(m_entities[0].pos.x + 100.0f);
-        m_camera.position.y = std::floor(m_entities[0].pos.y + 100.0f);
+        m_camera.position.x = std::floor(m_entities[0].pos.x);
+        m_camera.position.y = std::floor(m_entities[0].pos.y);
 
         m_particles.update(delta);
     }
@@ -190,7 +201,13 @@ public:
             float scale_factor = entity.speed_scale;
             scale_factor *= scale_factor * scale_factor;
 
-            ctx.queue.draw_texture(m_texture.get(), draw_pos, Vec2i(scale * scale_factor));
+            ctx.queue.draw_texture_ex(
+                m_texture.get(),
+                Color::WHITE,
+                draw_pos,
+                Vec2i(scale * scale_factor),
+                {0.5f, 0.5f},
+                0.0f);
         }
 
         Vec2i mouse_pos{m_servers.input.get_mouse_pos()};
@@ -200,10 +217,8 @@ public:
         Vec2 mouse_alt = m_view_context.world_to_screen(world_1);
         Vec2 world_2 = m_view_context.screen_to_world(mouse_alt);
 
-        world_2.x -= 4;
-        world_2.y -= 4;
-        ctx.queue.draw_color(Color{0xFF, 0x00, 0x00, 0x60}, Vec2i{world_2}, {16, 16});
-        ctx.queue.draw_color(Color{0xFF, 0x00, 0xFF, 0xFF}, Vec2i{world_1}, {8, 8});
+        ctx.queue.draw_color_ex(Color{0xFF, 0x00, 0x00, 0x60}, Vec2i{world_2}, {16, 16}, {0.5f, 0.5f}, 0.0f);
+        ctx.queue.draw_color_ex(Color{0xFF, 0x00, 0xFF, 0xFF}, Vec2i{world_1}, {8, 8}, {0.5f, 0.5f}, 0.0f);
 
         auto bounds = m_view_context.get_bounds_aabb();
         ctx.queue.draw_color(

@@ -4,9 +4,10 @@
 
 #include "core/image/image.h"
 #include "core/logger.h"
-#include "renderer/api/render_handles.h"
+
 #include "runtime/asset_cache.h"
 #include "runtime/image/decoder.h"
+#include "runtime/renderer/render_handles.h"
 
 struct AssetService::Impl {
     AssetCache<TextureHandle> textures;

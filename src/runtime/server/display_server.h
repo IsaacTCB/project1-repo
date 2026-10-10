@@ -1,10 +1,12 @@
 #pragma once
 
+#include <memory>
 #include <optional>
 #include <string>
 
 #include "core/math/vec2i.h"
-#include "renderer/api/renderer_apis.h"
+#include "graphics/api/render_device_factory.h"
+#include "runtime/debug/imgui_backend.h"
 
 #include "server_macros.inl"
 
@@ -16,7 +18,7 @@ struct DisplayWindowProps {
     Vec2i size{800, 600};
     std::optional<Vec2i> min_size;
     std::optional<Vec2i> max_size;
-    RendererAPI api = get_default_api();
+    std::string api;
     bool resizable = false;
 };
 
@@ -60,4 +62,13 @@ public:
      */
     [[nodiscard]]
     virtual Vec2i get_size(const DisplayWindowHandle &handle) const = 0;
+
+    [[nodiscard]]
+    virtual std::vector<std::string> get_render_backends() = 0;
+
+    [[nodiscard]]
+    virtual std::unique_ptr<IRenderDeviceFactory> get_render_factory(DisplayWindowHandle handle) = 0;
+
+    [[nodiscard]]
+    virtual std::unique_ptr<IImGuiBackend> create_imgui_backend(DisplayWindowHandle handle) = 0;
 };

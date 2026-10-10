@@ -18,7 +18,7 @@
 #define FORCE_INLINE [[gnu::always_inline]] inline
 
 /* MSVC */
-#elif define(_MSC_VER)
+#elif defined(_MSC_VER)
 #pragma warning(error : 4714)
 #define FORCE_INLINE __forceinline
 
