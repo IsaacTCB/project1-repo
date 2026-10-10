@@ -78,6 +78,33 @@ jobs:
         if: always()
         run: ccache --show-stats
 
+      # Artifact zips drop the executable bit, so ship a tarball instead.
+      - name: Package
+        run: |
+          mkdir -p dist
+          find build/ci/apps/${{ env.CMAKE_TARGET }} -maxdepth 1 -type f ! -name '*.cmake' -exec cp {} dist/ \;
+          tar -czf ${{ env.CMAKE_TARGET }}-linux-gcc-${{ matrix.build_type }}.tar.gz -C dist .
+
+      - name: Upload artifact
+        if: ${{ !env.ACT }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.CMAKE_TARGET }}-linux-gcc-${{ matrix.build_type }}
+          path: ${{ env.CMAKE_TARGET }}-linux-gcc-${{ matrix.build_type }}.tar.gz
+          compression-level: 0
+          retention-days: 14
+          if-no-files-found: error
+
+      # act's artifact server doesn't understand v7's upload requests yet.
+      - name: Upload artifact (act)
+        if: ${{ env.ACT }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.CMAKE_TARGET }}-linux-gcc-${{ matrix.build_type }}
+          path: ${{ env.CMAKE_TARGET }}-linux-gcc-${{ matrix.build_type }}.tar.gz
+          compression-level: 0
+          if-no-files-found: error
+
   # ===========================
   #   Windows - MSVC + Visual Studio
   # ===========================
@@ -174,6 +201,17 @@ jobs:
         if: always()
         shell: pwsh
         run: ccache --show-stats
+
+      # Visual Studio puts outputs (exe, pdb, dlls, assets) in a per-config folder.
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.CMAKE_TARGET }}-windows-msvc-${{ matrix.build_type }}
+          path: |
+            build/ci/apps/${{ env.CMAKE_TARGET }}/${{ matrix.build_type }}/
+            !build/ci/apps/${{ env.CMAKE_TARGET }}/${{ matrix.build_type }}/*.ilk
+          retention-days: 14
+          if-no-files-found: error
 
   # ===========================
   #   Windows - GCC (MinGW-w64) + Ninja
@@ -280,3 +318,15 @@ jobs:
         if: always()
         shell: pwsh
         run: ccache --show-stats
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.CMAKE_TARGET }}-windows-gcc-${{ matrix.build_type }}
+          path: |
+            build/ci/apps/${{ env.CMAKE_TARGET }}/
+            !build/ci/apps/${{ env.CMAKE_TARGET }}/CMakeFiles/**
+            !build/ci/apps/${{ env.CMAKE_TARGET }}/*.cmake
+            !build/ci/apps/${{ env.CMAKE_TARGET }}/*.a
+          retention-days: 14
+          if-no-files-found: error
