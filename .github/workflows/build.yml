@@ -224,8 +224,8 @@ jobs:
       matrix:
         build_type: [Debug, Release]
     env:
-      VCPKG_TRIPLET: x64-mingw-static
-      VCPKG_DEFAULT_HOST_TRIPLET: x64-mingw-static
+      VCPKG_TRIPLET: x64-mingw-dynamic
+      VCPKG_DEFAULT_HOST_TRIPLET: x64-mingw-dynamic
       VCPKG_ROOT: ${{ github.workspace }}/.vcpkg
       VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite
       CCACHE_DIR: ${{ github.workspace }}/.ccache
