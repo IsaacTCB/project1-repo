@@ -28,6 +28,7 @@ Diagnostics:
       - readability-isolate-declaration
       - readability-implicit-bool-conversion
       - readability-identifier-length
+      - readability-trailing-comma
 
 Completion:
   HeaderInsertion: Never
