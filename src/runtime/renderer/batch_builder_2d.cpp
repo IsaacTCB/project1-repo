@@ -153,7 +153,7 @@ void BatchBuilder2D::draw_rect(const Vec2 &pos, const Vec2 &size, const Vec2 &an
 
 void BatchBuilder2D::flush() {
     /* fail-safe: nothing was drawn, don't flush. */
-    if (m_vertices.size() == 0) {
+    if (m_vertices.empty()) {
         m_current_key.reset();
         return;
     }
@@ -167,11 +167,12 @@ void BatchBuilder2D::flush() {
 
     /* update vertex buffer */
     m_rd->update_buffer(m_state.vertex_buffer, m_vertices.size() * sizeof(BatchVertex2D), m_vertices.data());
-    m_rd->set_vertex_buffer(m_state.vertex_buffer);
-
-    /* update index buffer */
     m_rd->update_buffer(m_state.index_buffer, m_indices.size() * sizeof(uint16_t), m_indices.data());
-    m_rd->set_index_buffer(m_state.index_buffer);
+
+    m_rd->set_draw_buffers({
+        .vertex = m_state.vertex_buffer,
+        .index = m_state.index_buffer,
+    });
 
     /* use texture */
     m_rd->set_texture(0, m_current_key->texture, m_current_key->sampler);

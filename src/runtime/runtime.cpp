@@ -396,7 +396,9 @@ void EngineRuntime::imgui_editor() {
 
             const auto &layout = m_view.get_layout();
             ImGui::Text("fps = %d", m_fps.fps);
-            ImGui::Text("render_device = %s", "Not implemented!");
+
+            const IRenderDevice *device = m_renderer ? m_renderer->device() : nullptr;
+            ImGui::Text("render_device = %s", device ? device->name() : "n/a");
 
             /* ================= *
              *   View settings   *

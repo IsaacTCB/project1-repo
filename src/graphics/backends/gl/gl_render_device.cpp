@@ -746,12 +746,10 @@ void GL_RenderDevice::set_mvp_matrix(const MatrixApplyDesc &matrix_desc) {
     };
 }
 
-void GL_RenderDevice::set_vertex_buffer(BufferHandle vertex_buffer) {
-    m_bound_vbo = vertex_buffer;
-}
-
-void GL_RenderDevice::set_index_buffer(BufferHandle index_buffer) {
-    m_bound_ibo = index_buffer;
+void GL_RenderDevice::set_draw_buffers(const BufferApplyDesc &buffer_desc) {
+    ASSERT(m_buffers.has(buffer_desc.vertex), "Vertex buffer must be valid!");
+    m_bound_vbo = buffer_desc.vertex;
+    m_bound_ibo = buffer_desc.index;
 }
 
 /**
