@@ -5,6 +5,7 @@
 #include "runtime/asset_service.h"
 #include "runtime/input_service.h"
 #include "runtime/platform_services.h"
+#include "runtime/system/view/view_system_2d.h"
 
 #include <string>
 
@@ -13,8 +14,16 @@ struct ApplicationConfig {
         std::string caption = "Untitled";
         Vec2i size = {800, 600};
         bool resizable = false;
+        bool filter_textures = true;
 
     } display;
+
+    struct View {
+        Vec2 logical_size = {800.0f, 600.0f};
+        PresentationMode mode = PresentationMode::DISABLED;
+        AspectPolicy aspect = AspectPolicy::KEEP_HEIGHT;
+
+    } view;
 };
 
 class IApplication {

@@ -4,13 +4,14 @@
 #include <core/logger.h>
 
 #include <initializer_list>
+#include <span>
 #include <string_view>
 #include <vector>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-struct GLShaderSourceEntry {
+struct GL_ShaderSourceEntry {
     GLenum type;
     std::string_view source;
 };
@@ -26,24 +27,23 @@ struct GLShaderSourceEntry {
  * @param sources List of shader sources to compile and link from.
  * @return A usable gl shader program or 0 on failure.
  */
-static GLuint build_shader_program(std::span<const GLShaderSourceEntry> shaders);
-static GLuint build_shader_program(std::initializer_list<const GLShaderSourceEntry> list);
+static GLuint build_shader_program(std::span<const GL_ShaderSourceEntry> shaders);
+static GLuint build_shader_program(std::initializer_list<const GL_ShaderSourceEntry> list);
 
-GLShader::GLShader(std::string_view vertex_source, std::string_view fragment_source) {
+GL_Shader::GL_Shader(std::string_view vertex_source, std::string_view fragment_source) {
     m_program = build_shader_program({
         {.type = GL_VERTEX_SHADER, .source = vertex_source},
         {.type = GL_FRAGMENT_SHADER, .source = fragment_source},
     });
-    ASSERT(m_program != 0, "Failed to build shader program");
 }
 
-GLShader::~GLShader() {
+GL_Shader::~GL_Shader() {
     if (m_program) {
         glDeleteProgram(m_program);
     }
 }
 
-GLint GLShader::get_uniform(std::string_view uniform_name) {
+GLint GL_Shader::get_uniform(std::string_view uniform_name) {
     std::string temp(uniform_name);
 
     GLint uniform{};
@@ -63,32 +63,32 @@ GLint GLShader::get_uniform(std::string_view uniform_name) {
     return uniform;
 }
 
-void GLShader::set_int(std::string_view uniform_name, int value) {
+void GL_Shader::set_int(std::string_view uniform_name, int value) {
     GLint uniform = get_uniform(uniform_name);
     glUniform1i(uniform, value);
 }
 
-void GLShader::set_float(std::string_view uniform_name, float value) {
+void GL_Shader::set_float(std::string_view uniform_name, float value) {
     GLint uniform = get_uniform(uniform_name);
     glUniform1f(uniform, value);
 }
 
-void GLShader::set_float2(std::string_view uniform_name, const glm::vec2 &vec) {
+void GL_Shader::set_float2(std::string_view uniform_name, const glm::vec2 &vec) {
     GLint uniform = get_uniform(uniform_name);
     glUniform2fv(uniform, 1, glm::value_ptr(vec));
 }
 
-void GLShader::set_float3(std::string_view uniform_name, const glm::vec3 &vec) {
+void GL_Shader::set_float3(std::string_view uniform_name, const glm::vec3 &vec) {
     GLint uniform = get_uniform(uniform_name);
     glUniform3fv(uniform, 1, glm::value_ptr(vec));
 }
 
-void GLShader::set_float4(std::string_view uniform_name, const glm::vec4 &vec) {
+void GL_Shader::set_float4(std::string_view uniform_name, const glm::vec4 &vec) {
     GLint uniform = get_uniform(uniform_name);
     glUniform4fv(uniform, 1, glm::value_ptr(vec));
 }
 
-void GLShader::set_mat4(std::string_view uniform_name, const glm::mat4 &mat4) {
+void GL_Shader::set_mat4(std::string_view uniform_name, const glm::mat4 &mat4) {
     GLint uniform = get_uniform(uniform_name);
     glUniformMatrix4fv(uniform, 1, GL_FALSE, glm::value_ptr(mat4));
 }
@@ -150,7 +150,7 @@ static GLuint compile_shader(std::string_view shader_source, GLenum shader_type)
     return shader;
 }
 
-static GLuint build_shader_program(const std::span<const GLShaderSourceEntry> shaders) {
+static GLuint build_shader_program(const std::span<const GL_ShaderSourceEntry> shaders) {
     GLuint program = glCreateProgram();
     if (!program) {
         LOG_ERROR("gl: failed to create shader program object");
@@ -192,6 +192,6 @@ static GLuint build_shader_program(const std::span<const GLShaderSourceEntry> sh
     return program;
 }
 
-static GLuint build_shader_program(const std::initializer_list<const GLShaderSourceEntry> list) {
-    return build_shader_program(std::span<const GLShaderSourceEntry>{list.begin(), list.end()});
+static GLuint build_shader_program(const std::initializer_list<const GL_ShaderSourceEntry> list) {
+    return build_shader_program(std::span<const GL_ShaderSourceEntry>{list.begin(), list.end()});
 }

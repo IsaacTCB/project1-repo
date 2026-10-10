@@ -3,7 +3,6 @@
 #include <memory>
 
 #include "runtime/app/application.h"
-#include "runtime/app/context/frame_context.h"
 #include "runtime/platform_services.h"
 
 class IApplicationHandler {
