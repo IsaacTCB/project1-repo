@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <format>
-#include <functional>
 #include <limits>
 #include <type_traits>
 
