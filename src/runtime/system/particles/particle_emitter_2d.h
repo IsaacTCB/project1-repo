@@ -36,7 +36,7 @@ public:
 
 protected:
     friend EmitterPool;
-    ParticleEmitter2D(EmitterPool *system, EmitterHandle handle)
+    ParticleEmitter2D(EmitterPool *system, ParticleEmitterHandle handle)
         : m_emitter_pool(system), m_handle(handle) {}
 
 private:
@@ -44,7 +44,7 @@ private:
 
 private:
     EmitterPool *m_emitter_pool{nullptr};
-    EmitterHandle m_handle{};
+    ParticleEmitterHandle m_handle{};
 };
 
 /* ================= */
@@ -54,7 +54,7 @@ private:
 class EmitterPool {
 public:
     struct EmitterData {
-        EffectHandle effect; /* effect particle handle */
+        ParticleEffectHandle effect; /* effect particle handle */
         Vec2 position;
         float rotation;
         uint32_t emission_rate;
@@ -73,7 +73,7 @@ public:
         };
     }
 
-    void destroy(EmitterHandle emitter) {
+    void destroy(ParticleEmitterHandle emitter) {
         m_pool.remove(emitter);
     }
 
@@ -94,13 +94,13 @@ public:
     }
 
 protected:
-    void set_rate(EmitterHandle emitter, uint32_t emission_rate);
-    void set_position(EmitterHandle emitter, const Vec2 &position);
-    void set_angle(EmitterHandle emitter, float angle);
-    void set_emitting(EmitterHandle emitter, bool emitting);
+    void set_rate(ParticleEmitterHandle emitter, uint32_t emission_rate);
+    void set_position(ParticleEmitterHandle emitter, const Vec2 &position);
+    void set_angle(ParticleEmitterHandle emitter, float angle);
+    void set_emitting(ParticleEmitterHandle emitter, bool emitting);
 
     friend ParticleEmitter2D;
 
 private:
-    HandlePool<EmitterData, EmitterHandle> m_pool;
+    HandlePool<EmitterData, ParticleEmitterHandle> m_pool;
 };

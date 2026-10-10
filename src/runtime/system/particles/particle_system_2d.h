@@ -51,16 +51,16 @@ public:
 
 public:
     template <typename Fx>
-    EffectHandle create_effect(Fx &&effect) {
+    ParticleEffectHandle create_effect(Fx &&effect) {
         return m_effects.emplace(std::forward<Fx>(effect));
     }
 
-    void destroy_effect(EffectHandle handle) {
+    void destroy_effect(ParticleEffectHandle handle) {
         m_effects.remove(handle);
     }
 
     [[nodiscard]]
-    ParticleEmitter2D create_emitter(EffectHandle effect) {
+    ParticleEmitter2D create_emitter(ParticleEffectHandle effect) {
         /* HACK: don't do this */
         uint32_t rate = m_effects.has(effect)
                           ? m_effects.get(effect)->emission_rate
@@ -98,7 +98,7 @@ private:
         std::array<Vec2, PARTICLE_COUNT> vel;
         std::array<float, PARTICLE_COUNT> lifetime;
         std::array<float, PARTICLE_COUNT> lifetime_remaining;
-        std::array<EffectHandle, PARTICLE_COUNT> effect{};
+        std::array<ParticleEffectHandle, PARTICLE_COUNT> effect{};
         std::array<bool, PARTICLE_COUNT> alive{};
     };
 
@@ -106,7 +106,7 @@ private:
     size_t m_index{};
 
     EmitterPool m_emitters;
-    HandlePool<ParticleEffect2D, EffectHandle> m_effects;
+    HandlePool<ParticleEffect2D, ParticleEffectHandle> m_effects;
 
     uint32_t m_seed;
 };

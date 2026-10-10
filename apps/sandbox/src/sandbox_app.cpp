@@ -255,7 +255,7 @@ private:
 
     ParticleSystem2D m_particles;
     ParticleEmitter2D m_emitter;
-    EffectHandle m_emitter_effect;
+    ParticleEffectHandle m_emitter_effect;
 };
 
 SET_APP(SandboxApplication);

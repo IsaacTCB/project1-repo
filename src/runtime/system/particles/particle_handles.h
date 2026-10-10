@@ -2,8 +2,8 @@
 
 #include "core/utils/handles.h"
 
-struct EffectTag;
-using EffectHandle = Handle<EffectTag>;
+struct ParticleEffectTag;
+using ParticleEffectHandle = Handle<ParticleEffectTag>;
 
-struct EmitterTag;
-using EmitterHandle = Handle<EmitterTag>;
+struct ParticleEmitterTag;
+using ParticleEmitterHandle = Handle<ParticleEmitterTag>;
