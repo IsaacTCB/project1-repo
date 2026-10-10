@@ -4,6 +4,8 @@
 
 #include "core/logger.h"
 
+#include <source_location>
+
 #if defined(_MSC_VER)
 #define IMPL_DEBUG_BREAK __debugbreak
 #elif defined(__GNUC__) || defined(__clang__)
@@ -16,32 +18,33 @@
 
 /* This function is not meant to be used outside of this file! */
 namespace AssertImpl__ {
-inline void fail_assert__(const char *expr, const char *file, int line, const char *message) {
+inline void fail_assert__(const char *expr, const char *message, const std::source_location location = std::source_location::current()) {
     message = message ? message
                       : "No message specified";
 
     LOG_CRITICAL("ASSERTION FAILED\n"
                  "    Expression: {0}\n"
-                 "    File: {1}:{2}\n"
-                 "    Message: \"{3}\"",
-        expr, file, line, message);
+                 "    Function: {1}\n"
+                 "    File: {2}:{3}\n"
+                 "    Message: \"{4}\"",
+        expr, location.function_name(), location.file_name(), location.line(), message);
 
     IMPL_DEBUG_BREAK();
 }
 } // namespace AssertImpl__
 
-#define IMPL_ASSERT_MSG(expr, msg)                                       \
-    do {                                                                 \
-        if (!((expr))) {                                                 \
-            AssertImpl__::fail_assert__(#expr, __FILE__, __LINE__, msg); \
-        }                                                                \
+#define IMPL_ASSERT_MSG(expr, msg)                   \
+    do {                                             \
+        if (!((expr))) {                             \
+            AssertImpl__::fail_assert__(#expr, msg); \
+        }                                            \
     } while (0);
 
-#define IMPL_ASSERT_NO_MSG(expr)                                             \
-    do {                                                                     \
-        if (!((expr))) {                                                     \
-            AssertImpl__::fail_assert__(#expr, __FILE__, __LINE__, nullptr); \
-        }                                                                    \
+#define IMPL_ASSERT_NO_MSG(expr)                         \
+    do {                                                 \
+        if (!((expr))) {                                 \
+            AssertImpl__::fail_assert__(#expr, nullptr); \
+        }                                                \
     } while (0);
 
 #define IMPL_ASSERT_GET(var1, var2, impl, ...) impl
