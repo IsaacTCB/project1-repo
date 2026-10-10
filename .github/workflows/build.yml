@@ -73,7 +73,10 @@ jobs:
         run: |
           ccache --zero-stats
           cmake --build build/ci --target ${{ env.CMAKE_TARGET }} --parallel
-          ccache --show-stats
+
+      - name: ccache stats
+        if: always()
+        run: ccache --show-stats
 
   # ===========================
   #   Windows - MSVC + Visual Studio
@@ -160,12 +163,17 @@ jobs:
           -DCMAKE_VS_GLOBALS="CLToolExe=cl.exe;CLToolPath=$env:RUNNER_TEMP/ccache-cl;TrackFileAccess=false;UseMultiToolTask=true"
           -DENGINE_BUILD_TESTS=OFF
 
+      # The build must be the last command: a pwsh step only fails on the final exit code.
       - name: Build
         shell: pwsh
         run: |
           ccache --zero-stats
           cmake --build build/ci --target $env:CMAKE_TARGET --config ${{ matrix.build_type }} --parallel
-          ccache --show-stats
+
+      - name: ccache stats
+        if: always()
+        shell: pwsh
+        run: ccache --show-stats
 
   # ===========================
   #   Windows - GCC (MinGW-w64) + Ninja
@@ -261,9 +269,14 @@ jobs:
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           -DENGINE_BUILD_TESTS=OFF
 
+      # The build must be the last command: a pwsh step only fails on the final exit code.
       - name: Build
         shell: pwsh
         run: |
           ccache --zero-stats
           cmake --build build/ci --target $env:CMAKE_TARGET --parallel
-          ccache --show-stats
+
+      - name: ccache stats
+        if: always()
+        shell: pwsh
+        run: ccache --show-stats
