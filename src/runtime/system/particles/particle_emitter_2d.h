@@ -79,7 +79,7 @@ public:
 
     using EmitCallbackFn = void (*)(EmitterData &emitted, void *user);
     void update(float delta, EmitCallbackFn emit_callback, void *user) {
-        m_pool.foreach ([emit_callback, user, delta](EmitterData &emitter) {
+        m_pool.for_each([emit_callback, user, delta](EmitterData &emitter) -> void {
             if (!emitter.emitting) {
                 return;
             }

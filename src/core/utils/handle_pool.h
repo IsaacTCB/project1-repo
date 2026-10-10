@@ -168,7 +168,7 @@ public:
     }
 
     template <typename Func>
-    void foreach (Func &&func) {
+    void for_each(Func &&func) {
         for (Slot &slot : m_pool) {
             if (!slot.data.has_value()) {
                 continue;
