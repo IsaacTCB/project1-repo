@@ -92,6 +92,10 @@ static DisplayWindowProps get_window_props_from_config(const std::string &app_na
 }
 
 EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *const> args) {
+    /* HACK: We are currently using std::printf to print some stuff. We should either be
+     * using an in-house solution or std::println instead (the latter breaks ci mingw-w64
+     * builds). */
+
     const std::string_view program = !args.empty() && args[0] ? args[0] : "app";
 
     const auto print_usage = [program]() -> void {
