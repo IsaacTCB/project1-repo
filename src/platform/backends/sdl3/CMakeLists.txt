@@ -87,17 +87,16 @@ function(engine_create_application target_name)
     endif()
 
     if(ENGINE_SDL_FETCH_CONTROLLERDB AND NOT EMSCRIPTEN)
-        if(EXISTS "${sdl_controller_db_FILEPATH}")
+        if(sdl_controller_db_FILEPATH AND EXISTS "${sdl_controller_db_FILEPATH}")
             add_custom_command(
                 TARGET ${target_name} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
                         "${sdl_controller_db_FILEPATH}"
                         "$<TARGET_FILE_DIR:${target_name}>/gamecontrollerdb.txt"
-                DEPENDS "${sdl_controller_db_FILEPATH}"
                 COMMENT "Copying 'gamecontrollerdb.txt'..."
             )
         else()
-            message(STATUS "Notice: gamecontrollerdb.txt was not downloaded.")
+            message(STATUS "'gamecontrollerdb.txt' unavailable; skipping bundling.")
         endif()
     endif()
 
