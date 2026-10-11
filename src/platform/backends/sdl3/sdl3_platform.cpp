@@ -75,15 +75,14 @@ SDL_AppResult SDL3_PlatformImpl::init(int argc, char *argv[]) {
         return SDL_APP_FAILURE;
     }
 
-    if (int result = SDL_AddGamepadMappingsFromFile("gamecontrollerdb.txt") >= 0) {
-        LOG_TRACE("Loaded {0} gamepad mappings.", result);
-    } else if (result < 0) {
-        LOG_ERROR("Failed to load gamecontrollerdb.txt mappings. Reason: {0}", SDL_GetError());
-    }
-
     m_last_tick = SDL_GetTicks();
-
     m_runtime->init(s_app_handler);
+
+    if (int mappings = SDL_AddGamepadMappingsFromFile("gamecontrollerdb.txt"); mappings >= 0) {
+        LOG_INFO("Loaded {0} gamepad {1} from 'gamecontrollerdb.txt'.", mappings, mappings == 1 ? "mapping" : "mappings");
+    } else if (mappings == -1) {
+        LOG_WARN("Failed to load 'gamecontrollerdb.txt' mappings. Reason: {0}", SDL_GetError());
+    }
 
     return SDL_APP_CONTINUE;
 }

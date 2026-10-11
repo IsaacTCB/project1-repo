@@ -3,6 +3,8 @@
 
 cmake_minimum_required(VERSION 3.11)
 
+option(ENGINE_SDL_FETCH_CONTROLLERDB "Download gamecontrollerdb.txt automatically" ON)
+
 list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 include(engine_platform)
@@ -54,6 +56,10 @@ target_link_libraries(sdl3_platform_runtime
     SDL3::SDL3
 )
 
+if(ENGINE_SDL_FETCH_CONTROLLERDB)
+    fetch_gamecontrollerdb()
+endif()
+
 function(engine_create_application target_name)
     create_sdl3_target(${target_name} ${ARGN})
     target_link_libraries(${target_name} PRIVATE sdl3_platform_main sdl3_platform_runtime)
@@ -78,6 +84,21 @@ function(engine_create_application target_name)
             -static-libstdc++
             -static
         )
+    endif()
+
+    if(ENGINE_SDL_FETCH_CONTROLLERDB AND NOT EMSCRIPTEN)
+        if(EXISTS "${sdl_controller_db_FILEPATH}")
+            add_custom_command(
+                TARGET ${target_name} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        "${sdl_controller_db_FILEPATH}"
+                        "$<TARGET_FILE_DIR:${target_name}>/gamecontrollerdb.txt"
+                DEPENDS "${sdl_controller_db_FILEPATH}"
+                COMMENT "Copying 'gamecontrollerdb.txt'..."
+            )
+        else()
+            message(STATUS "Notice: gamecontrollerdb.txt was not downloaded.")
+        endif()
     endif()
 
     engine_copy_dll(${target_name})

@@ -33,3 +33,16 @@ macro(create_sdl3_target target_name)
         endif()
     endif()
 endmacro()
+
+macro(fetch_gamecontrollerdb)
+    include(FetchContent)
+    FetchContent_Declare(
+        sdl_controller_db
+        URL "https://raw.githubusercontent.com/mdqinc/SDL_GameControllerDB/refs/heads/master/gamecontrollerdb.txt"
+        DOWNLOAD_NO_EXTRACT TRUE
+    )
+    FetchContent_MakeAvailable(
+        sdl_controller_db
+    )
+    set(sdl_controller_db_FILEPATH "${sdl_controller_db_SOURCE_DIR}/gamecontrollerdb.txt" CACHE INTERNAL "Path to downloaded gamecontrollerdb")
+endmacro()
