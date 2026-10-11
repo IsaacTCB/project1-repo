@@ -1,0 +1,30 @@
+/*
+ * This file gets auto-filled by the build system (CMake)
+ * during build time everytime git state changes.
+ *
+ * This specific C++ pattern was inspired by the following
+ * blog post: https://lenord.me/posts/simple_release_versioning/
+ * I did my own updates though.
+ */
+
+#include <runtime/version.h>
+
+namespace RuntimeVersion {
+
+static constexpr VersionInfo INFO = {
+    // clang-format off
+    .major = @VERSION_MAJOR@,
+    .minor = @VERSION_MINOR@,
+    .patch = @VERSION_PATCH@,
+    .config = "@BUILD_CONFIG@",
+    .git_hash = "@GIT_HASH@",
+    .git_dirty = @GIT_DIRTY@,
+    .semver_string = "@VERSION_SEMVER@",
+    // clang-format on
+};
+
+const VersionInfo &version() {
+    return INFO;
+}
+
+} /* namespace RuntimeVersion */
