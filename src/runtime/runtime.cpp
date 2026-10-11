@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdio>
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <string>
@@ -106,7 +107,8 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
             "OPTIONS\n"
             "  -h, --help             show this message and exit\n"
             "  --version              show runtime version id\n"
-            "  --v, --verbose         enable detailed log levels\n"
+            "  -v, --verbose          enable detailed log levels\n"
+            "  -L, --export-log       output logs to a file\n"
             "\n"
             "DISPLAY OPTIONS\n"
             "  --render-device        select what render device backend to use\n"
@@ -167,6 +169,25 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
             std::fflush(stdout);
             return LaunchResult::EXIT_OK;
         }
+        if (arg == "-L" || arg == "--export-log") {
+            /* read options */
+            const std::string_view opt_arg =
+                (i + 1) < args.size()
+                    ? args[i + 1]
+                    : std::string_view{};
+
+            /* no option was specified */
+            if (opt_arg.empty()) {
+                LOG_ERROR("Please specify an output path for the log file");
+                std::fflush(stdout);
+                return LaunchResult::EXIT_ERROR;
+            }
+
+            m_export_log = opt_arg;
+            i++;
+
+            continue;
+        }
         if (arg == "--render-device") {
             /* read options */
             const std::string_view opt_arg =
@@ -210,7 +231,25 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
 }
 
 void EngineRuntime::init(IApplicationHandler &app_handler) {
-    Logger::get().add_sink(FileLogSink::open("runtime.log"));
+#if DEBUG
+    m_export_log =
+        m_export_log.empty()
+            ? "runtime.log"
+            : m_export_log;
+#endif
+
+    if (!m_export_log.empty()) {
+        auto file = FileLogSink::open(m_export_log);
+        if (file) {
+            LOG_INFO("Exporting this session's logs to '{}'", m_export_log.generic_string());
+            Logger::get().add_sink(std::move(file));
+        } else {
+            LOG_ERROR(
+                "Could not export logs to '{}'. Please "
+                "check filepath and file permissions.",
+                m_export_log.generic_string());
+        }
+    }
 
 #if ENABLE_IMGUI
     m_imgui_log_state = std::make_shared<ImGuiLogState>(ImGuiLogState::DEFAULT_LINE_COUNT);

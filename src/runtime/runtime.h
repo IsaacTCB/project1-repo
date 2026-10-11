@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <filesystem>
 #include <optional>
 #include <span>
 #include <string>
@@ -100,6 +101,7 @@ private:
 #endif
 
     std::string m_program_name;
+    std::filesystem::path m_export_log{};
     std::string m_preferred_backend;
 
     ViewSystem m_view;
