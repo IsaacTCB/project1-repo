@@ -103,6 +103,7 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
             "OPTIONS\n"
             "  -h, --help             show this message and exit\n"
             "  --version              show runtime version id\n"
+            "  --v, --verbose         enable detailed log levels\n"
             "\n"
             "DISPLAY OPTIONS\n"
             "  --render-device        select what render device backend to use\n"
@@ -147,6 +148,16 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
             print_version();
             std::fflush(stdout);
             return LaunchResult::EXIT_OK;
+        }
+        if (arg == "-v" || arg == "--verbose") {
+            Logger::get().set_severity(LOG_SEVERITY_TRACE);
+            if (LOG_DEFAULT_SEVERITY_LEVEL == LOG_SEVERITY_TRACE) {
+                LOG_TRACE("verbose mode was already enabled. Specifying -v/--verbose is redudant.");
+            } else {
+                LOG_TRACE("enabled verbose mode. Trace messages will get printed");
+            }
+            std::fflush(stdout);
+            continue;
         }
         if (arg == "--list-render-devices") {
             print_render_devices();
