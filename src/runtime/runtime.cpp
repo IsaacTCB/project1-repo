@@ -124,7 +124,7 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
 
     const auto print_render_devices = [this]() -> void {
         const auto backends = m_platform.display.get_render_backends();
-        std::puts("Supported backends:\n");
+        std::puts("Supported backends:");
 
         for (const auto &b : backends) {
             std::printf("  '%s'\n", b.data());
