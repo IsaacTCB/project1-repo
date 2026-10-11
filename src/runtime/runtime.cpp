@@ -5,7 +5,6 @@
 #include <cstdio>
 #include <memory>
 #include <optional>
-#include <print>
 #include <string>
 #include <string_view>
 
@@ -96,9 +95,9 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
     const std::string_view program = !args.empty() && args[0] ? args[0] : "app";
 
     const auto print_usage = [program]() -> void {
-        std::println(
+        std::printf(
             "Usage:\n"
-            "  {0} [options]\n"
+            "  %s [options]\n"
             "\n"
             "OPTIONS\n"
             "  -h, --help             show this message and exit\n"
@@ -107,8 +106,8 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
             "\n"
             "DISPLAY OPTIONS\n"
             "  --render-device        select what render device backend to use\n"
-            "  --list-render-devices  list available render device backends",
-            program);
+            "  --list-render-devices  list available render device backends\n",
+            program.data());
     };
 
     const auto print_version = []() -> void {
@@ -120,15 +119,15 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
 #endif
 
         /* TODO: use runtime version from cmake */
-        std::println("pj1-{}-v0.0.0", config ? config : "unk");
+        std::printf("pj1-%s-v0.0.0\n", config ? config : "unk");
     };
 
     const auto print_render_devices = [this]() -> void {
         const auto backends = m_platform.display.get_render_backends();
-        std::println("Supported backends:");
+        std::puts("Supported backends:\n");
 
         for (const auto &b : backends) {
-            std::println("  '{}'", b);
+            std::printf("  '%s'\n", b.data());
         }
     };
 
