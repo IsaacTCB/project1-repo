@@ -1,3 +1,6 @@
+# TODO: this whole file needs to be revised and rewritten from scratch.
+# It's really messy and poluted and hacky, I hate it.
+
 cmake_minimum_required(VERSION 3.11)
 
 list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -13,7 +16,6 @@ set(SDL3_SOURCES
     sdl3_gamepad.cpp
     sdl3_platform.cpp
     sdl3_registry.cpp
-    sdl3_main.cpp
 )
 
 add_library(sdl3_platform_runtime
@@ -21,10 +23,18 @@ add_library(sdl3_platform_runtime
     ${SDL3_SOURCES}
 )
 
-# Enable SDL callbacks
-target_compile_definitions(sdl3_platform_runtime PRIVATE SDL_MAIN_USE_CALLBACKS)
-
 engine_add_platform(sdl3_platform_runtime)
+
+# mingw builds needs the entrypoint to be linked
+# against the main executable, so that its linker
+# recognizes WinMain (we are using SDL callbacks)
+add_library(sdl3_platform_main OBJECT sdl3_main.cpp)
+
+# Enable SDL callbacks
+target_compile_definitions(sdl3_platform_main PRIVATE SDL_MAIN_USE_CALLBACKS)
+
+engine_add_platform(sdl3_platform_main)
+target_link_libraries(sdl3_platform_main PRIVATE SDL3::SDL3)
 
 # engine_add_renderer(sdl3_platform_runtime sdl3)
 engine_add_renderer(sdl3_platform_runtime gl
@@ -46,7 +56,7 @@ target_link_libraries(sdl3_platform_runtime
 
 function(engine_create_application target_name)
     create_sdl3_target(${target_name} ${ARGN})
-    target_link_libraries(${target_name} PRIVATE sdl3_platform_runtime)
+    target_link_libraries(${target_name} PRIVATE sdl3_platform_main sdl3_platform_runtime)
     if(TARGET imgui)
         target_link_libraries(${target_name} PRIVATE imgui)
         target_compile_definitions(${target_name} PRIVATE ENABLE_IMGUI=1)

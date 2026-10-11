@@ -52,6 +52,7 @@ bool Renderer2D::init_device() {
     });
     if (m_render_target) {
         m_enabled_render_targets = true;
+        init_fullscreen_quad();
     }
 
     return true;
@@ -62,7 +63,10 @@ void Renderer2D::close_device() {
 
     m_batch.reset();
 
-    m_rd->destroy_render_target(m_render_target);
+    if (m_render_target) {
+        m_rd->destroy_render_target(m_render_target);
+        close_fullscreen_quad();
+    }
 
     /* remove projection & view */
     m_rd->destroy_matrix(m_matrices.projection);
@@ -178,82 +182,93 @@ void Renderer2D::render_frame_pass(const RenderContext &ctx) {
     m_rd->end_pass();
 }
 
-struct BatchVertex2D {
-    Vec2 uv;
-    Color color;
-    Vec3 position;
-};
+void Renderer2D::init_fullscreen_quad() {
+    LOG_TRACE("Renderer2D: initializing fullscreen quad...");
 
-void Renderer2D::draw_fullscreen_quad(TextureHandle texture) {
-    static bool inited = false;
-    static PipelineHandle pipeline;
-    static BufferHandle vertices;
-    static BufferHandle indices;
-    static SamplerHandle sampler;
+    struct BatchVertex2D {
+        Vec2 uv;
+        Color color;
+        Vec3 position;
+    };
 
-    if (!inited) {
-        /* HACK: lazy-init is REALLY stupid here... Also, most of these objects are
-         * already used by the batch renderer, so we might just want to reuse those */
-        const std::array<VertexAttribute, 3> attrib{{
-            {.semantic = VertexAttribute::Semantic::POSITION, .format = VertexAttribute::Format::FLOAT3, .offset = offsetof(BatchVertex2D, position)},
-            {.semantic = VertexAttribute::Semantic::TEXCOORD, .format = VertexAttribute::Format::FLOAT2, .offset = offsetof(BatchVertex2D, uv)},
-            {.semantic = VertexAttribute::Semantic::COLOR, .format = VertexAttribute::Format::RGBA8888, .offset = offsetof(BatchVertex2D, color)},
-        }};
+    static constexpr std::array<VertexAttribute, 3> attrib{{
+        {.semantic = VertexAttribute::Semantic::POSITION, .format = VertexAttribute::Format::FLOAT3, .offset = offsetof(BatchVertex2D, position)},
+        {.semantic = VertexAttribute::Semantic::TEXCOORD, .format = VertexAttribute::Format::FLOAT2, .offset = offsetof(BatchVertex2D, uv)},
+        {.semantic = VertexAttribute::Semantic::COLOR, .format = VertexAttribute::Format::RGBA8888, .offset = offsetof(BatchVertex2D, color)},
+    }};
 
-        pipeline = m_rd->create_pipeline({
-            .blending = {
-                .enabled = false,
-            },
-            .index_format = IndexFormat::UINT8,
-            .vertex_layout = {
-                .attributes = attrib,
-                .stride = sizeof(BatchVertex2D),
-            },
-        });
+    m_fullscreen_quad.pipeline = m_rd->create_pipeline({
+        .blending = {
+            .enabled = false,
+        },
+        .index_format = IndexFormat::UINT8,
+        .vertex_layout = {
+            .attributes = attrib,
+            .stride = sizeof(BatchVertex2D),
+        },
+    });
+    ASSERT(m_fullscreen_quad.pipeline);
 
-        static const BatchVertex2D vertex_data[] = {
-            {.uv = {0.0f, 0.0f}, .color = Color{0xFFFFFFFF}, .position = {-1.0f, -1.0f, 0.0f}},
-            {.uv = {1.0f, 0.0f}, .color = Color{0xFFFFFFFF}, .position = {1.0f, -1.0f, 0.0f}},
-            {.uv = {1.0f, 1.0f}, .color = Color{0xFFFFFFFF}, .position = {1.0f, 1.0f, 0.0f}},
-            {.uv = {0.0f, 1.0f}, .color = Color{0xFFFFFFFF}, .position = {-1.0f, 1.0f, 0.0f}},
-        };
-        static const uint8_t index_data[] = {
-            // clang-format off
+    static constexpr BatchVertex2D vertex_data[] = {
+        {.uv = {0.0f, 0.0f}, .color = Color{0xFFFFFFFF}, .position = {-1.0f, -1.0f, 0.0f}},
+        {.uv = {1.0f, 0.0f}, .color = Color{0xFFFFFFFF}, .position = {1.0f, -1.0f, 0.0f}},
+        {.uv = {1.0f, 1.0f}, .color = Color{0xFFFFFFFF}, .position = {1.0f, 1.0f, 0.0f}},
+        {.uv = {0.0f, 1.0f}, .color = Color{0xFFFFFFFF}, .position = {-1.0f, 1.0f, 0.0f}},
+    };
+    static constexpr uint8_t index_data[] = {
+        // clang-format off
             0, 1, 2,
             2, 3, 0
-            // clang-format on
-        };
+        // clang-format on
+    };
 
-        vertices = m_rd->create_buffer({
-            .type = BufferType::VERTEX,
-            .usage = BufferUsage::STATIC,
-            .size = sizeof(vertex_data),
-            .ptr = vertex_data,
-        });
+    m_fullscreen_quad.vertices = m_rd->create_buffer({
+        .type = BufferType::VERTEX,
+        .usage = BufferUsage::STATIC,
+        .size = sizeof(vertex_data),
+        .ptr = vertex_data,
+    });
+    ASSERT(m_fullscreen_quad.vertices);
 
-        indices = m_rd->create_buffer({
-            .type = BufferType::INDEX,
-            .usage = BufferUsage::STATIC,
-            .size = sizeof(index_data),
-            .ptr = index_data,
-        });
+    m_fullscreen_quad.indices = m_rd->create_buffer({
+        .type = BufferType::INDEX,
+        .usage = BufferUsage::STATIC,
+        .size = sizeof(index_data),
+        .ptr = index_data,
+    });
+    ASSERT(m_fullscreen_quad.indices);
 
-        sampler = m_rd->create_sampler({
-            .filter = {
-                .mag = TextureFilter::NEAREST,
-                .min = TextureFilter::LINEAR,
-            },
-        });
+    m_fullscreen_quad.sampler = m_rd->create_sampler({
+        .filter = {
+            .mag = TextureFilter::NEAREST,
+            .min = TextureFilter::LINEAR,
+        },
+    });
+    ASSERT(m_fullscreen_quad.sampler);
 
-        inited = true;
-        LOG_TRACE("initialized fullscreen quad");
-    }
+    m_fullscreen_quad.init = true;
+}
 
-    m_rd->set_pipeline(pipeline);
-    m_rd->set_mvp_matrix({});
-    m_rd->set_vertex_buffer(vertices);
-    m_rd->set_index_buffer(indices);
-    m_rd->set_texture(0, texture, sampler);
+void Renderer2D::close_fullscreen_quad() {
+    ASSERT(m_fullscreen_quad.init, "Attempted to close fullscreen quad without having it initialized!");
+    LOG_TRACE("Renderer2D: closing fullscreen quad...");
+    m_rd->destroy_sampler(m_fullscreen_quad.sampler);
+    m_rd->destroy_buffer(m_fullscreen_quad.indices);
+    m_rd->destroy_buffer(m_fullscreen_quad.vertices);
+    m_rd->destroy_pipeline(m_fullscreen_quad.pipeline);
+    m_fullscreen_quad.init = false;
+}
+
+void Renderer2D::draw_fullscreen_quad(TextureHandle texture) {
+    ASSERT(m_fullscreen_quad.init, "Attempted to draw fullscreen quad without initing it!");
+
+    m_rd->set_pipeline(m_fullscreen_quad.pipeline);
+    m_rd->set_mvp_matrix({}); /* use normalized coords */
+    m_rd->set_draw_buffers({
+        .vertex = m_fullscreen_quad.vertices,
+        .index = m_fullscreen_quad.indices,
+    });
+    m_rd->set_texture(0, texture, m_fullscreen_quad.sampler);
 
     m_rd->draw_elements(6);
 }

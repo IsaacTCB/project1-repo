@@ -15,6 +15,14 @@ enum LogSeverity : uint8_t {
     LOG_SEVERITY_CRITICAL,
 };
 
+#ifdef DEBUG
+#define LOG_DEFAULT_SEVERITY_LEVEL (LOG_SEVERITY_TRACE)
+#endif
+
+#ifndef LOG_DEFAULT_SEVERITY_LEVEL
+#define LOG_DEFAULT_SEVERITY_LEVEL (LOG_SEVERITY_INFO)
+#endif
+
 enum class LogFeature : uint8_t {
     SEVERITY,
     DATETIME,
@@ -148,7 +156,7 @@ private:
     void log(LogSeverity severity, std::string_view message);
 
 private:
-    LogSeverity m_severity = LOG_SEVERITY_TRACE;
+    LogSeverity m_severity = LOG_DEFAULT_SEVERITY_LEVEL;
 
     std::vector<std::unique_ptr<ILogSink>> m_sinks;
     std::unique_ptr<ILogSink> m_sink_override;

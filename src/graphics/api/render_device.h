@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 
 #include "core/image/image.h"
 #include "core/math/color.h"
@@ -13,24 +14,24 @@
 #include "render_device_handles.h"
 #include "vertex_layout.h"
 
-enum class IndexFormat {
+enum class IndexFormat : uint8_t {
     UINT32,
     UINT16,
     UINT8,
 };
 
-enum class BufferType {
+enum class BufferType : uint8_t {
     VERTEX,
     INDEX,
 };
 
-enum class BufferUsage {
+enum class BufferUsage : uint8_t {
     STATIC,
     DYNAMIC,
     STREAMED,
 };
 
-enum class BlendFactor {
+enum class BlendFactor : uint8_t {
     ZERO,
     ONE,
     SRC_COLOR,
@@ -69,12 +70,12 @@ struct PipelineDesc {
     VertexLayout vertex_layout;
 };
 
-enum class TextureFilter {
+enum class TextureFilter : uint8_t {
     LINEAR,
     NEAREST,
 };
 
-enum class TextureWrap {
+enum class TextureWrap : uint8_t {
     REPEATED,
     CLAMP,
     MIRRORED_REPEAT,
@@ -97,6 +98,11 @@ struct BufferInitDesc {
     BufferUsage usage;
     size_t size;
     const void *ptr = nullptr;
+};
+
+struct BufferApplyDesc {
+    BufferHandle vertex;
+    BufferHandle index = {};
 };
 
 struct MatrixApplyDesc {
@@ -124,6 +130,14 @@ protected:
     friend class Renderer;
 
 public:
+    /**
+     * @brief Gets render device as a non-owning pointer.
+     *
+     * @return RenderDevice reference or nullptr if it doesn't exist
+     */
+    [[nodiscard]]
+    virtual const char *name() const = 0;
+
     virtual void begin_frame() = 0;
     virtual void end_frame() = 0;
     virtual void present() = 0;
@@ -167,8 +181,7 @@ public:
 
     virtual void set_pipeline(PipelineHandle pipeline) = 0;
     virtual void set_mvp_matrix(const MatrixApplyDesc &matrix_desc) = 0;
-    virtual void set_vertex_buffer(BufferHandle vertex_buffer) = 0;
-    virtual void set_index_buffer(BufferHandle index_buffer) = 0;
+    virtual void set_draw_buffers(const BufferApplyDesc &buffer_desc) = 0;
     virtual void set_texture(uint32_t slot, TextureHandle texture, SamplerHandle sampler) = 0;
     virtual void draw_elements(size_t index_count, size_t index_offset = 0) = 0;
 
