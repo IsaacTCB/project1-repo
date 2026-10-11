@@ -19,6 +19,7 @@ Diagnostics:
     Remove:
       - modernize-avoid-c-arrays
       - modernize-use-equals-delete
+      - modernize-use-std-print
       - modernize-use-trailing-return-type
       - performance-no-int-to-ptr
       - readability-uppercase-literal-suffix
