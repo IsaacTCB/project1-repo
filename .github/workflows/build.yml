@@ -52,6 +52,12 @@ jobs:
         with:
           submodules: recursive
 
+      # The container runs as root but the workspace belongs to the runner user, so git
+      # rejects it as "dubious ownership" (checkout only trusts it during its own step).
+      # Build-time version generation needs git to read the commit hash.
+      - name: Trust workspace for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       - name: Restore ccache
         uses: actions/cache@v6
         with:

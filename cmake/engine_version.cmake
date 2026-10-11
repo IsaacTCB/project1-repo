@@ -25,8 +25,14 @@ if(GIT_FOUND)
         OUTPUT_VARIABLE git_hash
         RESULT_VARIABLE git_result
         OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_QUIET
+        ERROR_VARIABLE git_error
+        ERROR_STRIP_TRAILING_WHITESPACE
     )
+
+    # Surface the reason instead of silently falling back to "unknown"
+    if(NOT git_result EQUAL 0)
+        message(WARNING "engine_version: 'git rev-parse' failed, using hash 'unknown':\n${git_error}")
+    endif()
 
     if(git_result EQUAL 0)
         set(GIT_HASH ${git_hash})
