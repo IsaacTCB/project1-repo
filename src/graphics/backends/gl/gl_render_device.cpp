@@ -10,7 +10,6 @@
 #include "core/logger.h"
 #include "core/utils/inline.h"
 #include "core/viewport.h"
-#include "glm/ext/matrix_clip_space.hpp"
 #include "graphics/api/render_device.h"
 #include "graphics/api/vertex_layout.h"
 #include "runtime/renderer/render_handles.h"
