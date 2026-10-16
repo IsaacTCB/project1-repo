@@ -2,8 +2,11 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdio>
+#include <filesystem>
 #include <memory>
 #include <optional>
+#include <string>
 #include <string_view>
 
 #include "core/assertion.h"
@@ -30,6 +33,7 @@
 #include "runtime/audio/audio_handles.h"
 #include "runtime/debug/sinks/file_log_sink.h"
 #include "runtime/system/view/view_system_2d.h"
+#include "runtime/version.h"
 #include "server/display_server.h"
 #include "server/os_server.h"
 
@@ -39,7 +43,11 @@
 #include "runtime/debug/sinks/imgui_log_sink.h"
 #include <imgui.h>
 #include <imgui_internal.h>
+#endif
 
+static const auto s_version_name = RuntimeVersion::version().full_semver_name();
+
+#if ENABLE_IMGUI
 /**
  * @brief Gets the dockspace's central node rectangle as a viewport.
  *
@@ -90,8 +98,156 @@ static DisplayWindowProps get_window_props_from_config(const std::string &app_na
     };
 }
 
+EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *const> args) {
+    /* HACK: We are currently using std::printf to print some stuff. We should either be
+     * using an in-house solution or std::println instead (the latter breaks ci mingw-w64
+     * builds). */
+
+    const std::string_view program = !args.empty() && args[0] ? args[0] : "app";
+
+    const auto print_usage = [program]() -> void {
+        std::printf(
+            "Usage:\n"
+            "  %s [options]\n"
+            "\n"
+            "OPTIONS\n"
+            "  -h, --help             show this message and exit\n"
+            "  --version              show runtime version id\n"
+            "  -v, --verbose          enable detailed log levels\n"
+            "  -L, --export-log       output logs to a file\n"
+            "\n"
+            "DISPLAY OPTIONS\n"
+            "  --render-device        select what render device backend to use\n"
+            "  --list-render-devices  list available render device backends\n",
+            program.data());
+    };
+
+    const auto print_version = []() -> void {
+        std::puts(s_version_name.c_str());
+    };
+
+    const auto print_render_devices = [this]() -> void {
+        const auto backends = m_platform.display.get_render_backends();
+        std::puts("Supported backends:");
+
+        for (const auto &b : backends) {
+            std::printf("  '%s'\n", b.data());
+        }
+    };
+
+    const auto is_render_device_available = [this](std::string_view backend) -> bool {
+        const auto backends = m_platform.display.get_render_backends();
+        return std::ranges::contains(backends, backend);
+    };
+
+    for (size_t i = 1; i < args.size(); ++i) {
+        const std::string_view arg = args[i];
+        if (arg == "-h" || arg == "--help") {
+            print_usage();
+            std::fflush(stdout);
+            return LaunchResult::EXIT_OK;
+        }
+        if (arg == "--version") {
+            print_version();
+            std::fflush(stdout);
+            return LaunchResult::EXIT_OK;
+        }
+        if (arg == "-v" || arg == "--verbose") {
+            Logger::get().set_severity(LOG_SEVERITY_TRACE);
+            if (LOG_DEFAULT_SEVERITY_LEVEL == LOG_SEVERITY_TRACE) {
+                LOG_TRACE("verbose mode was already enabled. Specifying -v/--verbose is redudant.");
+            } else {
+                LOG_TRACE("enabled verbose mode. Trace messages will get printed");
+            }
+            std::fflush(stdout);
+            continue;
+        }
+        if (arg == "--list-render-devices") {
+            print_render_devices();
+            std::fflush(stdout);
+            return LaunchResult::EXIT_OK;
+        }
+        if (arg == "-L" || arg == "--export-log") {
+            /* read options */
+            const std::string_view opt_arg =
+                (i + 1) < args.size()
+                    ? args[i + 1]
+                    : std::string_view{};
+
+            /* no option was specified */
+            if (opt_arg.empty()) {
+                LOG_ERROR("Please specify an output path for the log file");
+                std::fflush(stdout);
+                return LaunchResult::EXIT_ERROR;
+            }
+
+            m_export_log = opt_arg;
+            i++;
+
+            continue;
+        }
+        if (arg == "--render-device") {
+            /* read options */
+            const std::string_view opt_arg =
+                (i + 1) < args.size()
+                    ? args[i + 1]
+                    : std::string_view{};
+
+            /* no option was specified */
+            if (opt_arg.empty()) {
+                LOG_ERROR("Please specify a render device backend.");
+                print_render_devices();
+                std::fflush(stdout);
+                return LaunchResult::EXIT_ERROR;
+            }
+
+            if (!is_render_device_available(opt_arg)) {
+                LOG_ERROR(
+                    "RenderDevice '{}' does not exist or "
+                    "is not supported by this platform",
+                    opt_arg);
+                print_render_devices();
+                std::fflush(stdout);
+                return LaunchResult::EXIT_ERROR;
+            }
+
+            m_preferred_backend = opt_arg;
+            i++; /* skip next iteration */
+
+            continue;
+        }
+
+        LOG_ERROR("Unknown command '{}'", arg);
+        print_usage();
+        return LaunchResult::EXIT_ERROR;
+    }
+
+    /* commit name */
+    m_program_name = program;
+
+    return LaunchResult::CONTINUE;
+}
+
 void EngineRuntime::init(IApplicationHandler &app_handler) {
-    Logger::get().add_sink(FileLogSink::open("runtime.log"));
+#if DEBUG
+    m_export_log =
+        m_export_log.empty()
+            ? "runtime.log"
+            : m_export_log;
+#endif
+
+    if (!m_export_log.empty()) {
+        auto file = FileLogSink::open(m_export_log);
+        if (file) {
+            LOG_INFO("Exporting this session's logs to '{}'", m_export_log.generic_string());
+            Logger::get().add_sink(std::move(file));
+        } else {
+            LOG_ERROR(
+                "Could not export logs to '{}'. Please "
+                "check filepath and file permissions.",
+                m_export_log.generic_string());
+        }
+    }
 
 #if ENABLE_IMGUI
     m_imgui_log_state = std::make_shared<ImGuiLogState>(ImGuiLogState::DEFAULT_LINE_COUNT);
@@ -122,12 +278,13 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     m_fps = {};
 
     auto &os = m_platform.os;
+    LOG_INFO("runtime version: {}", RuntimeVersion::version().semver_string);
     LOG_INFO("platform: {}", os.get_platform());
     LOG_INFO("os: {}", os.get_os());
 
     /* create main window/screen */
     const auto props = get_window_props_from_config(m_app->get_name(), m_app_config);
-    if (!init_display_and_renderer(props)) {
+    if (!init_display_and_renderer(props, m_preferred_backend)) {
         exit(-1);
     }
 
@@ -141,7 +298,6 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     ImGuiCustomStyles::apply_dark_mode(ImGui::GetStyle());
 
@@ -218,7 +374,7 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     m_app->on_init();
 }
 
-bool EngineRuntime::try_init_backend(const std::string &backend, const DisplayWindowProps &props) {
+bool EngineRuntime::try_init_backend(std::string_view backend, const DisplayWindowProps &props) {
     DisplayWindowProps backend_props = props;
     backend_props.api = backend;
 
@@ -261,12 +417,22 @@ bool EngineRuntime::try_init_backend(const std::string &backend, const DisplayWi
     return true;
 }
 
-bool EngineRuntime::init_display_and_renderer(const DisplayWindowProps &props) {
+bool EngineRuntime::init_display_and_renderer(const DisplayWindowProps &props, std::string_view preferred_backend) {
     /* TODO: support explicit backend request */
     const auto supported_backends = m_platform.display.get_render_backends();
     if (supported_backends.empty()) {
         ASSERT(false, "EngineRuntime::init_display_and_renderer(): "
                       "Platform does not provide any graphics backend.");
+        return false;
+    }
+
+    if (!preferred_backend.empty()) {
+        if (try_init_backend(preferred_backend, props)) {
+            LOG_INFO("Using '{}' as render device backend (user specified)", preferred_backend);
+            return true;
+        }
+
+        LOG_CRITICAL("RenderDevice '{}' failed", preferred_backend);
         return false;
     }
 
@@ -292,7 +458,7 @@ bool EngineRuntime::init_display_and_renderer(const DisplayWindowProps &props) {
     }
 
     LOG_CRITICAL(
-        "Failed to start render device: unable to initialize"
+        "Failed to start render device: unable to initialize "
         "any of the available graphics backend.");
 
     return false;
@@ -337,7 +503,7 @@ void EngineRuntime::update(float delta) {
         const auto &render_size = m_view.get_layout().render_viewport.size;
         const std::string resolution = std::format("{0}x{1}", render_size.x, render_size.y);
 
-        std::string title = std::format("{0} | {1}fps | {2} | Debug", m_app_config.display.caption, m_fps.fps, resolution);
+        std::string title = std::format("{0} | {1}fps | {2} | {3}", m_app_config.display.caption, m_fps.fps, resolution, s_version_name);
         m_platform.display.set_display_caption(m_window, title);
     }
 #endif
@@ -430,7 +596,9 @@ void EngineRuntime::imgui_editor() {
 
             const auto &layout = m_view.get_layout();
             ImGui::Text("fps = %d", m_fps.fps);
-            ImGui::Text("render_device = %s", "Not implemented!");
+
+            const IRenderDevice *device = m_renderer ? m_renderer->device() : nullptr;
+            ImGui::Text("render_device = %s", device ? device->name() : "n/a");
 
             /* ================= *
              *   View settings   *
@@ -642,6 +810,13 @@ void EngineRuntime::render() {
 }
 
 void EngineRuntime::close() {
+    /* this is require to address early-exit before
+     * ::init() edgecases (happens whenever a launch
+     * arg parser fails or smth) */
+    if (!m_app) {
+        return;
+    }
+
     m_app->on_close();
     m_app.reset();
 

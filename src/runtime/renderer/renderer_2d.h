@@ -30,6 +30,9 @@ public:
     bool attach_device(std::unique_ptr<IRenderDeviceFactory> factory);
     void init();
 
+    [[nodiscard]]
+    const IRenderDevice *device() const { return m_rd.get(); };
+
 public:
     /* ================== *
      *  Frame rendering   *
@@ -59,6 +62,9 @@ private:
 
     void render_frame_pass(const RenderContext &ctx);
     void update_view_projection(const ViewContext2D &view);
+
+    void init_fullscreen_quad();
+    void close_fullscreen_quad();
     void draw_fullscreen_quad(TextureHandle texture);
 
 private:
@@ -66,6 +72,14 @@ private:
         MatrixHandle projection{};
         MatrixHandle view{};
     } m_matrices{};
+
+    struct FullscreenQuad {
+        bool init = false;
+        PipelineHandle pipeline{};
+        BufferHandle vertices{};
+        BufferHandle indices{};
+        SamplerHandle sampler{};
+    } m_fullscreen_quad{};
 
     bool m_enabled_render_targets{};
     RenderTargetHandle m_render_target{};

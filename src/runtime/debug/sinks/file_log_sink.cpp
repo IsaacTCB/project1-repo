@@ -40,7 +40,7 @@ namespace FileLogSink {
 std::unique_ptr<ILogSink> open(const std::filesystem::path &filepath) {
     auto sink = std::make_unique<File_LogSink>();
     if (sink && sink->open(filepath)) {
-        return std::move(sink);
+        return sink;
     }
     return {};
 }

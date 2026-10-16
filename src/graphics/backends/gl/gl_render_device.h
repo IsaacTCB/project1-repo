@@ -84,6 +84,8 @@ public:
     ~GL_RenderDevice() override;
 
 public:
+    const char *name() const override { return "gl"; }
+
     void begin_frame() override {}
     void end_frame() override {}
     void present() override;
@@ -125,8 +127,7 @@ public:
 
     void set_pipeline(PipelineHandle pipeline) override;
     void set_mvp_matrix(const MatrixApplyDesc &matrix_desc) override;
-    void set_vertex_buffer(BufferHandle vertex_buffer) override;
-    void set_index_buffer(BufferHandle index_buffer) override;
+    void set_draw_buffers(const BufferApplyDesc &buffer_desc) override;
     void set_texture(uint32_t slot, TextureHandle texture, SamplerHandle sampler) override;
     void draw_elements(size_t index_count, size_t index_offset) override;
 

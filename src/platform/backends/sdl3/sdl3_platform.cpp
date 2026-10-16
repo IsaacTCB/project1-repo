@@ -2,7 +2,9 @@
 
 #include <SDL3/SDL_init.h>
 #include <cstdint>
+#include <span>
 
+#include "runtime/runtime.h"
 #include "sdl3_common.h"
 #include "sdl3_gamepad.h"
 
@@ -41,21 +43,8 @@ static Input::Mouse::Buttons convert_mouse_button(uint8_t button) {
     return static_cast<Input::Mouse::Buttons>(button);
 }
 
-SDL_AppResult SDL3_PlatformImpl::init([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
+SDL_AppResult SDL3_PlatformImpl::init(int argc, char *argv[]) {
     log_init();
-
-    if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_AUDIO)) {
-        LOG_CRITICAL("Failed to initialize SDL3. Reason: {0}", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
-
-    if (int result = SDL_AddGamepadMappingsFromFile("gamecontrollerdb.txt") >= 0) {
-        LOG_TRACE("Loaded {0} gamepad mappings.", result);
-    } else if (result < 0) {
-        LOG_ERROR("Failed to load gamecontrollerdb.txt mappings. Reason: {0}", SDL_GetError());
-    }
-
-    m_last_tick = SDL_GetTicks();
 
     m_runtime.emplace(PlatformServices{
         .display = m_display_server,
@@ -64,7 +53,36 @@ SDL_AppResult SDL3_PlatformImpl::init([[maybe_unused]] int argc, [[maybe_unused]
         .event = m_event_server,
     });
 
+    std::span<char *const> args{};
+    if (argv && argc > 0) {
+        args = {argv, static_cast<size_t>(argc)};
+    }
+
+    switch (m_runtime->process_launch_args(args)) {
+        case EngineRuntime::LaunchResult::CONTINUE:
+            break;
+        case EngineRuntime::LaunchResult::EXIT_OK:
+            return SDL_APP_SUCCESS;
+        case EngineRuntime::LaunchResult::EXIT_ERROR:
+            return SDL_APP_FAILURE;
+        default:
+            ASSERT(false, "Unrecognized launch state");
+            return SDL_APP_FAILURE;
+    }
+
+    if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_AUDIO)) {
+        LOG_CRITICAL("Failed to initialize SDL3. Reason: {0}", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
+    m_last_tick = SDL_GetTicks();
     m_runtime->init(s_app_handler);
+
+    if (int mappings = SDL_AddGamepadMappingsFromFile("gamecontrollerdb.txt"); mappings >= 0) {
+        LOG_INFO("Loaded {0} gamepad {1} from 'gamecontrollerdb.txt'.", mappings, mappings == 1 ? "mapping" : "mappings");
+    } else if (mappings == -1) {
+        LOG_WARN("Failed to load 'gamecontrollerdb.txt' mappings. Reason: {0}", SDL_GetError());
+    }
 
     return SDL_APP_CONTINUE;
 }
@@ -265,9 +283,7 @@ SDL_AppResult SDL3_PlatformImpl::event(SDL_Event &event) {
 void SDL3_PlatformImpl::close(SDL_AppResult result) {
     m_runtime->close();
 
-    if (result == SDL_APP_SUCCESS) {
-        LOG_INFO("App closed successfully!");
-    } else {
+    if (result != SDL_APP_SUCCESS) {
         LOG_ERROR("App closed with errors.");
     }
 
