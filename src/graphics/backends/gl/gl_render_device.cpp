@@ -34,9 +34,12 @@ static bool init_glad(GLADloadfunc func) {
     return (version != 0);
 }
 
-static std::optional<GL_TextureStorage> build_texture(size_t width, size_t height, uint8_t channels, const void *data);
+static std::optional<GL_TextureStorage> build_texture(size_t width, size_t height, PixelFormat format, size_t channels, const void *data);
 static std::optional<GL_TextureStorage> build_texture(const ImageData &data) {
-    return build_texture(data.width, data.height, data.channels, data.pixels.data());
+    /* HACK: we are using bits per pixels for "autodetecting" the channel count. This works
+     * until we add more PixelFormat types like RGB565 or something that isn't a byte per channel.
+     * A more robust approach would be to detect the most fitting data format from PixelFormat */
+    return build_texture(data.width, data.height, data.format, data.bpp(), data.pixels.data());
 }
 
 #if ENABLE_DEBUG_MESSAGES
@@ -184,15 +187,15 @@ GL_RenderDevice::GL_RenderDevice(std::unique_ptr<GL_IContext> &&context)
     }
 
     m_white_texture = *build_texture(ImageData{
+        .width = 2,
+        .height = 2,
+        .format = PixelFormat::RGBA8,
         .pixels = {
             // clang-format off
             0xFF, 0xFF, 0xFF, 0xFF,  0xFF, 0xFF, 0xFF, 0xFF,
             0xFF, 0xFF, 0xFF, 0xFF,  0xFF, 0xFF, 0xFF, 0xFF,
             // clang-format on
         },
-        .width = 2,
-        .height = 2,
-        .channels = 4,
     });
 
     /* This allows gl to load images whose
@@ -239,7 +242,7 @@ RenderTargetHandle GL_RenderDevice::create_render_target(const RenderTargetDesc 
     targets.size = render_target_desc.size;
 
     /* create color attachment */
-    auto texture = build_texture(targets.size.x, targets.size.y, 4, nullptr);
+    auto texture = build_texture(targets.size.x, targets.size.y, PixelFormat::RGBA8, 3, nullptr);
     if (!texture) {
         glDeleteFramebuffers(1, &targets.framebuffer);
         ASSERT(false, "gl: Failed to allocate framebuffer color attachment!");
@@ -279,7 +282,7 @@ void GL_RenderDevice::resize_render_target(RenderTargetHandle handle, Vec2i size
     target->size = size;
 
     /* update color attachment */
-    auto texture = build_texture(target->size.x, target->size.y, 4, nullptr);
+    auto texture = build_texture(target->size.x, target->size.y, PixelFormat::RGBA8, 4, nullptr);
     if (!texture) {
         glDeleteFramebuffers(1, &target->framebuffer);
         ASSERT(false, "gl: Failed to reallocate framebuffer color attachment!");
@@ -576,20 +579,40 @@ void GL_RenderDevice::matrix_translate_rotate_scale(MatrixHandle matrix, const V
  *      Texture      *
  * ================= */
 
-static std::optional<GL_TextureStorage> build_texture(size_t width, size_t height, uint8_t channels, const void *data) {
+static GLenum get_gl_data_format(PixelFormat format) {
+    switch (format) {
+        case PixelFormat::RGB8:
+            return GL_RGB;
+        case PixelFormat::BGR8:
+            return GL_BGR;
+        case PixelFormat::RGBA8:
+            return GL_RGBA;
+        case PixelFormat::BGRA8:
+            return GL_BGRA;
+        default:
+            return 0;
+    }
+}
+
+static std::optional<GL_TextureStorage> build_texture(size_t width, size_t height, PixelFormat format, size_t channels, const void *data) {
     GL_TextureStorage storage{};
 
+    storage.data_format = get_gl_data_format(format);
+    if (storage.data_format == 0) {
+        ASSERT(false, "Unsupported pixel format!");
+        return std::nullopt;
+    }
+
+    storage.internal_format = 0;
     switch (channels) {
         case 3:
             storage.internal_format = GL_RGB8;
-            storage.data_format = GL_RGB;
             break;
         case 4:
             storage.internal_format = GL_RGBA8;
-            storage.data_format = GL_RGBA;
             break;
         default:
-            ASSERT(false, "Unsupported bpp");
+            ASSERT(false, "Unsupported channel count.");
             return std::nullopt;
     }
 
@@ -614,7 +637,7 @@ static std::optional<GL_TextureStorage> build_texture(size_t width, size_t heigh
 }
 
 TextureHandle GL_RenderDevice::load_texture(const ImageData &data) {
-    auto storage = build_texture(data.width, data.height, data.channels, data.pixels.data());
+    auto storage = build_texture(data);
     if (!storage.has_value()) {
         return TextureHandle{};
     }
