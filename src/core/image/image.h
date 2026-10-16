@@ -21,9 +21,6 @@ public:
     [[nodiscard]]
     size_t bpp() const {
         switch (format) {
-            case PixelFormat::INVALID:
-                return 0;
-
             case PixelFormat::RGB8:
             case PixelFormat::BGR8:
                 return 3;
@@ -31,6 +28,10 @@ public:
             case PixelFormat::RGBA8:
             case PixelFormat::BGRA8:
                 return 4;
+
+            case PixelFormat::INVALID:
+            default:
+                return 0;
         }
     }
 
