@@ -53,8 +53,8 @@ static void gl_debug_callback(
     const GLchar *message,
     const void *userParam) {
     /* fixes annoying unused variable warnings  */
-    (void)(length);
-    (void)(userParam);
+    (void)length;
+    (void)userParam;
 
     /* list of annoying driver warnings to be suppressed */
     constexpr std::array<GLuint, 1> IGNORED_IDS{{
@@ -148,8 +148,8 @@ static void init_debug(GL_IContext *context) {
 
     const bool debug_messages =
         (flags & GL_CONTEXT_FLAG_DEBUG_BIT) &&
-        (context->is_extension_supported("GL_KHR_debug")) &&
-        (glDebugMessageCallback && glDebugMessageControl);
+        context->is_extension_supported("GL_KHR_debug") &&
+        glDebugMessageCallback && glDebugMessageControl;
 
     if (!debug_messages) {
         LOG_INFO("gl(debug): failed to enable debug messages.");
