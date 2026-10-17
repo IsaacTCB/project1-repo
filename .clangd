@@ -30,6 +30,8 @@ Diagnostics:
       - readability-implicit-bool-conversion
       - readability-identifier-length
       - readability-trailing-comma
+      - readability-function-cognitive-complexity
+      - readability-use-concise-preprocessor-directives
 
 Completion:
   HeaderInsertion: Never
