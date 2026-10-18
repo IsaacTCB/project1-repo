@@ -2,7 +2,6 @@
 
 #include "core/math/random.h"
 #include "core/math/vec2.h"
-#include "renderer/api/render_handles.h"
 
 #include <algorithm>
 #include <cmath>

@@ -2,7 +2,7 @@
 
 #include "core/camera.h"
 #include "core/math/vec2.h"
-#include "core/viewport.h"
+#include "core/view_layout.h"
 
 /**
  * @class ViewContext2D
@@ -40,8 +40,7 @@ public:
 
 public:
     Camera2D *view_camera;
-    Vec2 view_size;
-    Viewport window_viewport;
+    ViewLayout layout;
 
 public:
     [[nodiscard]]

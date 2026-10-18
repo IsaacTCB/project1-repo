@@ -31,8 +31,8 @@ Vec2 ViewContext2D::world_to_screen(const Vec2 &world_coord) const {
 Vec2 ViewContext2D::screen_to_view(const Vec2 &screen_coord) const {
     Vec2 view{screen_coord};
 
-    view -= Vec2(window_viewport.position);
-    view *= view_size / Vec2(window_viewport.size);
+    view -= Vec2(layout.presentation_rect.position);
+    view *= layout.logical_size / Vec2(layout.presentation_rect.size);
     view -= get_anchor_offset();
 
     return {view.x, view.y};
@@ -42,8 +42,8 @@ Vec2 ViewContext2D::view_to_screen(const Vec2 &view_coord) const {
     Vec2 screen{view_coord};
 
     screen += get_anchor_offset();
-    screen *= Vec2(window_viewport.size) / view_size;
-    screen += Vec2(window_viewport.position);
+    screen *= Vec2(layout.presentation_rect.size) / layout.logical_size;
+    screen += Vec2(layout.presentation_rect.position);
 
     return screen;
 }
@@ -114,8 +114,8 @@ Vec2 ViewContext2D::world_to_view(const Vec2 &world_coord) const {
 
 ViewContext2D::BoundRect ViewContext2D::get_bounds_aabb() const {
     /* get projection bounds */
-    Vec2 tl = -get_anchor_offset(); // top-left coords
-    Vec2 br = tl + view_size;       // bottom-right coords
+    Vec2 tl = -get_anchor_offset();     // top-left coords
+    Vec2 br = tl + layout.logical_size; // bottom-right coords
 
     /* apply zoom */
     float zoom_factor = std::max(view_camera->zoom, EPSILON);
@@ -166,9 +166,9 @@ ViewContext2D::BoundRect ViewContext2D::get_bounds_aabb() const {
 ViewContext2D::BoundRect ViewContext2D::get_ortho() const {
     /* init values */
     float left = 0.0f;
-    float right = view_size.x;
+    float right = layout.logical_size.x;
     float top = 0.0f;
-    float bottom = view_size.y;
+    float bottom = layout.logical_size.y;
 
     /* apply anchor offset */
     auto anchor = get_anchor_offset();
@@ -192,7 +192,7 @@ ViewContext2D::BoundRect ViewContext2D::get_ortho() const {
 
 Vec2 ViewContext2D::get_anchor_offset() const {
     if (view_camera->anchor == Camera2D::AnchorMode::CENTER) {
-        return view_size * 0.5f;
+        return layout.logical_size * 0.5f;
     }
     return Vec2{};
 }

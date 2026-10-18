@@ -182,12 +182,12 @@ public:
          * by the on_render() function! this way
          * we don't need to waste time building
          * the same view context twice */
-        m_view_context = Camera2DUtils::build_view_context(m_camera, ctx.frame.viewport);
+        m_view_context = Camera2DUtils::build_view_context(m_camera, *ctx.frame.view_layout);
 
         /* update the input action system */
         m_input_action.update(m_servers.input);
 
-        m_camera.zoom = (float)ctx.frame.viewport.size.y / 600.0f;
+        m_camera.zoom = 1.0f;
         m_registry.view<VelocityComponent, InputComponent>().each([&]([[maybe_unused]] auto entity, auto &vel) {
             Vec2 move{
                 m_input_action.get_axis(InputAction::LEFT, InputAction::RIGHT),
@@ -359,7 +359,7 @@ private:
 
     InputActionSystem<InputAction> m_input_action;
 
-    EffectHandle m_particle_fx;
+    ParticleEffectHandle m_particle_fx;
     ParticleEmitter2D m_emitter;
     ParticleSystem2D m_particles;
 };

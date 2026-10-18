@@ -1,10 +1,12 @@
 #pragma once
 
-#include "core/math/vec2.h"
-#include "core/utils/handles.h"
 #include <cstdint>
 
-using EmitterHandle = Handle;
+#include "core/math/vec2.h"
+#include "core/utils/handle_pool.h"
+#include "core/utils/handles.h"
+
+#include "particle_handles.h"
 
 class Vec2;
 class EmitterPool;
@@ -34,7 +36,7 @@ public:
 
 protected:
     friend EmitterPool;
-    ParticleEmitter2D(EmitterPool *system, EmitterHandle handle)
+    ParticleEmitter2D(EmitterPool *system, ParticleEmitterHandle handle)
         : m_emitter_pool(system), m_handle(handle) {}
 
 private:
@@ -42,7 +44,7 @@ private:
 
 private:
     EmitterPool *m_emitter_pool{nullptr};
-    EmitterHandle m_handle{};
+    ParticleEmitterHandle m_handle{};
 };
 
 /* ================= */
@@ -52,7 +54,7 @@ private:
 class EmitterPool {
 public:
     struct EmitterData {
-        Handle effect; /* effect particle handle */
+        ParticleEffectHandle effect; /* effect particle handle */
         Vec2 position;
         float rotation;
         uint32_t emission_rate;
@@ -71,13 +73,13 @@ public:
         };
     }
 
-    void destroy(EmitterHandle emitter) {
+    void destroy(ParticleEmitterHandle emitter) {
         m_pool.remove(emitter);
     }
 
     using EmitCallbackFn = void (*)(EmitterData &emitted, void *user);
     void update(float delta, EmitCallbackFn emit_callback, void *user) {
-        m_pool.foreach ([emit_callback, user, delta](EmitterData &emitter) {
+        m_pool.for_each([emit_callback, user, delta](EmitterData &emitter) -> void {
             if (!emitter.emitting) {
                 return;
             }
@@ -92,13 +94,13 @@ public:
     }
 
 protected:
-    void set_rate(EmitterHandle emitter, uint32_t emission_rate);
-    void set_position(EmitterHandle emitter, const Vec2 &position);
-    void set_angle(EmitterHandle emitter, float angle);
-    void set_emitting(EmitterHandle emitter, bool emitting);
+    void set_rate(ParticleEmitterHandle emitter, uint32_t emission_rate);
+    void set_position(ParticleEmitterHandle emitter, const Vec2 &position);
+    void set_angle(ParticleEmitterHandle emitter, float angle);
+    void set_emitting(ParticleEmitterHandle emitter, bool emitting);
 
     friend ParticleEmitter2D;
 
 private:
-    HandlePool<EmitterData> m_pool;
+    HandlePool<EmitterData, ParticleEmitterHandle> m_pool;
 };

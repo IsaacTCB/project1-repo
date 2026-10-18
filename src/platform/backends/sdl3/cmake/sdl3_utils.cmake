@@ -33,3 +33,32 @@ macro(create_sdl3_target target_name)
         endif()
     endif()
 endmacro()
+
+macro(fetch_gamecontrollerdb)
+    set(sdl_controller_db_FILEPATH "" CACHE INTERNAL "Path to downloaded gamecontrollerdb" FORCE)
+
+    set(_db_url "https://raw.githubusercontent.com/mdqinc/SDL_GameControllerDB/refs/heads/master/gamecontrollerdb.txt")
+    set(_db_path "${CMAKE_BINARY_DIR}/gamecontrollerdb.txt")
+
+    message(STATUS "Downloading 'gamecontrollerdb.txt'...")
+
+    file(DOWNLOAD
+        "${_db_url}"
+        "${_db_path}"
+        STATUS _download_status
+        TIMEOUT 10
+        TLS_VERIFY ON
+    )
+
+    list(GET _download_status 0 _download_code)
+
+    if(_download_code EQUAL 0)
+        set(sdl_controller_db_FILEPATH "${_db_path}" CACHE INTERNAL "Path to downloaded gamecontrollerdb" FORCE)
+        message(STATUS "Downloaded 'gamecontrollerdb.txt'")
+    else()
+        list(GET _download_status 1 _download_message)
+        message(WARNING "Could not download 'gamecontrollerdb.txt': ${_download_message}. Continuing without it.")
+        file(REMOVE "${_db_path}")
+    endif()
+
+endmacro()

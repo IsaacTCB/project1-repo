@@ -1,6 +1,9 @@
 #include "particle_emitter_2d.h"
 
 #include "core/math/vec2.h"
+#include "core/utils/handle_pool.h"
+
+#include "particle_handles.h"
 
 /* ===================== */
 /*    ParticleEmitter2D  */
@@ -52,7 +55,7 @@ void ParticleEmitter2D::destroy_handle() {
 /*    EmitterPool    */
 /* ================= */
 
-void EmitterPool::set_rate(EmitterHandle emitter, uint32_t emission_rate) {
+void EmitterPool::set_rate(ParticleEmitterHandle emitter, uint32_t emission_rate) {
     EmitterData *instance = m_pool.get(emitter);
     if (!instance) {
         return;
@@ -61,7 +64,7 @@ void EmitterPool::set_rate(EmitterHandle emitter, uint32_t emission_rate) {
     instance->emission_rate = emission_rate;
 }
 
-void EmitterPool::set_position(EmitterHandle emitter, const Vec2 &position) {
+void EmitterPool::set_position(ParticleEmitterHandle emitter, const Vec2 &position) {
     EmitterData *instance = m_pool.get(emitter);
     if (!instance) {
         return;
@@ -70,7 +73,7 @@ void EmitterPool::set_position(EmitterHandle emitter, const Vec2 &position) {
     instance->position = position;
 }
 
-void EmitterPool::set_angle(EmitterHandle emitter, float angle) {
+void EmitterPool::set_angle(ParticleEmitterHandle emitter, float angle) {
     EmitterData *instance = m_pool.get(emitter);
     if (!instance) {
         return;
@@ -79,7 +82,7 @@ void EmitterPool::set_angle(EmitterHandle emitter, float angle) {
     instance->rotation = angle;
 }
 
-void EmitterPool::set_emitting(EmitterHandle emitter, bool emitting) {
+void EmitterPool::set_emitting(ParticleEmitterHandle emitter, bool emitting) {
     EmitterData *instance = m_pool.get(emitter);
     if (!instance) {
         return;

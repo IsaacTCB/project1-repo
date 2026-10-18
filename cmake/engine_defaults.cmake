@@ -17,8 +17,8 @@ if(NOT CMAKE_BUILD_TYPE)
     "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    list(APPEND ENGINE_COMPILE_DEFINITIONS ENABLE_ASSERTS=1)
+if(NOT CMAKE_BUILD_TYPE MATCHES "^(Release|MinSizeRel)$")
+    list(APPEND ENGINE_COMPILE_DEFINITIONS ENABLE_ASSERTS=1 DEBUG)
     if(MSVC)
         list(APPEND ENGINE_COMPILE_OPTIONS
             /W4)
@@ -30,6 +30,12 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             -Wconversion
             -Wno-sign-conversion)
     endif()
+else()
+    list(APPEND ENGINE_COMPILE_DEFINITIONS NDEBUG)
+endif()
+
+if(ENGINE_ENABLE_IMGUI)
+    list(APPEND ENGINE_COMPILE_DEFINITIONS ENABLE_IMGUI=1)
 endif()
 
 set(DEFAULTS_LOADED_ TRUE)
