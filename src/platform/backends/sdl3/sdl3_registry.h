@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cstdint>
-#include <map>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "core/assertion.h"
@@ -15,18 +15,27 @@ template <typename FactorySpecs>
 class BackendRegistry {
 public:
     [[nodiscard]]
-    FactorySpecs *get(const std::string &name) {
-        auto it = m_backends.find(name);
-        if (it == m_backends.end()) {
-            return nullptr;
+    const FactorySpecs *get(std::string_view name) const {
+        for (const auto &entry : m_backends) {
+            if (entry.key == name) {
+                return &entry.value;
+            }
         }
-
-        return &it->second;
+        return nullptr;
     }
 
-    void add(const std::string &name, FactorySpecs &&spec) {
+    [[nodiscard]]
+    FactorySpecs *get(std::string_view name) {
+        const auto *const_this = const_cast<const BackendRegistry<FactorySpecs> *>(this);
+        return const_cast<FactorySpecs *>(const_this->get(name));
+    }
+
+    void add(std::string_view name, FactorySpecs &&spec) {
         ASSERT(!get(name));
-        m_backends[name] = std::forward<FactorySpecs>(spec);
+        m_backends.emplace_back(KeyTable{
+            .key = std::string{name},
+            .value = std::forward<FactorySpecs>(spec),
+        });
     }
 
     [[nodiscard]]
@@ -34,8 +43,8 @@ public:
         std::vector<std::string> backends;
         backends.reserve(m_backends.size());
 
-        for (const auto &[k, v] : m_backends) {
-            backends.emplace_back(k);
+        for (const auto &entry : m_backends) {
+            backends.emplace_back(entry.key);
         }
 
         return backends;
@@ -43,8 +52,13 @@ public:
 
 private:
     /* NOTE: this has to be ordered, because we want to
-     * prioritize certain backends over others */
-    std::map<std::string, FactorySpecs> m_backends;
+     * prioritize certain backends over others. Lookup
+     * becomes O(n) because of this, unfortunately. */
+    struct KeyTable {
+        std::string key;
+        FactorySpecs value;
+    };
+    std::vector<KeyTable> m_backends;
 };
 
 struct SDL_FactorySpecs {

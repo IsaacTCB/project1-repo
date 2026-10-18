@@ -52,6 +52,12 @@ jobs:
         with:
           submodules: recursive
 
+      # The container runs as root but the workspace belongs to the runner user, so git
+      # rejects it as "dubious ownership" (checkout only trusts it during its own step).
+      # Build-time version generation needs git to read the commit hash.
+      - name: Trust workspace for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       - name: Restore ccache
         uses: actions/cache@v6
         with:
@@ -215,118 +221,123 @@ jobs:
 
   # ===========================
   #   Windows - GCC (MinGW-w64) + Ninja
+  #
+  #   DISABLED FOR THE SAKE OF SAVING
+  #   WORKFLOW USAGE. ONCE P1 GOES PUBLIC
+  #   THEN I'LL ENABLE IT BACK.
   # ===========================
-  windows-gcc:
-    name: Windows GCC (${{ matrix.build_type }})
-    runs-on: windows-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        build_type: [Debug, Release]
-    env:
-      VCPKG_TRIPLET: x64-mingw-dynamic
-      VCPKG_DEFAULT_HOST_TRIPLET: x64-mingw-dynamic
-      VCPKG_ROOT: ${{ github.workspace }}/.vcpkg
-      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite
-      CCACHE_DIR: ${{ github.workspace }}/.ccache
-      CCACHE_BASEDIR: ${{ github.workspace }}
-      CCACHE_COMPRESS: true
-
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          submodules: recursive
-
-      # Up-to-date GCC toolchain (the runner's preinstalled MinGW lags behind for C++23).
-      - name: Setup MSYS2 (UCRT64)
-        id: msys2
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: UCRT64
-          update: false
-          cache: true
-          install: >-
-            mingw-w64-ucrt-x86_64-gcc
-            mingw-w64-ucrt-x86_64-cmake
-            mingw-w64-ucrt-x86_64-ninja
-            mingw-w64-ucrt-x86_64-ccache
-
-      - name: Add MinGW to PATH
-        shell: pwsh
-        run: '"${{ steps.msys2.outputs.msys2-location }}\ucrt64\bin" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH'
-
-      - uses: actions/checkout@v7
-        with:
-          repository: microsoft/vcpkg
-          ref: ${{ env.VCPKG_REF }}
-          path: .vcpkg
-
-      - name: Bootstrap vcpkg
-        run: .vcpkg/bootstrap-vcpkg.bat -disableMetrics
-        shell: cmd
-
-      # The MinGW compiler version is part of the cache key, so a toolchain update starts fresh.
-      - name: Get GCC version
-        id: gcc
-        shell: pwsh
-        run: '"version=$(gcc -dumpfullversion)" | Out-File -Append -Encoding utf8 $env:GITHUB_OUTPUT'
-
-      - name: Restore vcpkg binary cache
-        uses: actions/cache/restore@v6
-        with:
-          path: .vcpkg-cache
-          key: vcpkg-${{ env.VCPKG_TRIPLET }}-gcc${{ steps.gcc.outputs.version }}-${{ env.VCPKG_REF }}-
-          restore-keys: vcpkg-${{ env.VCPKG_TRIPLET }}-gcc${{ steps.gcc.outputs.version }}-${{ env.VCPKG_REF }}-
-
-      - name: Install SDL3
-        run: .vcpkg/vcpkg install sdl3 --triplet ${{ env.VCPKG_TRIPLET }} --clean-after-build
-
-      - name: Save vcpkg binary cache
-        uses: actions/cache/save@v6
-        with:
-          path: .vcpkg-cache
-          key: vcpkg-${{ env.VCPKG_TRIPLET }}-gcc${{ steps.gcc.outputs.version }}-${{ env.VCPKG_REF }}-${{ hashFiles('.vcpkg-cache/**') }}
-
-      - name: Restore ccache
-        uses: actions/cache@v6
-        with:
-          path: .ccache
-          key: ccache-windows-gcc-${{ matrix.build_type }}-${{ github.run_id }}
-          restore-keys: ccache-windows-gcc-${{ matrix.build_type }}-
-
-      - name: Configure
-        shell: pwsh
-        run: >
-          cmake -S . -B build/ci -G Ninja
-          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
-          -DVCPKG_TARGET_TRIPLET="$env:VCPKG_TRIPLET"
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-          -DCMAKE_C_COMPILER=gcc
-          -DCMAKE_CXX_COMPILER=g++
-          -DCMAKE_C_COMPILER_LAUNCHER=ccache
-          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
-          -DENGINE_BUILD_TESTS=OFF
-
-      # The build must be the last command: a pwsh step only fails on the final exit code.
-      - name: Build
-        shell: pwsh
-        run: |
-          ccache --zero-stats
-          cmake --build build/ci --target $env:CMAKE_TARGET --parallel
-
-      - name: ccache stats
-        if: always()
-        shell: pwsh
-        run: ccache --show-stats
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ env.CMAKE_TARGET }}-windows-gcc-${{ matrix.build_type }}
-          path: |
-            build/ci/apps/${{ env.CMAKE_TARGET }}/
-            !build/ci/apps/${{ env.CMAKE_TARGET }}/CMakeFiles/**
-            !build/ci/apps/${{ env.CMAKE_TARGET }}/*.cmake
-            !build/ci/apps/${{ env.CMAKE_TARGET }}/*.a
-          retention-days: 14
-          if-no-files-found: error
+  #
+  # windows-gcc:
+  #   name: Windows GCC (${{ matrix.build_type }})
+  #   runs-on: windows-latest
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       build_type: [Debug, Release]
+  #   env:
+  #     VCPKG_TRIPLET: x64-mingw-dynamic
+  #     VCPKG_DEFAULT_HOST_TRIPLET: x64-mingw-dynamic
+  #     VCPKG_ROOT: ${{ github.workspace }}/.vcpkg
+  #     VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite
+  #     CCACHE_DIR: ${{ github.workspace }}/.ccache
+  #     CCACHE_BASEDIR: ${{ github.workspace }}
+  #     CCACHE_COMPRESS: true
+  #
+  #   steps:
+  #     - uses: actions/checkout@v7
+  #       with:
+  #         submodules: recursive
+  #
+  #     # Up-to-date GCC toolchain (the runner's preinstalled MinGW lags behind for C++23).
+  #     - name: Setup MSYS2 (UCRT64)
+  #       id: msys2
+  #       uses: msys2/setup-msys2@v2
+  #       with:
+  #         msystem: UCRT64
+  #         update: false
+  #         cache: true
+  #         install: >-
+  #           mingw-w64-ucrt-x86_64-gcc
+  #           mingw-w64-ucrt-x86_64-cmake
+  #           mingw-w64-ucrt-x86_64-ninja
+  #           mingw-w64-ucrt-x86_64-ccache
+  #
+  #     - name: Add MinGW to PATH
+  #       shell: pwsh
+  #       run: '"${{ steps.msys2.outputs.msys2-location }}\ucrt64\bin" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH'
+  #
+  #     - uses: actions/checkout@v7
+  #       with:
+  #         repository: microsoft/vcpkg
+  #         ref: ${{ env.VCPKG_REF }}
+  #         path: .vcpkg
+  #
+  #     - name: Bootstrap vcpkg
+  #       run: .vcpkg/bootstrap-vcpkg.bat -disableMetrics
+  #       shell: cmd
+  #
+  #     # The MinGW compiler version is part of the cache key, so a toolchain update starts fresh.
+  #     - name: Get GCC version
+  #       id: gcc
+  #       shell: pwsh
+  #       run: '"version=$(gcc -dumpfullversion)" | Out-File -Append -Encoding utf8 $env:GITHUB_OUTPUT'
+  #
+  #     - name: Restore vcpkg binary cache
+  #       uses: actions/cache/restore@v6
+  #       with:
+  #         path: .vcpkg-cache
+  #         key: vcpkg-${{ env.VCPKG_TRIPLET }}-gcc${{ steps.gcc.outputs.version }}-${{ env.VCPKG_REF }}-
+  #         restore-keys: vcpkg-${{ env.VCPKG_TRIPLET }}-gcc${{ steps.gcc.outputs.version }}-${{ env.VCPKG_REF }}-
+  #
+  #     - name: Install SDL3
+  #       run: .vcpkg/vcpkg install sdl3 --triplet ${{ env.VCPKG_TRIPLET }} --clean-after-build
+  #
+  #     - name: Save vcpkg binary cache
+  #       uses: actions/cache/save@v6
+  #       with:
+  #         path: .vcpkg-cache
+  #         key: vcpkg-${{ env.VCPKG_TRIPLET }}-gcc${{ steps.gcc.outputs.version }}-${{ env.VCPKG_REF }}-${{ hashFiles('.vcpkg-cache/**') }}
+  #
+  #     - name: Restore ccache
+  #       uses: actions/cache@v6
+  #       with:
+  #         path: .ccache
+  #         key: ccache-windows-gcc-${{ matrix.build_type }}-${{ github.run_id }}
+  #         restore-keys: ccache-windows-gcc-${{ matrix.build_type }}-
+  #
+  #     - name: Configure
+  #       shell: pwsh
+  #       run: >
+  #         cmake -S . -B build/ci -G Ninja
+  #         -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+  #         -DVCPKG_TARGET_TRIPLET="$env:VCPKG_TRIPLET"
+  #         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+  #         -DCMAKE_C_COMPILER=gcc
+  #         -DCMAKE_CXX_COMPILER=g++
+  #         -DCMAKE_C_COMPILER_LAUNCHER=ccache
+  #         -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+  #         -DENGINE_BUILD_TESTS=OFF
+  #
+  #     # The build must be the last command: a pwsh step only fails on the final exit code.
+  #     - name: Build
+  #       shell: pwsh
+  #       run: |
+  #         ccache --zero-stats
+  #         cmake --build build/ci --target $env:CMAKE_TARGET --parallel
+  #
+  #     - name: ccache stats
+  #       if: always()
+  #       shell: pwsh
+  #       run: ccache --show-stats
+  #
+  #     - name: Upload artifact
+  #       uses: actions/upload-artifact@v7
+  #       with:
+  #         name: ${{ env.CMAKE_TARGET }}-windows-gcc-${{ matrix.build_type }}
+  #         path: |
+  #           build/ci/apps/${{ env.CMAKE_TARGET }}/
+  #           !build/ci/apps/${{ env.CMAKE_TARGET }}/CMakeFiles/**
+  #           !build/ci/apps/${{ env.CMAKE_TARGET }}/*.cmake
+  #           !build/ci/apps/${{ env.CMAKE_TARGET }}/*.a
+  #         retention-days: 14
+  #         if-no-files-found: error

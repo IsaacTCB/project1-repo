@@ -32,6 +32,7 @@
 #include "runtime/app/context/frame_context.h"
 #include "runtime/debug/sinks/file_log_sink.h"
 #include "runtime/system/view/view_system_2d.h"
+#include "runtime/version.h"
 #include "server/display_server.h"
 #include "server/os_server.h"
 
@@ -41,7 +42,11 @@
 #include "runtime/debug/sinks/imgui_log_sink.h"
 #include <imgui.h>
 #include <imgui_internal.h>
+#endif
 
+static const auto s_version_name = RuntimeVersion::version().full_semver_name();
+
+#if ENABLE_IMGUI
 /**
  * @brief Gets the dockspace's central node rectangle as a viewport.
  *
@@ -117,15 +122,7 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
     };
 
     const auto print_version = []() -> void {
-        const char *config = nullptr;
-#if DEBUG
-        config = "debug";
-#elif NDEBUG
-        config = "ndebug";
-#endif
-
-        /* TODO: use runtime version from cmake */
-        std::printf("pj1-%s-v0.0.0\n", config ? config : "unk");
+        std::puts(s_version_name.c_str());
     };
 
     const auto print_render_devices = [this]() -> void {
@@ -277,6 +274,7 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     m_fps = {};
 
     auto &os = m_platform.os;
+    LOG_INFO("runtime version: {}", RuntimeVersion::version().semver_string);
     LOG_INFO("platform: {}", os.get_platform());
     LOG_INFO("os: {}", os.get_os());
 
@@ -474,7 +472,7 @@ void EngineRuntime::update(float delta) {
         const auto &render_size = m_view.get_layout().render_viewport.size;
         const std::string resolution = std::format("{0}x{1}", render_size.x, render_size.y);
 
-        std::string title = std::format("{0} | {1}fps | {2} | Debug", m_app_config.display.caption, m_fps.fps, resolution);
+        std::string title = std::format("{0} | {1}fps | {2} | {3}", m_app_config.display.caption, m_fps.fps, resolution, s_version_name);
         m_platform.display.set_display_caption(m_window, title);
     }
 #endif
