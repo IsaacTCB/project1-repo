@@ -10,6 +10,8 @@
 #include <string_view>
 
 #include "core/assertion.h"
+#include "core/debug/profiler/profiler.h"
+#include "core/debug/profiler/profiler_limits.h"
 #include "core/events/input_events.h"
 #include "core/events/platform_events.h"
 #include "core/events/window_events.h"
@@ -82,6 +84,17 @@ static std::optional<Viewport> get_dockspace_viewport(ImGuiID dockspace_id) {
 
 EngineRuntime::EngineRuntime(const PlatformServices &platform)
     : m_platform(platform) {
+}
+
+void EngineRuntime::begin_frame() {
+    Profiler::get().begin_frame(std::move(m_profiler_frame));
+}
+
+void EngineRuntime::end_frame() {
+    m_profiler_frame = Profiler::get().end_frame();
+    for (const auto &event : m_profiler_frame.events) {
+        LOG_TRACE("{} took {}ns", event.source.function_name(), event.duration_ns);
+    }
 }
 
 static DisplayWindowProps get_window_props_from_config(const std::string &app_name, const ApplicationConfig &config) {
@@ -339,6 +352,8 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     m_view.set_output_rect({.position = {0, 0}, .size = display_size});
     m_input_service.init();
 
+    m_profiler_frame.events.reserve(ProfilerLimits::MAX_EVENTS_PER_FRAME);
+
     /* initialize application */
     m_app->on_init();
 }
@@ -451,6 +466,8 @@ bool EngineRuntime::count_fps(float delta) {
 }
 
 void EngineRuntime::update(float delta) {
+    begin_frame();
+
     /* it's important that we call this
      * before clamping delta time since
      * we want accurate results */
@@ -531,6 +548,8 @@ void EngineRuntime::update(float delta) {
 
 #if ENABLE_IMGUI
 void EngineRuntime::imgui_editor() {
+    PROFILER_SCOPE();
+
     /* TODO: temporary code. Move it into its own special code. */
     static bool s_menu_bar = true;
     if (m_input_service.is_key_just_pressed(Input::Key::Scancode::F1)) {
@@ -651,6 +670,7 @@ void EngineRuntime::imgui_editor() {
 }
 
 void EngineRuntime::imgui_console() {
+    PROFILER_SCOPE();
     ImGui::Begin("Console");
 
     static ImGuiTextFilter s_console_filter;
@@ -775,6 +795,8 @@ void EngineRuntime::render() {
 #endif
 
     m_renderer->present();
+
+    end_frame();
 }
 
 void EngineRuntime::close() {

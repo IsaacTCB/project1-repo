@@ -6,6 +6,7 @@
 #include <span>
 #include <string>
 
+#include "core/debug/profiler/profiler.h"
 #include "renderer/renderer_2d.h"
 
 #include "app/application_handler.h"
@@ -36,6 +37,9 @@ public:
     void close();
 
 private:
+    void begin_frame();
+    void end_frame();
+
     /**
      * @brief Initializes the main window and renderer.
      *
@@ -103,6 +107,7 @@ private:
     std::string m_program_name;
     std::filesystem::path m_export_log{};
     std::string m_preferred_backend;
+    ProfilerFrame m_profiler_frame{};
 
     ViewSystem m_view;
 
