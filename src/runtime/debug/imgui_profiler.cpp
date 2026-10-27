@@ -285,10 +285,11 @@ void ImGuiProfiler::draw_scope_tree(NodeID node, size_t recursion) {
             open = ImGui::TreeNodeEx(node_def.tag, flags, "%s", node_def.tag);
             ImGui::PopStyleColor();
         } else {
-            const auto func = m_impl->short_name
-                                ? short_function_name(node_def.source.function_name())
-                                : std::string_view{node_def.source.function_name()};
-            open = ImGui::TreeNodeEx(func.data(), flags, "%.*s", static_cast<int>(func.size()), func.data());
+            const char *func = node_def.source.function_name();
+            const auto f = m_impl->short_name
+                             ? short_function_name(func)
+                             : std::string_view{func};
+            open = ImGui::TreeNodeEx(func, flags, "%.*s", static_cast<int>(f.size()), f.data());
         }
     }
 
