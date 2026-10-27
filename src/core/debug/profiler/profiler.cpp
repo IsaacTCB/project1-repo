@@ -7,6 +7,15 @@
 
 #include "profiler_limits.h"
 
+namespace {
+
+size_t this_thread_hash() {
+    const auto thid = std::this_thread::get_id();
+    return std::hash<std::thread::id>{}(thid);
+}
+
+} /* namespace */
+
 /* ==================== *
  *        Scope         *
  * ==================== */
@@ -22,11 +31,10 @@ void ProfilerScope::end_profiler() {
 
     const auto d = static_cast<uint64_t>(duration.count());
     const auto s = static_cast<uint64_t>(start.time_since_epoch().count());
-    const auto thid = std::this_thread::get_id();
 
     m_profiler->record({
         .source = m_source,
-        .thread_id = std::hash<std::thread::id>{}(thid),
+        .thread_id = this_thread_hash(),
         .start_ns = s,
         .duration_ns = d,
     });
@@ -44,6 +52,7 @@ Profiler &Profiler::get() {
 void Profiler::begin_frame(ProfilerFrame &&frame) {
     const auto lock = std::scoped_lock{m_mutex};
     m_current_frame = std::move(frame);
+    m_current_frame.main_thread_id = this_thread_hash();
     m_current_frame.events.resize(0);
     m_current_frame.dropped = 0;
 }

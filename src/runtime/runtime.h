@@ -18,6 +18,10 @@
 #include "runtime/server/display_server.h"
 #include "runtime/system/view/view_system_2d.h"
 
+#if ENABLE_IMGUI
+#include "debug/imgui_profiler.h"
+#endif
+
 class EngineRuntime {
 public:
     enum class LaunchResult : uint8_t {
@@ -102,6 +106,7 @@ private:
 #if ENABLE_IMGUI
     std::unique_ptr<IImGuiBackend> m_imgui;
     std::shared_ptr<class ImGuiLogState> m_imgui_log_state;
+    ImGuiProfiler m_imgui_profiler;
 #endif
 
     std::string m_program_name;

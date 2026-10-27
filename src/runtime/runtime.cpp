@@ -92,9 +92,9 @@ void EngineRuntime::begin_frame() {
 
 void EngineRuntime::end_frame() {
     m_profiler_frame = Profiler::get().end_frame();
-    for (const auto &event : m_profiler_frame.events) {
-        LOG_TRACE("{} took {}ns", event.source.function_name(), event.duration_ns);
-    }
+#if ENABLE_IMGUI
+    m_imgui_profiler.push_frame(m_profiler_frame);
+#endif
 }
 
 static DisplayWindowProps get_window_props_from_config(const std::string &app_name, const ApplicationConfig &config) {
@@ -467,6 +467,7 @@ bool EngineRuntime::count_fps(float delta) {
 
 void EngineRuntime::update(float delta) {
     begin_frame();
+    PROFILER_SCOPE();
 
     /* it's important that we call this
      * before clamping delta time since
@@ -559,6 +560,7 @@ void EngineRuntime::imgui_editor() {
 
     static bool s_demo_open = false;
     static bool s_console_open = true;
+    static bool s_profiler_open = false;
 
     if (s_menu_bar) {
         if (ImGui::BeginMainMenuBar()) {
@@ -567,6 +569,7 @@ void EngineRuntime::imgui_editor() {
                     s_demo_open = true;
                 }
                 ImGui::MenuItem("Console", nullptr, &s_console_open);
+                ImGui::MenuItem("Profiler", nullptr, &s_profiler_open);
                 ImGui::EndMenu();
             }
 
@@ -665,6 +668,10 @@ void EngineRuntime::imgui_editor() {
 
         if (s_console_open) {
             imgui_console();
+        }
+
+        if (s_profiler_open) {
+            m_imgui_profiler.draw("Profiler", &s_profiler_open);
         }
     }
 }
@@ -766,36 +773,38 @@ void EngineRuntime::imgui_console() {
 #endif
 
 void EngineRuntime::render() {
-    if (m_exit_requested) {
-        /* fixes ImGui assertion on app exit. */
-        return;
-    }
+    {
+        PROFILER_SCOPE();
+        if (m_exit_requested) {
+            /* fixes ImGui assertion on app exit. */
+            return;
+        }
 
-    m_queue.clear();
+        m_queue.clear();
 
-    /* build render frame! */
-    RenderContext render{
-        .frame = m_frame_ctx,
-        .view_context = nullptr,
-        .queue = m_queue,
-        .clear_color = Color{25, 25, 25, 0},
-    };
+        /* build render frame! */
+        RenderContext render{
+            .frame = m_frame_ctx,
+            .view_context = nullptr,
+            .queue = m_queue,
+            .clear_color = Color{25, 25, 25, 0},
+        };
 
-    m_app->on_draw(render);
-    ASSERT(render.view_context, "View context must be built every frame!");
+        m_app->on_draw(render);
+        ASSERT(render.view_context, "View context must be built every frame!");
 
-    m_renderer->render_frame(render);
+        m_renderer->render_frame(render);
 
 #if ENABLE_IMGUI
-    /* build ImGui data and render it */
-    if (m_imgui) {
-        ImGui::Render();
-        m_imgui->render();
-    }
+        /* build ImGui data and render it */
+        if (m_imgui) {
+            ImGui::Render();
+            m_imgui->render();
+        }
 #endif
 
-    m_renderer->present();
-
+        m_renderer->present();
+    }
     end_frame();
 }
 

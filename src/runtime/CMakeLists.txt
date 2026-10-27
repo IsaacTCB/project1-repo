@@ -28,6 +28,7 @@ set(RUNTIME_SOURCES
     renderer/batch_builder_2d.cpp
     system/view/view_system_2d.cpp
     debug/sinks/file_log_sink.cpp
+    debug/imgui_profiler.cpp
     runtime.cpp
     ${RUNTIME_VERSION_CPP}
 )

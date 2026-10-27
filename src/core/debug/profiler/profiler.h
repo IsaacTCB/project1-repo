@@ -21,7 +21,8 @@ struct ProfilerEvent {
 
 struct ProfilerFrame {
     std::vector<ProfilerEvent> events;
-    size_t dropped; /* number of scoped events whose push was rejected */
+    size_t main_thread_id; /* used by the profiler window */
+    size_t dropped;        /* number of scoped events whose push was rejected */
 };
 
 class ProfilerScope {
