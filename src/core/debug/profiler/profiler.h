@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <mutex>
 #include <source_location>
+#include <vector>
 
 /* ==================== *
  *        Scope         *
@@ -94,12 +95,22 @@ private:
  *       Macros         *
  * ==================== */
 
+#if ENABLE_PROFILER
+
+inline constexpr bool PROFILER_ENABLED = true;
 #define PROFILE_CONCAT_HIDDEN(a, b) a##b
 #define PROFILE_CONCAT(a, b) PROFILE_CONCAT_HIDDEN(a, b)
 #define PROFILE_STRINGIFY(x) #x
 
 #define PROFILE_FUNCTION_SCOPE() \
     const auto PROFILE_CONCAT(profiler__func_, __LINE__) = Profiler::get().scope(nullptr)
-
 #define PROFILE_TAGGED_SCOPE(tag) \
-    const auto PROFILE_CONCAT(profiler__tagged_, tag) = Profiler::get().scope(PROFILE_STRINGIFY(tag));
+    const auto PROFILE_CONCAT(profiler__tagged_, tag) = Profiler::get().scope(PROFILE_STRINGIFY(tag))
+
+#else
+
+inline constexpr bool PROFILER_ENABLED = false;
+#define PROFILE_FUNCTION_SCOPE()
+#define PROFILE_TAGGED_SCOPE(tag)
+
+#endif /* ENABLE_PROFILER */

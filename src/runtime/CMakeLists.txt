@@ -28,7 +28,6 @@ set(RUNTIME_SOURCES
     renderer/batch_builder_2d.cpp
     system/view/view_system_2d.cpp
     debug/sinks/file_log_sink.cpp
-    debug/imgui_profiler.cpp
     runtime.cpp
     ${RUNTIME_VERSION_CPP}
 )
@@ -39,11 +38,17 @@ target_link_libraries(runtime PRIVATE core)
 engine_add_module(runtime)
 
 if(ENGINE_ENABLE_IMGUI)
-    target_sources(runtime PRIVATE
+    set(IMGUI_SOURCES
         debug/imgui_backend.cpp
         debug/imgui_style.cpp
         debug/sinks/imgui_log_sink.cpp
     )
+
+    if(ENGINE_ENABLE_PROFILER)
+        list(APPEND IMGUI_SOURCES debug/imgui_profiler.cpp)
+    endif()
+
+    target_sources(runtime PRIVATE ${IMGUI_SOURCES})
     target_link_libraries(runtime PUBLIC imgui)
 endif()
 

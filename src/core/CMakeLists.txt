@@ -10,8 +10,12 @@ set(CORE_SOURCES
     math/vec2i.cpp
     math/vec3.cpp
     math/vec3i.cpp
-    debug/profiler/profiler.cpp
 )
+
+if(ENGINE_ENABLE_PROFILER)
+    list(APPEND CORE_SOURCES
+        debug/profiler/profiler.cpp)
+endif()
 
 add_library(core STATIC ${CORE_SOURCES})
 engine_add_module(core)

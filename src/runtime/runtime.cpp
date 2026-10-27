@@ -87,14 +87,18 @@ EngineRuntime::EngineRuntime(const PlatformServices &platform)
 }
 
 void EngineRuntime::begin_frame() {
-    Profiler::get().begin_frame(std::move(m_profiler_frame));
+    if constexpr (PROFILER_ENABLED) {
+        Profiler::get().begin_frame(std::move(m_profiler_frame));
+    }
 }
 
 void EngineRuntime::end_frame() {
-    m_profiler_frame = Profiler::get().end_frame();
+    if constexpr (PROFILER_ENABLED) {
+        m_profiler_frame = Profiler::get().end_frame();
 #if ENABLE_IMGUI
-    m_imgui_profiler.push_frame(m_profiler_frame);
+        m_imgui_profiler.push_frame(m_profiler_frame);
 #endif
+    }
 }
 
 static DisplayWindowProps get_window_props_from_config(const std::string &app_name, const ApplicationConfig &config) {
@@ -352,7 +356,9 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     m_view.set_output_rect({.position = {0, 0}, .size = display_size});
     m_input_service.init();
 
-    m_profiler_frame.events.reserve(ProfilerLimits::MAX_EVENTS_PER_FRAME);
+    if constexpr (PROFILER_ENABLED) {
+        m_profiler_frame.events.reserve(ProfilerLimits::MAX_EVENTS_PER_FRAME);
+    }
 
     /* initialize application */
     m_app->on_init();
@@ -571,7 +577,13 @@ void EngineRuntime::imgui_editor() {
                     s_demo_open = true;
                 }
                 ImGui::MenuItem("Console", nullptr, &s_console_open);
-                ImGui::MenuItem("Profiler", nullptr, &s_profiler_open);
+
+                const char *profiler_item = "Profiler";
+                ImGui::MenuItem(profiler_item, nullptr, &s_profiler_open, PROFILER_ENABLED);
+                if constexpr (!PROFILER_ENABLED) {
+                    ImGui::SetItemTooltip("Profiler is disabled for this build.");
+                }
+
                 ImGui::EndMenu();
             }
 
@@ -672,9 +684,11 @@ void EngineRuntime::imgui_editor() {
             imgui_console(&s_console_open);
         }
 
+#if ENABLE_PROFILER
         if (s_profiler_open) {
             m_imgui_profiler.draw("Profiler", &s_profiler_open);
         }
+#endif
     }
 }
 
