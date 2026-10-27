@@ -61,6 +61,42 @@ struct ScopeData {
 /* helper functions used by the profiler window */
 namespace ImGuiProfilerHelpers {
 
+/* "virtual void Foo::bar(int) const" -> "Foo::bar" */
+inline std::string_view short_function_name(std::string_view name) {
+    size_t end = name.size();
+    int depth = 0;
+
+    /* find string end (the character before the parameter list parenthesis) */
+    for (size_t i = 0; i < name.size(); ++i) {
+        const char c = name[i];
+        if (c == '<') {
+            depth++;
+        } else if (c == '>') {
+            depth--;
+        } else if (c == '(' && depth == 0) {
+            end = i;
+            break;
+        }
+    }
+
+    /* walk back from end until the function name start */
+    size_t begin = 0;
+    depth = 0;
+    for (size_t i = end; i-- > 0;) {
+        const char c = name[i];
+        if (c == '>') {
+            depth++;
+        } else if (c == '<') {
+            depth--;
+        } else if (c == ' ' && depth == 0) {
+            begin = i + 1;
+            break;
+        }
+    }
+
+    return name.substr(begin, end - begin);
+}
+
 inline void text_right_aligned(const char *text) {
     float width = ImGui::CalcTextSize(text).x;
     float avail_width = ImGui::GetContentRegionAvail().x;

@@ -31,9 +31,10 @@ struct ImGuiProfiler::Impl {
     std::vector<ScopeData> scope_stack;
     std::vector<size_t> event_order;
 
-    bool paused;
+    bool paused = false;
+    bool short_name = true;
     SortKind sort_kind{SortKind::CHRONOLOGICAL};
-    size_t dropped;
+    size_t dropped{};
 };
 
 /* ================= *
@@ -149,6 +150,9 @@ void ImGuiProfiler::draw_controls() {
                     "profiler frame stays in a frozen state.");
         ImGui::EndTooltip();
     }
+
+    ImGui::SameLine();
+    ImGui::Checkbox("Short Names", &m_impl->short_name);
 
     static const char *sort_names[] = {
         "Chronological",
@@ -281,7 +285,10 @@ void ImGuiProfiler::draw_scope_tree(NodeID node, size_t recursion) {
             open = ImGui::TreeNodeEx(node_def.tag, flags, "%s", node_def.tag);
             ImGui::PopStyleColor();
         } else {
-            open = ImGui::TreeNodeEx(node_def.source.function_name(), flags, "%s", node_def.source.function_name());
+            const auto func = m_impl->short_name
+                                ? short_function_name(node_def.source.function_name())
+                                : std::string_view{node_def.source.function_name()};
+            open = ImGui::TreeNodeEx(func.data(), flags, "%.*s", static_cast<int>(func.size()), func.data());
         }
     }
 
