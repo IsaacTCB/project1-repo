@@ -34,6 +34,7 @@ void ProfilerScope::end_profiler() {
 
     m_profiler->record({
         .source = m_source,
+        .tag = m_tag,
         .thread_id = this_thread_hash(),
         .start_ns = s,
         .duration_ns = d,
@@ -62,8 +63,8 @@ ProfilerFrame Profiler::end_frame() {
     return std::move(m_current_frame);
 }
 
-ProfilerScope Profiler::scope(const std::source_location &source) {
-    return ProfilerScope{this, source};
+ProfilerScope Profiler::scope(const char *tag, const std::source_location &source) {
+    return ProfilerScope{this, tag, source};
 }
 
 void Profiler::record(const ProfilerEvent &event) {

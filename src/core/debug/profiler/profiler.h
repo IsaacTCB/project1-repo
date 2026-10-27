@@ -14,6 +14,7 @@ class Profiler;
 
 struct ProfilerEvent {
     std::source_location source;
+    const char *tag;
     size_t thread_id;
     uint64_t start_ns;
     uint64_t duration_ns;
@@ -28,8 +29,8 @@ struct ProfilerFrame {
 class ProfilerScope {
 protected:
     friend Profiler;
-    explicit ProfilerScope(Profiler *profiler, const std::source_location &source)
-        : m_profiler(profiler), m_source(source) {
+    explicit ProfilerScope(Profiler *profiler, const char *tag, const std::source_location &source)
+        : m_profiler(profiler), m_tag(tag), m_source(source) {
         begin_profiler();
     }
 
@@ -51,6 +52,7 @@ private:
 
 private:
     Profiler *m_profiler{};
+    const char *m_tag;
     std::source_location m_source;
 
     /* counter */
@@ -77,7 +79,7 @@ public:
     ProfilerFrame end_frame();
 
     [[nodiscard]]
-    ProfilerScope scope(const std::source_location &source = std::source_location::current());
+    ProfilerScope scope(const char *tag, const std::source_location &source = std::source_location::current());
 
 protected:
     void record(const ProfilerEvent &event);
@@ -92,5 +94,12 @@ private:
  *       Macros         *
  * ==================== */
 
-#define PROFILER_SCOPE() \
-    const auto profiler__scope_ = Profiler::get().scope()
+#define PROFILE_CONCAT_HIDDEN(a, b) a##b
+#define PROFILE_CONCAT(a, b) PROFILE_CONCAT_HIDDEN(a, b)
+#define PROFILE_STRINGIFY(x) #x
+
+#define PROFILE_FUNCTION_SCOPE() \
+    const auto PROFILE_CONCAT(profiler__func_, __LINE__) = Profiler::get().scope(nullptr)
+
+#define PROFILE_TAGGED_SCOPE(tag) \
+    const auto PROFILE_CONCAT(profiler__tagged_, tag) = Profiler::get().scope(PROFILE_STRINGIFY(tag));

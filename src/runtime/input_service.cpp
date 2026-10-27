@@ -28,7 +28,7 @@ void InputService::close() {
 }
 
 void InputService::update() {
-    PROFILER_SCOPE();
+    PROFILE_FUNCTION_SCOPE();
 
     m_mouse_state_previous = m_mouse_state;
 

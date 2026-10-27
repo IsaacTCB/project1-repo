@@ -99,7 +99,7 @@ void BatchBuilder2D::set_batch_key(const BatchKey &key) {
 }
 
 void BatchBuilder2D::draw_rect(const Vec2 &pos, const Vec2 &size, const Vec2 &anchor, float rotation, Color color, TextureHandle texture, bool filter) {
-    PROFILER_SCOPE();
+    PROFILE_FUNCTION_SCOPE();
 
     if (!can_fit_quad()) {
         flush();

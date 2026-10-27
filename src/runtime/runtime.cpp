@@ -467,7 +467,7 @@ bool EngineRuntime::count_fps(float delta) {
 
 void EngineRuntime::update(float delta) {
     begin_frame();
-    PROFILER_SCOPE();
+    PROFILE_FUNCTION_SCOPE();
 
     /* it's important that we call this
      * before clamping delta time since
@@ -543,13 +543,15 @@ void EngineRuntime::update(float delta) {
         .frame = build_frame_context(delta),
         .new_second = new_second,
     };
-
-    m_app->on_update(update_ctx);
+    {
+        PROFILE_TAGGED_SCOPE(ApplicationUpdate);
+        m_app->on_update(update_ctx);
+    }
 }
 
 #if ENABLE_IMGUI
 void EngineRuntime::imgui_editor() {
-    PROFILER_SCOPE();
+    PROFILE_FUNCTION_SCOPE();
 
     /* TODO: temporary code. Move it into its own special code. */
     static bool s_menu_bar = true;
@@ -677,7 +679,7 @@ void EngineRuntime::imgui_editor() {
 }
 
 void EngineRuntime::imgui_console() {
-    PROFILER_SCOPE();
+    PROFILE_FUNCTION_SCOPE();
     ImGui::Begin("Console");
 
     static ImGuiTextFilter s_console_filter;
@@ -774,7 +776,7 @@ void EngineRuntime::imgui_console() {
 
 void EngineRuntime::render() {
     {
-        PROFILER_SCOPE();
+        PROFILE_FUNCTION_SCOPE();
         if (m_exit_requested) {
             /* fixes ImGui assertion on app exit. */
             return;
@@ -783,16 +785,18 @@ void EngineRuntime::render() {
         m_queue.clear();
 
         /* build render frame! */
+
         RenderContext render{
             .frame = m_frame_ctx,
             .view_context = nullptr,
             .queue = m_queue,
             .clear_color = Color{25, 25, 25, 0},
         };
-
-        m_app->on_draw(render);
+        {
+            PROFILE_TAGGED_SCOPE(ApplicationDraw);
+            m_app->on_draw(render);
+        }
         ASSERT(render.view_context, "View context must be built every frame!");
-
         m_renderer->render_frame(render);
 
 #if ENABLE_IMGUI

@@ -23,6 +23,7 @@ using namespace ImGuiProfilerHelpers;
 constexpr ImColor MAIN_THREAD_COLOR(66, 135, 245);
 constexpr ImColor WORKER_THREAD_COLOR(245, 188, 66);
 constexpr ImColor TEXT_WARNING_COLOR(245, 188, 66);
+constexpr ImColor SCOPE_TAGGED_COLOR(190, 250, 233);
 
 struct ImGuiProfiler::Impl {
     std::vector<NodeDef> nodes;
@@ -52,6 +53,8 @@ ImGuiProfiler::ImGuiProfiler() {
 ImGuiProfiler::~ImGuiProfiler() = default;
 
 void ImGuiProfiler::draw(const char *title, bool *open) {
+    PROFILE_FUNCTION_SCOPE();
+
     if (!ImGui::Begin(title, open)) {
         ImGui::End();
         return;
@@ -91,8 +94,15 @@ void ImGuiProfiler::push_frame(const ProfilerFrame &frame) {
 static void node_tooltip(const NodeDef &node) {
     char buffer[32];
     if (node.kind == NodeKind::SCOPE) {
-        ImGui::TextUnformatted(node.source.function_name());
+        const bool is_tagged = node.tag != nullptr;
+        if (is_tagged) {
+            ImGui::TextColored(SCOPE_TAGGED_COLOR, "%s", node.tag);
+            ImGui::TextDisabled("%s", node.source.function_name());
+        } else {
+            ImGui::TextUnformatted(node.source.function_name());
+        }
         ImGui::TextDisabled("%s:%d", node.source.file_name(), node.source.line());
+
         ImGui::Separator();
 
         format_duration_string(node.total_ns, buffer, sizeof(buffer));
@@ -265,9 +275,14 @@ void ImGuiProfiler::draw_scope_tree(NodeID node, size_t recursion) {
         open = ImGui::TreeNodeEx("Thread", flags, "Thread 0x%zx", node_def.thread_id);
         ImGui::PopStyleColor();
     } else {
-        const char *func = node_def.source.function_name();
-        const char *name = func ? func : "Func";
-        open = ImGui::TreeNodeEx(name, flags, "%s", name);
+        const bool is_tagged = node_def.tag != nullptr;
+        if (is_tagged) {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImU32{SCOPE_TAGGED_COLOR});
+            open = ImGui::TreeNodeEx(node_def.tag, flags, "%s", node_def.tag);
+            ImGui::PopStyleColor();
+        } else {
+            open = ImGui::TreeNodeEx(node_def.source.function_name(), flags, "%s", node_def.source.function_name());
+        }
     }
 
     /* 1. scopes */
@@ -325,7 +340,8 @@ void ImGuiProfiler::draw_scope_tree(NodeID node, size_t recursion) {
  * ================== */
 
 static bool is_same_scope(const ProfilerEvent &event, const NodeDef &node_def) {
-    return (event.source.line() == node_def.source.line() &&
+    return (event.tag == node_def.tag &&
+            event.source.line() == node_def.source.line() &&
             event.source.function_name() == node_def.source.function_name() &&
             event.source.file_name() == node_def.source.file_name());
 }
@@ -433,6 +449,8 @@ void ImGuiProfiler::rebuild_tree(const ProfilerFrame &frame) {
                 .first_start_ns = event.start_ns,
                 .first_child = NO_NODE,
                 .sibling = parent.first_child,
+
+                .tag = event.tag,
                 .source = event.source,
             });
             parent.first_child = node_idx;

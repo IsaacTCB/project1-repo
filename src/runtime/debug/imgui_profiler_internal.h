@@ -42,6 +42,7 @@ struct NodeDef {
     NodeID first_child = NO_NODE;
     NodeID sibling = NO_NODE;
 
+    const char *tag{};
     std::source_location source{};
     size_t calls{};
 

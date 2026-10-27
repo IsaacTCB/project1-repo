@@ -109,7 +109,7 @@ void Renderer2D::update_view_projection(const ViewContext2D &view) {
 
 void Renderer2D::render_frame(const RenderContext &ctx) {
     ASSERT_DEVICE_READY();
-    PROFILER_SCOPE();
+    PROFILE_FUNCTION_SCOPE();
     m_rd->begin_frame();
 
     if (m_enabled_render_targets) {
