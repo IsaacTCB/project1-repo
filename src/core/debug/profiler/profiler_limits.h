@@ -4,6 +4,6 @@
 
 namespace ProfilerLimits {
 
-inline constexpr size_t MAX_EVENTS_PER_FRAME = 1000;
+inline constexpr size_t MAX_EVENTS_PER_FRAME = 10000;
 
 } /* namespace ProfilerLimits */

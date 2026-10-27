@@ -5,6 +5,7 @@
 #include <variant>
 
 #include "core/assertion.h"
+#include "core/debug/profiler/profiler.h"
 #include "core/logger.h"
 #include "core/math/vec2.h"
 #include "core/math/vec2i.h"
@@ -108,6 +109,7 @@ void Renderer2D::update_view_projection(const ViewContext2D &view) {
 
 void Renderer2D::render_frame(const RenderContext &ctx) {
     ASSERT_DEVICE_READY();
+    PROFILER_SCOPE();
     m_rd->begin_frame();
 
     if (m_enabled_render_targets) {

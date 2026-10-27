@@ -6,6 +6,7 @@
 #include <cstdint>
 
 #include "core/assertion.h"
+#include "core/debug/profiler/profiler.h"
 #include "core/input/gamepad.h"
 #include "core/input/keyboard.h"
 #include "core/input/mouse.h"
@@ -27,6 +28,8 @@ void InputService::close() {
 }
 
 void InputService::update() {
+    PROFILER_SCOPE();
+
     m_mouse_state_previous = m_mouse_state;
 
     /* update previous pad state */
