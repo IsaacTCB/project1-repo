@@ -95,7 +95,7 @@ void EngineRuntime::begin_frame() {
 void EngineRuntime::end_frame() {
     if constexpr (PROFILER_ENABLED) {
         m_profiler_frame = Profiler::get().end_frame();
-#if ENABLE_IMGUI
+#if ENABLE_IMGUI && ENABLE_PROFILER
         m_imgui_profiler.push_frame(m_profiler_frame);
 #endif
     }
