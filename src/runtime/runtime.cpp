@@ -561,9 +561,9 @@ void EngineRuntime::imgui_editor() {
 
     /* TODO: temporary code. Move it into its own special code. */
     static bool s_menu_bar = true;
-    if (m_input_service.is_key_just_pressed(Input::Key::Scancode::F1)) {
+    constexpr ImGuiInputFlags shortcut_flags = ImGuiInputFlags_RouteGlobal;
+    if (ImGui::Shortcut(ImGuiKey_F1, shortcut_flags)) {
         s_menu_bar = !s_menu_bar;
-        LOG_TRACE("{} ImGui...", s_menu_bar ? "enabling" : "disabling");
     }
 
     static bool s_demo_open = false;
@@ -571,15 +571,23 @@ void EngineRuntime::imgui_editor() {
     static bool s_profiler_open = false;
 
     if (s_menu_bar) {
+        /* global keybinds */
+        if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_C, shortcut_flags)) {
+            s_console_open = !s_console_open;
+        }
+        if (PROFILER_ENABLED && ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_P, shortcut_flags)) {
+            s_profiler_open = !s_profiler_open;
+        }
+
         if (ImGui::BeginMainMenuBar()) {
             if (ImGui::BeginMenu("Debug")) {
                 if (ImGui::MenuItem("Demo Window")) {
                     s_demo_open = true;
                 }
-                ImGui::MenuItem("Console", nullptr, &s_console_open);
+                ImGui::MenuItem("Console", "Ctrl+C", &s_console_open);
 
                 const char *profiler_item = "Profiler";
-                ImGui::MenuItem(profiler_item, nullptr, &s_profiler_open, PROFILER_ENABLED);
+                ImGui::MenuItem(profiler_item, "Ctrl+P", &s_profiler_open, PROFILER_ENABLED);
                 if constexpr (!PROFILER_ENABLED) {
                     ImGui::SetItemTooltip("Profiler is disabled for this build.");
                 }
