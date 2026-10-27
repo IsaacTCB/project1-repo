@@ -91,7 +91,7 @@ private:
 
 #if ENABLE_IMGUI
     void imgui_editor();
-    void imgui_console();
+    void imgui_console(bool *open = nullptr);
 #endif
 
 private:

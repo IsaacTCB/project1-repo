@@ -669,7 +669,7 @@ void EngineRuntime::imgui_editor() {
         }
 
         if (s_console_open) {
-            imgui_console();
+            imgui_console(&s_console_open);
         }
 
         if (s_profiler_open) {
@@ -678,9 +678,9 @@ void EngineRuntime::imgui_editor() {
     }
 }
 
-void EngineRuntime::imgui_console() {
+void EngineRuntime::imgui_console(bool *open) {
     PROFILE_FUNCTION_SCOPE();
-    ImGui::Begin("Console");
+    ImGui::Begin("Console", open);
 
     static ImGuiTextFilter s_console_filter;
     static bool s_autoscroll = true;
@@ -709,6 +709,8 @@ void EngineRuntime::imgui_console() {
 
     ImGui::SameLine();
     s_console_filter.Draw("##console_log_filter", ImGui::GetContentRegionAvail().x);
+
+    ImGui::SeparatorText("Logs");
 
     ImGui::BeginChild("##console_log", ImVec2(0, 0), 0, ImGuiWindowFlags_HorizontalScrollbar);
     ImGui::PushStyleVarY(ImGuiStyleVar_ItemSpacing, 2.0f);
