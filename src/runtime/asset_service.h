@@ -3,11 +3,39 @@
 #include <memory>
 #include <string_view>
 
+#include "core/image/image.h"
+#include "core/math/vec2i.h"
 #include "runtime/renderer/render_handles.h"
 
 #include "asset_ref.h"
 
-using TextureRef = AssetRef<TextureHandle>;
+/* TODO: move asset definitions outta here */
+struct TextureAsset {
+    TextureHandle handle;
+    PixelFormat format;
+    Vec2i size;
+
+    operator TextureHandle() const { return handle; }
+    operator bool() const { return handle.valid(); }
+};
+
+class TextureRef : public AssetRef<TextureAsset> {
+public:
+    TextureRef() = default;
+    TextureRef(AssetRef<TextureAsset> &&asset)
+        : AssetRef(std::move(asset)) {}
+
+    /* texture metadata */
+    [[nodiscard]] TextureHandle handle() const { return this->get().handle; }
+    [[nodiscard]] PixelFormat format() const { return this->get().format; }
+    [[nodiscard]] Vec2i size() const { return this->get().size; };
+    [[nodiscard]] int width() const { return this->get().size.x; };
+    [[nodiscard]] int height() const { return this->get().size.y; };
+
+    /* misc */
+    [[nodiscard]] bool valid() const { return static_cast<bool>(this->get()); }
+    [[nodiscard]] operator bool() const { return this->valid(); }
+};
 
 class ImageData;
 class AssetService {
@@ -35,8 +63,8 @@ public:
     TextureRef get_texture(std::string_view path);
 
 private:
-    [[nodiscard]] TextureHandle load_texture(std::string_view path) const;
-    void unload_texture(TextureHandle handle) const;
+    [[nodiscard]] TextureAsset load_texture(std::string_view path) const;
+    void unload_texture(const TextureAsset &texture) const;
 
 private:
     struct Impl;
