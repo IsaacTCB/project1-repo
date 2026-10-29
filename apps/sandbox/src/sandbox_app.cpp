@@ -15,8 +15,10 @@
 #include "runtime/asset_service.h"
 #include "runtime/camera_2d_utils.h"
 #include "runtime/input_service.h"
+#include "runtime/renderer/sprite_2d.h"
 
 #include "entity.h"
+#include "sprite_manager.h"
 
 class SandboxApplication : public IApplication {
     DECLARE_APP(SandboxApplication);
@@ -43,13 +45,26 @@ public:
         };
     }
 
+    [[nodiscard]]
+    static Sprite2D build_sprite(const TextureRef &texture, Vec2i region_min, Vec2i region_max, Vec2 anchor = {}) {
+        const auto texture_size = texture.size();
+        return {
+            .texture = texture,
+            .uv_min = Vec2{region_min} / Vec2{texture_size},
+            .uv_max = Vec2{region_max} / Vec2{texture_size},
+            .anchor = anchor,
+            .size = Vec2{region_max - region_min},
+        };
+    }
+
     void on_init() override {
-        m_texture = m_servers.asset.get_texture("test.png");
-        if (m_texture) {
-            LOG_TRACE("loaded texture size is {}x{}", m_texture.width(), m_texture.height());
-        } else {
-            LOG_WARN("failed to load sandbox texture");
-        }
+        m_sprite_manager.emplace(m_servers.asset);
+        m_sprite = m_sprite_manager->load_sprite(
+            "test.png",
+            {0, 0}, {256, 256},
+            {0.5f, 0.5f} /* anchor */);
+
+        LOG_TRACE("sprite texture size: {}x{}", m_sprite.texture.width(), m_sprite.texture.height());
 
         m_entities.emplace_back(Vec2{0.0f, 0.0f}, 1.0f);
 
@@ -153,16 +168,13 @@ public:
             Vec2i draw_pos{entity.pos};
 
             /* get scale size */
-            Vec2 scale{200.0f, 200.0f};
-            float scale_factor = entity.speed_scale;
+            Vec2 scale_factor = Vec2{entity.speed_scale, entity.speed_scale};
             scale_factor *= scale_factor * scale_factor;
 
-            ctx.queue.draw_texture_ex(
-                m_texture.handle(),
-                Color::WHITE,
+            ctx.queue.draw_sprite(
+                m_sprite,
                 draw_pos,
-                Vec2i(scale * scale_factor),
-                {0.5f, 0.5f},
+                scale_factor,
                 0.0f);
         }
 
@@ -195,9 +207,10 @@ public:
 
 private:
     std::vector<Entity> m_entities;
-    TextureRef m_texture;
+    Sprite2D m_sprite;
     Camera2D m_camera;
 
+    std::optional<SpriteManager> m_sprite_manager;
     ViewContext2D m_view_context;
 };
 

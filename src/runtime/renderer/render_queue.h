@@ -8,12 +8,15 @@
 #include "core/math/vec2i.h"
 
 #include "render_handles.h"
+#include "sprite_2d.h"
 
 struct RenderCommandDraw {
     TextureHandle texture; /* handle is null = draw solid color */
     Vec2 pos;
     Vec2 size;
     Vec2 anchor;
+    Vec2 uv_min;
+    Vec2 uv_max;
     float rotation;
     Color color;
     // int zsort;
@@ -42,6 +45,8 @@ public:
             .pos = Vec2{position},
             .size = Vec2{size},
             .anchor = anchor,
+            .uv_min = Vec2{0.0f, 0.0f},
+            .uv_max = Vec2{1.0f, 1.0f},
             .rotation = rotation,
             .color = color,
             // .zsort = 0,
@@ -62,6 +67,20 @@ public:
 
     void draw_color(Color color, const Vec2i &position, const Vec2i &size) {
         draw_color_ex(color, position, size, Vec2{0.0f, 0.0f}, 0.0f);
+    }
+
+    void draw_sprite(const Sprite2D &sprite, const Vec2i &position, const Vec2 &scale, float rotation) {
+        Vec2 size = sprite.size * scale;
+        m_queue.emplace_back(RenderCommandDraw{
+            .texture = sprite.texture.handle(),
+            .pos = Vec2{position},
+            .size = Vec2{size},
+            .anchor = sprite.anchor,
+            .uv_min = sprite.uv_min,
+            .uv_max = sprite.uv_max,
+            .rotation = rotation,
+            .color{},
+        });
     }
 
 private:
