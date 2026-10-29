@@ -10,7 +10,7 @@
 #include "runtime/renderer/render_handles.h"
 
 struct AssetService::Impl {
-    AssetCache<TextureHandle> textures;
+    AssetCache<TextureAsset> textures;
 };
 
 AssetService::AssetService() = default;
@@ -23,7 +23,7 @@ AssetService::AssetService(const Provider &provider)
     auto texture_load_fn = [this](std::string_view path) {
         return this->load_texture(path);
     };
-    auto texture_unload_fn = [this](auto handle) {
+    auto texture_unload_fn = [this](const auto &handle) {
         this->unload_texture(handle);
     };
     m_impl->textures.set_load_callbacks(texture_load_fn, texture_unload_fn);
@@ -45,22 +45,26 @@ TextureRef AssetService::get_texture(std::string_view path) {
 
 /* Loaders */
 
-TextureHandle AssetService::load_texture(std::string_view path) const {
+TextureAsset AssetService::load_texture(std::string_view path) const {
     ASSERT(m_provider.renderer.load_texture);
 
     ImageData image = Image::decode(path);
     if (!image) {
         LOG_WARN("Unable to load image at \"{}\"", path);
-        return TextureHandle{};
+        return TextureAsset{};
     }
 
     LOG_TRACE("loading texture {}", path);
-    return m_provider.renderer.load_texture(image, m_provider.renderer.userdata);
+    return {
+        .handle = m_provider.renderer.load_texture(image, m_provider.renderer.userdata),
+        .format = image.format,
+        .size = Vec2i{static_cast<int>(image.width), static_cast<int>(image.height)},
+    };
 }
 
-void AssetService::unload_texture(TextureHandle handle) const {
-    LOG_TRACE("unloading texture {}", handle);
+void AssetService::unload_texture(const TextureAsset &texture) const {
+    LOG_TRACE("unloading texture {}", texture.handle);
     ASSERT(m_provider.renderer.unload_texture);
-    ASSERT(handle, "Attempted to destroy an invalid handle");
-    m_provider.renderer.unload_texture(handle, m_provider.renderer.userdata);
+    ASSERT(texture.handle, "Attempted to destroy an invalid handle");
+    m_provider.renderer.unload_texture(texture.handle, m_provider.renderer.userdata);
 }
