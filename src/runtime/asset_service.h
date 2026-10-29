@@ -19,11 +19,9 @@ struct TextureAsset {
     operator bool() const { return handle.valid(); }
 };
 
-class TextureRef : public AssetRef<TextureAsset> {
+class TextureRef : public AssetRefMixin<TextureRef, TextureAsset> {
 public:
-    TextureRef() = default;
-    TextureRef(AssetRef<TextureAsset> &&asset)
-        : AssetRef(std::move(asset)) {}
+    using AssetRefMixin::AssetRefMixin;
 
     /* texture metadata */
     [[nodiscard]] TextureHandle handle() const { return this->get().handle; }
