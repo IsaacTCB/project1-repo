@@ -1,0 +1,14 @@
+{
+    "version": 1,
+    "textures": {
+        /* textures are in relative coords */
+        "idle": "test.png"
+    },
+    "sprites": {
+        "test.idle": {
+            "texture": "idle",
+            "rect": [0, 0, 256, 256],
+            "anchor": [0.5, 0.5]
+        }
+    }
+}

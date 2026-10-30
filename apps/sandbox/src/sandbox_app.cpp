@@ -31,6 +31,7 @@ public:
             .caption = "Sandbox",
             .size = VIEWPORT_SIZE * 3,
             .resizable = true,
+            .filter_textures = false,
         };
 
         config.view = {
@@ -45,8 +46,7 @@ public:
         };
     }
 
-    [[nodiscard]]
-    static Sprite2D build_sprite(const TextureRef &texture, Vec2i region_min, Vec2i region_max, Vec2 anchor = {}) {
+    [[nodiscard]] static Sprite2D build_sprite(const TextureRef &texture, Vec2i region_min, Vec2i region_max, Vec2 anchor = {}) {
         const auto texture_size = texture.size();
         return {
             .texture = texture,
@@ -59,10 +59,12 @@ public:
 
     void on_init() override {
         m_sprite_manager.emplace(m_servers.asset);
-        m_sprite = m_sprite_manager->load_sprite(
-            "test.png",
-            {0, 0}, {256, 256},
-            {0.5f, 0.5f} /* anchor */);
+
+        if (auto error = m_sprite_manager->load_manifest("assets/test.json"); !error) {
+            LOG_WARN("failed to load manifest file");
+        } else {
+            m_sprite = m_sprite_manager->get_sprite("test.idle");
+        }
 
         LOG_TRACE("sprite texture size: {}x{}", m_sprite.texture.width(), m_sprite.texture.height());
 
