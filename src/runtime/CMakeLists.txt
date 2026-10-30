@@ -40,6 +40,7 @@ engine_add_module(runtime)
 if(ENGINE_ENABLE_IMGUI)
     target_sources(runtime PRIVATE
         debug/imgui_backend.cpp
+        debug/imgui_editor.cpp
         debug/imgui_style.cpp
         debug/sinks/imgui_log_sink.cpp
     )
