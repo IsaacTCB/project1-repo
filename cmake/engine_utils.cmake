@@ -32,7 +32,7 @@ function(engine_copy_dll target)
     )
 endfunction()
 
-# Copies assets next to the target's binary after build, preserving
+# Copies assets next to the target's binary on every build, preserving
 # their directory layout relative to CMAKE_CURRENT_SOURCE_DIR.
 # e.g. 'assets/textures.png' -> '<target dir>/assets/texture.png'
 function(engine_add_assets target)
@@ -68,12 +68,14 @@ function(engine_add_assets target)
     endif()
     list(REMOVE_DUPLICATES asset_dirs)
 
-    add_custom_command(
-        TARGET ${target}
-        POST_BUILD
+    # we need to create a custom target in
+    # order for this to execute the copy
+    # commands on every build
+    add_custom_target(${target}_assets ALL
         COMMAND ${CMAKE_COMMAND} -E make_directory ${asset_dirs}
         ${copy_commands}
         COMMENT "${target}: Copying assets onto target directory..."
         VERBATIM
     )
+    add_dependencies(${target}_assets ${target})
 endfunction()
