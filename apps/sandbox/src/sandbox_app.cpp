@@ -60,7 +60,7 @@ public:
     void on_init() override {
         m_sprite_manager.emplace(m_servers.asset);
 
-        if (auto error = m_sprite_manager->load_manifest("assets/test.json"); !error) {
+        if (auto error = m_sprite_manager->load_manifest("assets/manifest.json"); !error) {
             LOG_WARN("failed to load manifest file");
         } else {
             m_sprite = m_sprite_manager->get_sprite("test.idle");

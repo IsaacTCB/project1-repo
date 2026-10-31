@@ -27,7 +27,8 @@ struct SpriteManifestDesc {
     std::unordered_map<std::string, SpriteDesc> sprites;
 };
 
-static std::expected<void, ManifestLoadError> parse_manifest_file(SpriteManifestDesc &manifest, const std::filesystem::path &filepath) {
+template <typename TManifest>
+static std::expected<void, ManifestLoadError> parse_manifest_file(TManifest &manifest, const std::filesystem::path &filepath) {
     static constexpr glz::opts kManifestOpts{
         .error_on_missing_keys = true,
     };
@@ -43,7 +44,7 @@ static std::expected<void, ManifestLoadError> parse_manifest_file(SpriteManifest
     return {};
 }
 
-std::expected<void, ManifestLoadError> SpriteManager::load_manifest(const std::filesystem::path &filepath) {
+std::expected<void, ManifestLoadError> SpriteManager::add_manifest_group(const std::filesystem::path &filepath) {
     SpriteManifestDesc manifest;
     if (!parse_manifest_file(manifest, filepath)) {
         return std::unexpected{ManifestLoadError::ERROR};
@@ -87,7 +88,9 @@ std::expected<void, ManifestLoadError> SpriteManager::load_manifest(const std::f
             x < 0 || y < 0 ||
             w > texture.width() - x ||
             h > texture.height() - y) {
-            LOG_ERROR("manifest load error: sprite '{}' uses invalid rect dimensions");
+            LOG_ERROR(
+                "manifest load error: sprite '{}' uses invalid rect dimensions",
+                name);
             return std::unexpected{ManifestLoadError::ERROR};
         }
 
@@ -103,7 +106,35 @@ std::expected<void, ManifestLoadError> SpriteManager::load_manifest(const std::f
         sprite_map.emplace(name, std::move(spr));
     }
 
+    sprite_map.merge(m_sprites);
+
+    /* commit to m_sprites */
     m_sprites = std::move(sprite_map);
+
+    return {};
+}
+
+struct ManifestDesc {
+    int version;
+    std::vector<std::string> groups;
+};
+
+std::expected<void, ManifestLoadError> SpriteManager::load_manifest(const std::filesystem::path &filepath) {
+    ManifestDesc manifest;
+    if (!parse_manifest_file(manifest, filepath)) {
+        return std::unexpected{ManifestLoadError::ERROR};
+    }
+
+    for (const auto &path : manifest.groups) {
+        const auto p = filepath.parent_path() / std::filesystem::path{path};
+        if (auto error = add_manifest_group(p); !error) {
+            return error;
+        }
+    };
+
+    LOG_TRACE("loaded {} sprites from {} groups",
+        m_sprites.size(), manifest.groups.size());
+
     return {};
 }
 

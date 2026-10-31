@@ -27,6 +27,9 @@ public:
     [[nodiscard]] Sprite2D get_sprite(std::string_view path) const;
 
 private:
+    std::expected<void, ManifestLoadError> add_manifest_group(const std::filesystem::path &filepath);
+
+private:
     std::unordered_map<std::string, Sprite2D> m_sprites;
     AssetService &m_service;
 };

@@ -4,8 +4,9 @@ engine_create_application(${EXAMPLE_NAME}
 )
 
 set(EXAMPLE_ASSETS
-    assets/test.json
-    assets/test.png
+    assets/manifest.json
+    assets/sprites/test.json
+    assets/sprites/test.png
 )
 
 # Adds engine-level warnings and compile definitions
