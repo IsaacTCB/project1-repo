@@ -464,6 +464,7 @@ void EngineRuntime::update(float delta) {
         .app_config = m_app_config,
         .renderer = m_renderer,
         .fps = m_fps.fps,
+        .max_fps = m_platform.os.get_fps_max(),
     });
 #endif
 

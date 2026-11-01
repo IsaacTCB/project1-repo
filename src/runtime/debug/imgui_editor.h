@@ -27,6 +27,7 @@ public:
         ApplicationConfig &app_config;
         std::optional<Renderer2D> &renderer;
         uint32_t fps;
+        uint32_t max_fps;
     };
 
 public:
