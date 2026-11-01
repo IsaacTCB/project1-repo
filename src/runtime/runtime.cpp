@@ -31,6 +31,7 @@
 #include "runtime/app/application.h"
 #include "runtime/app/context/frame_context.h"
 #include "runtime/debug/sinks/file_log_sink.h"
+#include "runtime/renderer/render_queue_builder.h"
 #include "runtime/system/view/view_system_2d.h"
 #include "runtime/version.h"
 #include "server/display_server.h"
@@ -477,7 +478,7 @@ void EngineRuntime::render() {
     RenderContext render{
         .frame = m_frame_ctx,
         .view_context = nullptr,
-        .queue = m_queue,
+        .queue = RenderQueueBuilder{m_queue},
         .clear_color = Color{25, 25, 25, 0},
     };
 

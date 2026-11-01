@@ -8,7 +8,6 @@
 #include "core/math/vec2i.h"
 
 #include "render_handles.h"
-#include "sprite_2d.h"
 
 struct RenderCommandDraw {
     TextureHandle texture; /* handle is null = draw solid color */
@@ -29,58 +28,11 @@ public:
         m_queue.reserve(initial_size);
     }
 
-    [[nodiscard]]
-    const std::vector<RenderCommand> &get() const {
-        return m_queue;
-    }
+    [[nodiscard]] const std::vector<RenderCommand> &get() const { return m_queue; }
+    [[nodiscard]] std::vector<RenderCommand> &get() { return m_queue; }
 
     void clear() {
         m_queue.clear();
-    }
-
-public:
-    void draw_texture_ex(TextureHandle texture, Color color, const Vec2i &position, const Vec2i &size, const Vec2 &anchor, float rotation) {
-        m_queue.emplace_back(RenderCommandDraw{
-            .texture = texture,
-            .pos = Vec2{position},
-            .size = Vec2{size},
-            .anchor = anchor,
-            .uv_min = Vec2{0.0f, 0.0f},
-            .uv_max = Vec2{1.0f, 1.0f},
-            .rotation = rotation,
-            .color = color,
-            // .zsort = 0,
-        });
-    }
-
-    void draw_texture_blended(TextureHandle texture, Color color, const Vec2i &position, const Vec2i &size) {
-        draw_texture_ex(texture, color, position, size, {0.0f, 0.0f}, 0.0f);
-    }
-
-    void draw_texture(TextureHandle texture, const Vec2i &position, const Vec2i &size) {
-        draw_texture_blended(texture, Color::WHITE, position, size);
-    }
-
-    void draw_color_ex(Color color, const Vec2i &position, const Vec2i &size, const Vec2 &anchor, float rotation) {
-        draw_texture_ex(TextureHandle{}, color, position, size, anchor, rotation);
-    }
-
-    void draw_color(Color color, const Vec2i &position, const Vec2i &size) {
-        draw_color_ex(color, position, size, Vec2{0.0f, 0.0f}, 0.0f);
-    }
-
-    void draw_sprite(const Sprite2D &sprite, const Vec2i &position, const Vec2 &scale, float rotation) {
-        Vec2 size = sprite.size * scale;
-        m_queue.emplace_back(RenderCommandDraw{
-            .texture = sprite.texture.handle(),
-            .pos = Vec2{position},
-            .size = Vec2{size},
-            .anchor = sprite.anchor,
-            .uv_min = sprite.uv_min,
-            .uv_max = sprite.uv_max,
-            .rotation = rotation,
-            .color{},
-        });
     }
 
 private:

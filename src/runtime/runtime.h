@@ -14,6 +14,7 @@
 #include "platform_services.h"
 #include "runtime/app/application.h"
 #include "runtime/app/context/frame_context.h"
+#include "runtime/renderer/render_queue.h"
 #if ENABLE_IMGUI
 #include "runtime/debug/imgui_editor.h"
 #endif
