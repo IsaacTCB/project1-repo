@@ -45,6 +45,7 @@ void RenderQueueBuilder::draw_color(Color color, const Vec2i &position, const Ve
 /* ================ *
  *     Sprite2D     *
  * ================ */
+
 void RenderQueueBuilder::draw_sprite(const Sprite2D &sprite, const Vec2i &position, const Vec2 &scale, float rotation) {
     Vec2 size = sprite.size * scale;
     m_queue.get().emplace_back(RenderCommandDraw{
