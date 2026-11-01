@@ -101,6 +101,7 @@ private:
     std::string m_program_name;
     std::filesystem::path m_export_log{};
     std::string m_preferred_backend;
+    std::optional<uint32_t> m_fps_override;
 
     ViewSystem m_view;
 

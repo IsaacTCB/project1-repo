@@ -80,7 +80,8 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
             "\n"
             "DISPLAY OPTIONS\n"
             "  --render-device        select what render device backend to use\n"
-            "  --list-render-devices  list available render device backends\n",
+            "  --list-render-devices  list available render device backends\n"
+            "  --max-fps              overrides the maximum framerate. Pass 0 to disable framelimiter.\n",
             program.data());
     };
 
@@ -178,6 +179,44 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
 
             continue;
         }
+        if (arg == "--max-fps") {
+            /* read options */
+            const std::string opt_arg =
+                (i + 1) < args.size()
+                    ? std::string{args[i + 1]}
+                    : std::string{};
+
+            /* no option was specified */
+            if (opt_arg.empty()) {
+                LOG_ERROR("Please specify the maximum fps amount (or 0 for no cap).");
+                std::fflush(stdout);
+                return LaunchResult::EXIT_ERROR;
+            }
+
+            long long fps_amount = 0;
+            const auto [ptr, ec] = std::from_chars(opt_arg.data(), opt_arg.data() + opt_arg.size(), fps_amount);
+            if (ec == std::errc::result_out_of_range) {
+                LOG_ERROR("The maximum fps amount is out of range.");
+                std::fflush(stdout);
+                return LaunchResult::EXIT_ERROR;
+            }
+            if (ec == std::errc::invalid_argument) {
+                LOG_ERROR("The maximum fps parameter must be a number.");
+                std::fflush(stdout);
+                return LaunchResult::EXIT_ERROR;
+            }
+            if (fps_amount < 0) {
+                LOG_ERROR("The maximum fps amount cannot be a negative number.");
+                std::fflush(stdout);
+                return LaunchResult::EXIT_ERROR;
+            }
+
+            m_fps_override.emplace(
+                static_cast<uint32_t>(fps_amount));
+            i++; /* skip next iteration */
+
+            continue;
+        }
 
         LOG_ERROR("Unknown command '{}'", arg);
         print_usage();
@@ -242,7 +281,7 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
 
     /* apply fps cap */
     m_platform.os.set_fps_max(
-        m_app_config.display.max_fps);
+        m_fps_override.value_or(m_app_config.display.max_fps));
 
     if (auto fps = m_platform.os.get_fps_max(); fps > 0) {
         LOG_INFO("frame limiter: {}", fps);
