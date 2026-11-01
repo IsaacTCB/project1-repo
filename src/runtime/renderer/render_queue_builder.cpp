@@ -52,11 +52,10 @@ void RenderQueueBuilder::draw_sprite(const Sprite2D &sprite, const Vec2i &positi
         return;
     }
 
-    Vec2 size = sprite.size * scale;
     m_queue.get().emplace_back(RenderCommandDraw{
         .texture = sprite.texture.handle(),
         .pos = Vec2{position},
-        .size = Vec2{size},
+        .size = sprite.size * scale,
         .anchor = sprite.anchor,
         .uv_min = sprite.uv_min,
         .uv_max = sprite.uv_max,
