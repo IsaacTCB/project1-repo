@@ -8,4 +8,13 @@ struct Sprite2D {
     Vec2 uv_min, uv_max;
     Vec2 anchor; /* normalized coords, where 0.0 = left & 1.0 = right */
     Vec2 size;   /* in pixel size */
+
+    [[nodiscard]] bool valid() const {
+        return texture.valid() &&
+               size.x > 0 && size.y > 0;
+    }
+
+    [[nodiscard]] explicit operator bool() const {
+        return valid();
+    }
 };
