@@ -7,6 +7,7 @@
 #include "runtime/platform_services.h"
 #include "runtime/system/view/view_system_2d.h"
 
+#include <cstdint>
 #include <string>
 
 struct ApplicationConfig {
@@ -14,6 +15,7 @@ struct ApplicationConfig {
         std::string caption = "Untitled";
         Vec2i size = {800, 600};
         bool resizable = false;
+        uint32_t max_fps = 0;
         bool filter_textures = true;
 
     } display;

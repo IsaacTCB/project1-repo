@@ -240,6 +240,16 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     LOG_INFO("platform: {}", os.get_platform());
     LOG_INFO("os: {}", os.get_os());
 
+    /* apply fps cap */
+    m_platform.os.set_fps_max(
+        m_app_config.display.max_fps);
+
+    if (auto fps = m_platform.os.get_fps_max(); fps > 0) {
+        LOG_INFO("frame limiter: {}", fps);
+    } else {
+        LOG_INFO("frame limiter: {}", "off");
+    }
+
     /* create main window/screen */
     const auto props = get_window_props_from_config(m_app->get_name(), m_app_config);
     if (!init_display_and_renderer(props, m_preferred_backend)) {

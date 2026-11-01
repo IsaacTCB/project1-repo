@@ -23,4 +23,19 @@ public:
 
     [[nodiscard]]
     virtual uint64_t get_ticks_ms() const = 0;
+
+    /**
+     * @brief Enables the fps limiter
+     *
+     * @param fps The maximum fps, or 0 to disable fps limiter.
+     */
+    virtual void set_fps_max(uint32_t fps) = 0;
+
+    /**
+     * @brief Gets the current fps cap value
+     *
+     * @return The maximum fps, or 0 if it's disabled.
+     */
+    [[nodiscard]]
+    virtual uint32_t get_fps_max() = 0;
 };
