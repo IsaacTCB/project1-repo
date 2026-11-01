@@ -164,7 +164,7 @@ void Renderer2D::render_frame_pass(const RenderContext &ctx) {
         .view = m_matrices.view,
     });
 
-    for (const RenderCommand &command : ctx.queue.get()) {
+    for (const RenderCommand &command : ctx.queue.queue().get()) {
         std::visit(
             Overload{
                 /* draw 2D rect command */

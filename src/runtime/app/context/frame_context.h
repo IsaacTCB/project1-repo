@@ -6,7 +6,7 @@
 #include "core/view_context_2d.h"
 #include "core/view_layout.h"
 
-#include "runtime/renderer/render_queue.h"
+#include "runtime/renderer/render_queue_builder.h"
 
 struct FrameContext {
     /**
@@ -39,6 +39,6 @@ struct RenderContext {
     ViewContext2D *view_context;
 
     /* used in rendering */
-    RenderQueue &queue;
+    RenderQueueBuilder queue;
     Color clear_color;
 };

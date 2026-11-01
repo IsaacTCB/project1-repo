@@ -25,6 +25,7 @@ set(RUNTIME_SOURCES
     input_service.cpp
     image/decoder.cpp
     renderer/renderer_2d.cpp
+    renderer/render_queue_builder.cpp
     renderer/batch_builder_2d.cpp
     system/view/view_system_2d.cpp
     debug/sinks/file_log_sink.cpp
