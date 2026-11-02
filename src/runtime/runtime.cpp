@@ -103,8 +103,16 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
         return std::ranges::contains(backends, backend);
     };
 
-    for (size_t i = 1; i < args.size(); ++i) {
-        const std::string_view arg = args[i];
+    size_t cursor = 0;
+    const auto next_arg = [&]() -> std::string_view {
+        return ++cursor < args.size()
+                 ? std::string_view{args[cursor]}
+                 : std::string_view{};
+    };
+
+    while (cursor + 1 < args.size()) {
+        const auto arg = next_arg();
+
         if (arg == "-h" || arg == "--help") {
             print_usage();
             std::fflush(stdout);
@@ -132,10 +140,7 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
         }
         if (arg == "-L" || arg == "--export-log") {
             /* read options */
-            const std::string_view opt_arg =
-                (i + 1) < args.size()
-                    ? args[i + 1]
-                    : std::string_view{};
+            const auto opt_arg = next_arg();
 
             /* no option was specified */
             if (opt_arg.empty()) {
@@ -145,16 +150,11 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
             }
 
             m_export_log = opt_arg;
-            i++;
-
             continue;
         }
         if (arg == "--render-device") {
             /* read options */
-            const std::string_view opt_arg =
-                (i + 1) < args.size()
-                    ? args[i + 1]
-                    : std::string_view{};
+            const auto opt_arg = next_arg();
 
             /* no option was specified */
             if (opt_arg.empty()) {
@@ -175,16 +175,11 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
             }
 
             m_preferred_backend = opt_arg;
-            i++; /* skip next iteration */
-
             continue;
         }
         if (arg == "--max-fps") {
             /* read options */
-            const std::string opt_arg =
-                (i + 1) < args.size()
-                    ? std::string{args[i + 1]}
-                    : std::string{};
+            const auto opt_arg = next_arg();
 
             /* no option was specified */
             if (opt_arg.empty()) {
@@ -200,7 +195,7 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
                 std::fflush(stdout);
                 return LaunchResult::EXIT_ERROR;
             }
-            if (ec == std::errc::invalid_argument) {
+            if (ec == std::errc::invalid_argument || ptr != opt_arg.data() + opt_arg.size()) {
                 LOG_ERROR("The maximum fps parameter must be a number.");
                 std::fflush(stdout);
                 return LaunchResult::EXIT_ERROR;
@@ -213,8 +208,6 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
 
             m_fps_override.emplace(
                 static_cast<uint32_t>(fps_amount));
-            i++; /* skip next iteration */
-
             continue;
         }
 
