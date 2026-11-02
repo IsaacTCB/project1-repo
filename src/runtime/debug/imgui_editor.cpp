@@ -142,6 +142,12 @@ void ImGuiEditor::draw_editor(const Context &ctx) {
             const auto &layout = ctx.view.get_layout();
             ImGui::Text("fps = %d", ctx.fps);
 
+            if (ctx.max_fps > 0) {
+                ImGui::Text("fps_max = %d", ctx.max_fps);
+            } else {
+                ImGui::TextDisabled("fps_max = %s", "off");
+            }
+
             const IRenderDevice *device = ctx.renderer ? ctx.renderer->device() : nullptr;
             ImGui::Text("render_device = %s", device ? device->name() : "n/a");
 

@@ -75,7 +75,7 @@ SDL_AppResult SDL3_PlatformImpl::init(int argc, char *argv[]) {
         return SDL_APP_FAILURE;
     }
 
-    m_last_tick = SDL_GetTicks();
+    m_last_tick = SDL_GetTicksNS();
     m_runtime->init(s_app_handler);
 
     if (int mappings = SDL_AddGamepadMappingsFromFile("gamecontrollerdb.txt"); mappings >= 0) {
@@ -98,9 +98,10 @@ SDL_AppResult SDL3_PlatformImpl::iterate() {
     m_runtime->render();
 
     /* apply framelimit */
-    constexpr uint64_t TARGET_TICKRATE = 1000000000 / TARGET_FPS;
-    uint64_t work_time = SDL_GetTicksNS() - current_tick;
-    apply_framelimit(work_time, TARGET_TICKRATE);
+    if (g_fps_tickrate) {
+        uint64_t work_time = SDL_GetTicksNS() - current_tick;
+        apply_framelimit(work_time, g_fps_tickrate);
+    }
 
     /* clear any existing events
      *WARNING : removing this WILL cause memory leaks */

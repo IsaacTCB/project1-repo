@@ -80,7 +80,8 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
             "\n"
             "DISPLAY OPTIONS\n"
             "  --render-device        select what render device backend to use\n"
-            "  --list-render-devices  list available render device backends\n",
+            "  --list-render-devices  list available render device backends\n"
+            "  --max-fps              overrides the maximum framerate. Pass 0 to disable framelimiter.\n",
             program.data());
     };
 
@@ -102,8 +103,16 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
         return std::ranges::contains(backends, backend);
     };
 
-    for (size_t i = 1; i < args.size(); ++i) {
-        const std::string_view arg = args[i];
+    size_t cursor = 0;
+    const auto next_arg = [&]() -> std::string_view {
+        return ++cursor < args.size()
+                 ? std::string_view{args[cursor]}
+                 : std::string_view{};
+    };
+
+    while (cursor + 1 < args.size()) {
+        const auto arg = next_arg();
+
         if (arg == "-h" || arg == "--help") {
             print_usage();
             std::fflush(stdout);
@@ -131,10 +140,7 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
         }
         if (arg == "-L" || arg == "--export-log") {
             /* read options */
-            const std::string_view opt_arg =
-                (i + 1) < args.size()
-                    ? args[i + 1]
-                    : std::string_view{};
+            const auto opt_arg = next_arg();
 
             /* no option was specified */
             if (opt_arg.empty()) {
@@ -144,16 +150,11 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
             }
 
             m_export_log = opt_arg;
-            i++;
-
             continue;
         }
         if (arg == "--render-device") {
             /* read options */
-            const std::string_view opt_arg =
-                (i + 1) < args.size()
-                    ? args[i + 1]
-                    : std::string_view{};
+            const auto opt_arg = next_arg();
 
             /* no option was specified */
             if (opt_arg.empty()) {
@@ -174,8 +175,39 @@ EngineRuntime::LaunchResult EngineRuntime::process_launch_args(std::span<char *c
             }
 
             m_preferred_backend = opt_arg;
-            i++; /* skip next iteration */
+            continue;
+        }
+        if (arg == "--max-fps") {
+            /* read options */
+            const auto opt_arg = next_arg();
 
+            /* no option was specified */
+            if (opt_arg.empty()) {
+                LOG_ERROR("Please specify the maximum fps amount (or 0 for no cap).");
+                std::fflush(stdout);
+                return LaunchResult::EXIT_ERROR;
+            }
+
+            long long fps_amount = 0;
+            const auto [ptr, ec] = std::from_chars(opt_arg.data(), opt_arg.data() + opt_arg.size(), fps_amount);
+            if (ec == std::errc::result_out_of_range) {
+                LOG_ERROR("The maximum fps amount is out of range.");
+                std::fflush(stdout);
+                return LaunchResult::EXIT_ERROR;
+            }
+            if (ec == std::errc::invalid_argument || ptr != opt_arg.data() + opt_arg.size()) {
+                LOG_ERROR("The maximum fps parameter must be a number.");
+                std::fflush(stdout);
+                return LaunchResult::EXIT_ERROR;
+            }
+            if (fps_amount < 0) {
+                LOG_ERROR("The maximum fps amount cannot be a negative number.");
+                std::fflush(stdout);
+                return LaunchResult::EXIT_ERROR;
+            }
+
+            m_fps_override.emplace(
+                static_cast<uint32_t>(fps_amount));
             continue;
         }
 
@@ -239,6 +271,16 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     LOG_INFO("runtime version: {}", RuntimeVersion::version().semver_string);
     LOG_INFO("platform: {}", os.get_platform());
     LOG_INFO("os: {}", os.get_os());
+
+    /* apply fps cap */
+    m_platform.os.set_fps_max(
+        m_fps_override.value_or(m_app_config.display.max_fps));
+
+    if (auto fps = m_platform.os.get_fps_max(); fps > 0) {
+        LOG_INFO("frame limiter: {}", fps);
+    } else {
+        LOG_INFO("frame limiter: {}", "off");
+    }
 
     /* create main window/screen */
     const auto props = get_window_props_from_config(m_app->get_name(), m_app_config);
@@ -454,6 +496,7 @@ void EngineRuntime::update(float delta) {
         .app_config = m_app_config,
         .renderer = m_renderer,
         .fps = m_fps.fps,
+        .max_fps = m_platform.os.get_fps_max(),
     });
 #endif
 
