@@ -113,115 +113,35 @@ void ImGuiEditor::shutdown() {
 }
 
 void ImGuiEditor::draw_editor(const Context &ctx) {
-    if (ctx.input.is_key_just_pressed(Input::Key::Scancode::F1)) {
+    constexpr ImGuiInputFlags shortcut_flags = ImGuiInputFlags_RouteGlobal;
+    if (ImGui::Shortcut(ImGuiKey_F1, shortcut_flags)) {
         m_menu_bar = !m_menu_bar;
         LOG_TRACE("{} ImGui...", m_menu_bar ? "enabling" : "disabling");
     }
 
     if (m_menu_bar) {
+        /* global flags */
+        if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_D, shortcut_flags)) {
+            m_details_open = !m_details_open;
+        }
+        if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_C, shortcut_flags)) {
+            m_console_open = !m_console_open;
+        }
+
         if (ImGui::BeginMainMenuBar()) {
             if (ImGui::BeginMenu("Debug")) {
-                if (ImGui::MenuItem("Demo Window")) {
-                    m_demo_open = true;
-                }
-                ImGui::MenuItem("Console", nullptr, &m_console_open);
+                ImGui::MenuItem("Demo Window", nullptr, &m_demo_open);
+                ImGui::MenuItem("Details & Settings", "Ctrl+D", &m_details_open);
+                ImGui::MenuItem("Console", "Ctrl+C", &m_console_open);
                 ImGui::EndMenu();
             }
 
             ImGui::EndMainMenuBar();
         }
 
-        if (ImGui::Begin("Details & Settings")) {
-            ImGui::TextWrapped("Adjust settings");
-
-            /* ================== *
-             *   Detail settings   *
-             * ================== */
-            ImGui::SeparatorText("Details");
-
-            const auto &layout = ctx.view.get_layout();
-            ImGui::Text("fps = %d", ctx.fps);
-
-            if (ctx.max_fps > 0) {
-                ImGui::Text("fps_max = %d", ctx.max_fps);
-            } else {
-                ImGui::TextDisabled("fps_max = %s", "off");
-            }
-
-            const IRenderDevice *device = ctx.renderer ? ctx.renderer->device() : nullptr;
-            ImGui::Text("render_device = %s", device ? device->name() : "n/a");
-
-            /* ================= *
-             *   View settings   *
-             * ================= */
-            ImGui::SeparatorText("View");
-
-            /* Logical View size */
-            bool updated_view = false;
-            if (ImGui::DragFloat2("View Size", &ctx.app_config.view.logical_size.x, 1.0f, 1.0f, 10000.0f, "%.1f")) {
-                updated_view = true;
-            }
-
-            /* Filtering */
-            static const char *filtering_items[] = {
-                "Nearest",
-                "Bilinear",
-            };
-            static const bool filtering_lookup[] = {false, true};
-            int filtering_mode = static_cast<int>(ctx.app_config.display.filter_textures);
-            if (ImGui::Combo("Texture Filtering", &filtering_mode, filtering_items, IM_ARRAYSIZE(filtering_items))) {
-                ctx.app_config.display.filter_textures = filtering_lookup[filtering_mode];
-                ctx.renderer->set_filtering(ctx.app_config.display.filter_textures);
-            }
-
-            /* PresentationMode */
-            static const char *presentation_policy_items[] = {
-                "Disabled",
-                "Fixed Resolution",
-                "Logical View",
-            };
-            static const PresentationMode presentation_policy_lookup[] = {
-                PresentationMode::DISABLED,
-                PresentationMode::FIXED_RESOLUTION,
-                PresentationMode::LOGICAL_VIEW,
-            };
-            int presentation_mode = static_cast<int>(ctx.app_config.view.mode);
-            if (ImGui::Combo("Presentation Mode", &presentation_mode, presentation_policy_items, IM_ARRAYSIZE(presentation_policy_items))) {
-                ctx.app_config.view.mode = presentation_policy_lookup[presentation_mode];
-                updated_view = true;
-            }
-
-            /* AspectPolicy */
-            static const char *aspect_policy_items[] = {
-                "Ignore",
-                "Keep Width",
-                "Keep Height",
-                "Expand",
-            };
-            static const AspectPolicy aspect_policy_lookup[] = {
-                AspectPolicy::IGNORE,
-                AspectPolicy::KEEP_WIDTH,
-                AspectPolicy::KEEP_HEIGHT,
-                AspectPolicy::EXPAND,
-            };
-            int aspect_mode = static_cast<int>(ctx.app_config.view.aspect);
-            if (ImGui::Combo("Aspect Mode", &aspect_mode, aspect_policy_items, IM_ARRAYSIZE(aspect_policy_items))) {
-                ctx.app_config.view.aspect = aspect_policy_lookup[aspect_mode];
-                updated_view = true;
-            }
-            ImGui::Text("logical_size = %.0fx%.0f", layout.logical_size.x, layout.logical_size.y);
-            ImGui::Text("render_target_size = %dx%d", layout.render_target_size.x, layout.render_target_size.y);
-
-            if (updated_view) {
-                LOG_TRACE("updated view");
-                ctx.view.set_presentation({
-                    .logical_size = ctx.app_config.view.logical_size,
-                    .mode = ctx.app_config.view.mode,
-                    .aspect = ctx.app_config.view.aspect,
-                });
-            }
+        if (m_details_open) {
+            draw_details(ctx);
         }
-        ImGui::End();
 
         if (m_demo_open) {
             ImGui::ShowDemoWindow(&m_demo_open);
@@ -233,8 +153,102 @@ void ImGuiEditor::draw_editor(const Context &ctx) {
     }
 }
 
+void ImGuiEditor::draw_details(const Context &ctx) {
+    if (ImGui::Begin("Details & Settings", &m_details_open)) {
+        ImGui::TextWrapped("Adjust settings");
+
+        /* ================== *
+         *   Detail settings   *
+         * ================== */
+        ImGui::SeparatorText("Details");
+
+        const auto &layout = ctx.view.get_layout();
+        ImGui::Text("fps = %d", ctx.fps);
+
+        if (ctx.max_fps > 0) {
+            ImGui::Text("fps_max = %d", ctx.max_fps);
+        } else {
+            ImGui::TextDisabled("fps_max = %s", "off");
+        }
+
+        const IRenderDevice *device = ctx.renderer ? ctx.renderer->device() : nullptr;
+        ImGui::Text("render_device = %s", device ? device->name() : "n/a");
+
+        /* ================= *
+         *   View settings   *
+         * ================= */
+        ImGui::SeparatorText("View");
+
+        /* Logical View size */
+        bool updated_view = false;
+        if (ImGui::DragFloat2("View Size", &ctx.app_config.view.logical_size.x, 1.0f, 1.0f, 10000.0f, "%.1f")) {
+            updated_view = true;
+        }
+
+        /* Filtering */
+        static const char *filtering_items[] = {
+            "Nearest",
+            "Bilinear",
+        };
+        static const bool filtering_lookup[] = {false, true};
+        int filtering_mode = static_cast<int>(ctx.app_config.display.filter_textures);
+        if (ImGui::Combo("Texture Filtering", &filtering_mode, filtering_items, IM_ARRAYSIZE(filtering_items))) {
+            ctx.app_config.display.filter_textures = filtering_lookup[filtering_mode];
+            ctx.renderer->set_filtering(ctx.app_config.display.filter_textures);
+        }
+
+        /* PresentationMode */
+        static const char *presentation_policy_items[] = {
+            "Disabled",
+            "Fixed Resolution",
+            "Logical View",
+        };
+        static const PresentationMode presentation_policy_lookup[] = {
+            PresentationMode::DISABLED,
+            PresentationMode::FIXED_RESOLUTION,
+            PresentationMode::LOGICAL_VIEW,
+        };
+        int presentation_mode = static_cast<int>(ctx.app_config.view.mode);
+        if (ImGui::Combo("Presentation Mode", &presentation_mode, presentation_policy_items, IM_ARRAYSIZE(presentation_policy_items))) {
+            ctx.app_config.view.mode = presentation_policy_lookup[presentation_mode];
+            updated_view = true;
+        }
+
+        /* AspectPolicy */
+        static const char *aspect_policy_items[] = {
+            "Ignore",
+            "Keep Width",
+            "Keep Height",
+            "Expand",
+        };
+        static const AspectPolicy aspect_policy_lookup[] = {
+            AspectPolicy::IGNORE,
+            AspectPolicy::KEEP_WIDTH,
+            AspectPolicy::KEEP_HEIGHT,
+            AspectPolicy::EXPAND,
+        };
+        int aspect_mode = static_cast<int>(ctx.app_config.view.aspect);
+        if (ImGui::Combo("Aspect Mode", &aspect_mode, aspect_policy_items, IM_ARRAYSIZE(aspect_policy_items))) {
+            ctx.app_config.view.aspect = aspect_policy_lookup[aspect_mode];
+            updated_view = true;
+        }
+        ImGui::Text("logical_size = %.0fx%.0f", layout.logical_size.x, layout.logical_size.y);
+        ImGui::Text("render_target_size = %dx%d", layout.render_target_size.x, layout.render_target_size.y);
+
+        if (updated_view) {
+            LOG_TRACE("updated view");
+            ctx.view.set_presentation({
+                .logical_size = ctx.app_config.view.logical_size,
+                .mode = ctx.app_config.view.mode,
+                .aspect = ctx.app_config.view.aspect,
+            });
+        }
+    }
+    ImGui::End();
+}
+
 void ImGuiEditor::draw_console() {
-    ImGui::Begin("Console");
+    ImGui::Begin("Console", &m_console_open);
 
     static ImGuiTextFilter s_console_filter;
     static bool s_autoscroll = true;

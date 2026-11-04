@@ -14,6 +14,7 @@ struct TextureAsset {
     TextureHandle handle;
     PixelFormat format;
     Vec2i size;
+    void *native_ptr; /* native handle */
 
     operator TextureHandle() const { return handle; }
     operator bool() const { return handle.valid(); }
@@ -29,6 +30,7 @@ public:
     [[nodiscard]] Vec2i size() const { return this->get().size; };
     [[nodiscard]] int width() const { return this->get().size.x; };
     [[nodiscard]] int height() const { return this->get().size.y; };
+    [[nodiscard]] const void *native() const { return this->get().native_ptr; }
 
     /* misc */
     [[nodiscard]] bool valid() const { return static_cast<bool>(this->get()); }
@@ -40,7 +42,7 @@ class AssetService {
 public:
     class Provider {
     public:
-        using LoadFn = TextureHandle (*)(ImageData &image, void *userdata);
+        using LoadFn = TextureAsset (*)(ImageData &image, void *userdata);
         using UnloadFn = void (*)(TextureHandle handle, void *userdata);
 
         struct {

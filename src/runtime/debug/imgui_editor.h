@@ -48,6 +48,7 @@ public:
     void shutdown();
 
 private:
+    void draw_details(const Context &ctx);
     void draw_editor(const Context &ctx);
     void draw_console();
 
@@ -56,5 +57,6 @@ private:
     std::shared_ptr<ImGuiLogState> m_log_state;
     bool m_menu_bar = true;
     bool m_demo_open = false;
-    bool m_console_open = true;
+    bool m_details_open = false;
+    bool m_console_open = false;
 };

@@ -55,11 +55,7 @@ TextureAsset AssetService::load_texture(std::string_view path) const {
     }
 
     LOG_TRACE("loading texture {}", path);
-    return {
-        .handle = m_provider.renderer.load_texture(image, m_provider.renderer.userdata),
-        .format = image.format,
-        .size = Vec2i{static_cast<int>(image.width), static_cast<int>(image.height)},
-    };
+    return m_provider.renderer.load_texture(image, m_provider.renderer.userdata);
 }
 
 void AssetService::unload_texture(const TextureAsset &texture) const {
