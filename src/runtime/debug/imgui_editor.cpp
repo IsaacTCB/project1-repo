@@ -113,17 +113,26 @@ void ImGuiEditor::shutdown() {
 }
 
 void ImGuiEditor::draw_editor(const Context &ctx) {
-    if (ctx.input.is_key_just_pressed(Input::Key::Scancode::F1)) {
+    constexpr ImGuiInputFlags shortcut_flags = ImGuiInputFlags_RouteGlobal;
+    if (ImGui::Shortcut(ImGuiKey_F1, shortcut_flags)) {
         m_menu_bar = !m_menu_bar;
         LOG_TRACE("{} ImGui...", m_menu_bar ? "enabling" : "disabling");
     }
 
     if (m_menu_bar) {
+        /* global flags */
+        if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_D, shortcut_flags)) {
+            m_details_open = !m_details_open;
+        }
+        if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_C, shortcut_flags)) {
+            m_console_open = !m_console_open;
+        }
+
         if (ImGui::BeginMainMenuBar()) {
             if (ImGui::BeginMenu("Debug")) {
                 ImGui::MenuItem("Demo Window", nullptr, &m_demo_open);
-                ImGui::MenuItem("Details & Settings", nullptr, &m_details_open);
-                ImGui::MenuItem("Console", nullptr, &m_console_open);
+                ImGui::MenuItem("Details & Settings", "Ctrl+D", &m_details_open);
+                ImGui::MenuItem("Console", "Ctrl+C", &m_console_open);
                 ImGui::EndMenu();
             }
 
