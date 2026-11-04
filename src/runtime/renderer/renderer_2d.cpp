@@ -288,6 +288,12 @@ void Renderer2D::destroy_texture(TextureHandle texture) {
     m_rd->destroy_texture(texture);
 }
 
+void *Renderer2D::get_texture_native_ptr(TextureHandle texture) {
+    ASSERT_DEVICE_READY();
+    const auto info = m_rd->get_texture_info(texture);
+    return info ? info->native_ptr : nullptr;
+}
+
 /* ================== *
  *       Other        *
  * ================== */

@@ -306,10 +306,20 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     m_asset_service.reset();
     m_asset_service.emplace(::AssetService::Provider{
         .renderer = {
-            .load_texture = [](ImageData &image, void *userdata) -> TextureHandle {
+            .load_texture = [](ImageData &image, void *userdata) -> TextureAsset {
                 ASSERT(userdata);
                 auto *renderer = static_cast<Renderer2D *>(userdata);
-                return renderer->load_texture(image);
+
+                const auto handle = renderer->load_texture(image);
+                if (!handle) {
+                    return {};
+                }
+                return {
+                    .handle = handle,
+                    .format = image.format,
+                    .size = Vec2i{static_cast<int>(image.width), static_cast<int>(image.height)},
+                    .native_ptr = renderer->get_texture_native_ptr(handle),
+                };
             },
             .unload_texture = [](TextureHandle texture, void *userdata) -> void {
                 ASSERT(userdata);
