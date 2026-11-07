@@ -97,14 +97,14 @@ void BatchBuilder2D::set_batch_key(const BatchKey &key) {
     m_current_key.emplace(key);
 }
 
-void BatchBuilder2D::draw_rect(const Vec2 &pos, const Vec2 &size, const Vec2 &anchor, float rotation, Color color, TextureHandle texture, bool filter) {
+void BatchBuilder2D::draw_rect(const DrawRectDesc &desc) {
     if (!can_fit_quad()) {
         flush();
     }
 
     set_batch_key({
-        .texture = texture,
-        .sampler = filter ? m_state.samplers.linear : m_state.samplers.nearest,
+        .texture = desc.texture,
+        .sampler = desc.filter ? m_state.samplers.linear : m_state.samplers.nearest,
     });
 
     const auto index_base =
@@ -117,32 +117,32 @@ void BatchBuilder2D::draw_rect(const Vec2 &pos, const Vec2 &size, const Vec2 &an
         {0.0f, 1.0f},
     }};
 
-    if (is_zero_approx(rotation)) [[likely]] {
+    if (is_zero_approx(desc.rotation)) [[likely]] {
         /* not rotated, skip slow path */
-        const Vec2 offset = pos - anchor * size;
+        const Vec2 offset = desc.pos - desc.anchor * desc.size;
         for (const auto &corner : CORNERS) {
-            Vec2 position = offset + corner * size;
+            Vec2 position = offset + corner * desc.size;
             m_vertices.emplace_back(BatchVertex2D{
-                .uv = corner,
-                .color = color,
+                .uv = desc.uv_min + (desc.uv_max - desc.uv_min) * corner,
+                .color = desc.color,
                 .position = {position.x, position.y, 0.0f},
             });
         }
     } else {
-        const float c = std::cos(rotation);
-        const float s = std::sin(rotation);
+        const float c = std::cos(desc.rotation);
+        const float s = std::sin(desc.rotation);
 
-        const Vec2 anchor_offset = anchor * size;
+        const Vec2 anchor_offset = desc.anchor * desc.size;
         for (const auto &corner : CORNERS) {
-            const Vec2 local = (corner * size) - anchor_offset;
+            const Vec2 local = (corner * desc.size) - anchor_offset;
             const Vec2 position{
-                pos.x + ((local.x * c) - (local.y * s)),
-                pos.y + ((local.x * s) + (local.y * c)),
+                desc.pos.x + ((local.x * c) - (local.y * s)),
+                desc.pos.y + ((local.x * s) + (local.y * c)),
             };
 
             m_vertices.emplace_back(BatchVertex2D{
-                .uv = corner,
-                .color = color,
+                .uv = desc.uv_min + (desc.uv_max - desc.uv_min) * corner,
+                .color = desc.color,
                 .position = {position.x, position.y, 0.0f},
             });
         }

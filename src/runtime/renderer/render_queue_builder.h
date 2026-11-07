@@ -21,6 +21,8 @@ public:
      *     Textures     *
      * ================ */
     void draw_texture_ex(TextureHandle texture, Color color, const Vec2i &position, const Vec2i &size, const Vec2 &anchor, float rotation);
+    void draw_texture_uv_ex(TextureHandle texture, const Vec2 &uv_min, const Vec2 &uv_max, Color color, const Vec2i &position, const Vec2i &size, const Vec2 &anchor, float rotation);
+    void draw_texture_uv(TextureHandle texture, const Vec2 &uv_min, const Vec2 &uv_max, const Vec2i &position, const Vec2i &size);
     void draw_texture_blended(TextureHandle texture, Color color, const Vec2i &position, const Vec2i &size);
     void draw_texture(TextureHandle texture, const Vec2i &position, const Vec2i &size);
 

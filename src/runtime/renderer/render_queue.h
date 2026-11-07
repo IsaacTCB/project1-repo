@@ -14,6 +14,8 @@ struct RenderCommandDraw {
     Vec2 pos;
     Vec2 size;
     Vec2 anchor;
+    Vec2 uv_min;
+    Vec2 uv_max;
     float rotation;
     Color color;
     // int zsort;

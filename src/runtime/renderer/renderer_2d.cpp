@@ -170,7 +170,17 @@ void Renderer2D::render_frame_pass(const RenderContext &ctx) {
                 /* draw 2D rect command */
                 [&](const RenderCommandDraw &draw) {
                     /* TODO: solve texture handle */
-                    m_batch->draw_rect(draw.pos, draw.size, draw.anchor, draw.rotation, draw.color, draw.texture, m_filter);
+                    m_batch->draw_rect({
+                        .pos = draw.pos,
+                        .size = draw.size,
+                        .anchor = draw.anchor,
+                        .rotation = draw.rotation,
+                        .uv_min = draw.uv_min,
+                        .uv_max = draw.uv_max,
+                        .color = draw.color,
+                        .texture = draw.texture,
+                        .filter = m_filter,
+                    });
                 },
             },
             command);
