@@ -84,7 +84,7 @@ enum class TextureWrap : uint8_t {
 
 struct RenderTextureInfo {
     /* TODO: add width, height, format, filtering, etc... */
-    void *native_ptr;
+    uint64_t native_handle;
 };
 
 struct SamplerInitDesc {
