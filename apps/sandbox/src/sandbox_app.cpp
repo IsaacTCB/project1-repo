@@ -15,8 +15,11 @@
 #include "runtime/asset_service.h"
 #include "runtime/camera_2d_utils.h"
 #include "runtime/input_service.h"
+#include "runtime/system/particles/particle_system_2d.h"
 
 #include "entity.h"
+
+constexpr float PI = 3.1415926535f;
 
 class SandboxApplication : public IApplication {
     DECLARE_APP(SandboxApplication);
@@ -57,6 +60,34 @@ public:
 
         m_camera.zoom = 0.8f;
         m_camera.anchor = Camera2D::AnchorMode::CENTER;
+
+        m_emitter_effect = m_particles.create_effect(ParticleEffect2D{
+            .lifetime_min = 0.25f,
+            .lifetime_max = 1.0f,
+
+            .emission_rate = 400,
+            .emission_spread = PI,
+
+            /* speed */
+            .speed_min = 50.0f,
+            .speed_max = 70.0f,
+
+            /* color */
+            .color_start = Color{0xEB, 0xCF, 0x34, 0x40},
+            .color_end = Color{0xFF, 0x00, 0x00, 0x00},
+
+            /* scale */
+            .scale_start = 0.1f,
+            .scale_end = 8.0f,
+
+            /* misc. */
+            .particle_texture{},
+            .particle_size = Vec2{10.0f, 10.0f},
+            .particle_gravity = Vec2{0.0f, -8.0f},
+        });
+        m_emitter = m_particles.create_emitter(m_emitter_effect);
+        m_emitter.set_emitting(true);
+        m_emitter.set_rotation(2.0f);
     }
 
     void on_update(UpdateContext &ctx) override {
@@ -82,8 +113,25 @@ public:
             float speed_scale = Random::randf_range(0.85f, 1.2f);
             m_entities.emplace_back(Vec2(mouse_pos), speed_scale);
         }
+
+        /* update emitter */
+        m_emitter.set_position(mouse_pos);
+        // static float m_angle = 0.0f;
+        // m_angle += delta * 6.0f;
+        // m_emitter.set_rotation(m_angle);
+
         if (m_servers.input.is_mouse_button_just_released(Input::Mouse::Buttons::RIGHT)) {
             LOG_TRACE("Walked");
+        }
+
+        if (m_servers.input.is_key_just_pressed(Input::Key::Scancode::T)) {
+            m_emitter.reset();
+
+            /* reset effect */
+            if (m_emitter_effect) {
+                m_particles.destroy_effect(m_emitter_effect);
+                m_emitter_effect = {};
+            }
         }
 
         Vec2 move{};
@@ -140,6 +188,8 @@ public:
 
         m_camera.position.x = std::floor(m_entities[0].pos.x);
         m_camera.position.y = std::floor(m_entities[0].pos.y);
+
+        m_particles.update(delta);
     }
 
     void on_draw(RenderContext &ctx) override {
@@ -181,10 +231,19 @@ public:
             Color{0xFF, 0x00, 0xFF, 0x20},
             Vec2i{bounds.tl} + Vec2i{8, 8},
             Vec2i{bounds.size()} - Vec2i{16, 16});
+
+        m_particles.render(ctx.queue);
     }
 
     void on_close() override {
         LOG_INFO("Application ended!");
+
+        m_emitter.reset();
+
+        if (m_emitter_effect) {
+            m_particles.destroy_effect(m_emitter_effect);
+            m_emitter_effect = {};
+        }
     }
 
     [[nodiscard]]
@@ -199,6 +258,10 @@ private:
     Camera2D m_camera;
 
     ViewContext2D m_view_context;
+
+    ParticleSystem2D m_particles;
+    ParticleEmitter2D m_emitter;
+    ParticleEffectHandle m_emitter_effect;
 };
 
 SET_APP(SandboxApplication);
