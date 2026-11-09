@@ -659,7 +659,7 @@ std::optional<RenderTextureInfo> GL_RenderDevice::get_texture_info(TextureHandle
         return {};
     }
     return RenderTextureInfo{
-        .native_ptr = reinterpret_cast<void *>(storage->texture),
+        .native_handle = static_cast<uint64_t>(storage->texture),
     };
 }
 

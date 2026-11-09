@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string_view>
 
@@ -15,7 +16,7 @@ struct TextureAsset {
     TextureHandle handle;
     PixelFormat format;
     Vec2i size;
-    void *native_ptr; /* native handle */
+    uint64_t native_handle; /* opaque backend handle */
 
     operator TextureHandle() const { return handle; }
     operator bool() const { return handle.valid(); }
@@ -31,7 +32,7 @@ public:
     [[nodiscard]] Vec2i size() const { return this->get().size; };
     [[nodiscard]] int width() const { return this->get().size.x; };
     [[nodiscard]] int height() const { return this->get().size.y; };
-    [[nodiscard]] const void *native() const { return this->get().native_ptr; }
+    [[nodiscard]] uint64_t native() const { return this->get().native_handle; }
 
     /* misc */
     [[nodiscard]] bool valid() const { return static_cast<bool>(this->get()); }

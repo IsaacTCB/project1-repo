@@ -47,7 +47,7 @@ public:
 
     TextureHandle load_texture(ImageData &data);
     void destroy_texture(TextureHandle texture);
-    void *get_texture_native_ptr(TextureHandle texture);
+    uint64_t get_texture_native_handle(TextureHandle texture);
     void set_filtering(bool filter) {
         m_filter = filter;
     }

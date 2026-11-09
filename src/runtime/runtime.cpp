@@ -327,7 +327,7 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
                     .handle = handle,
                     .format = image.format,
                     .size = Vec2i{static_cast<int>(image.width), static_cast<int>(image.height)},
-                    .native_ptr = renderer->get_texture_native_ptr(handle),
+                    .native_handle = renderer->get_texture_native_handle(handle),
                 };
             },
             .unload_texture = [](TextureHandle texture, void *userdata) -> void {
