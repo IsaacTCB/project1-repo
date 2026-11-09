@@ -311,7 +311,7 @@ TextureHandle GL_RenderDevice::get_color_attachment(RenderTargetHandle handle) {
 
 std::tuple<GLenum, GLint> get_gl_attrib_type(VertexAttribute::Format format) {
     switch (format) {
-        case VertexAttribute::Format::INT:
+        case VertexAttribute::Format::INT8:
             return {GL_BYTE, 1};
         case VertexAttribute::Format::INT16:
             return {GL_SHORT, 1};
@@ -651,6 +651,16 @@ void GL_RenderDevice::destroy_texture(TextureHandle texture) {
 
 bool GL_RenderDevice::has_texture(TextureHandle texture) {
     return m_textures.has(texture);
+}
+
+std::optional<RenderTextureInfo> GL_RenderDevice::get_texture_info(TextureHandle texture) const {
+    const auto *storage = m_textures.get(texture);
+    if (!storage) {
+        return {};
+    }
+    return RenderTextureInfo{
+        .native_ptr = reinterpret_cast<void *>(storage->texture),
+    };
 }
 
 static GLenum get_filter_value(TextureFilter filter) {

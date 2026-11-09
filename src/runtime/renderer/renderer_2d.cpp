@@ -164,13 +164,23 @@ void Renderer2D::render_frame_pass(const RenderContext &ctx) {
         .view = m_matrices.view,
     });
 
-    for (const RenderCommand &command : ctx.queue.get()) {
+    for (const RenderCommand &command : ctx.queue.queue().get()) {
         std::visit(
             Overload{
                 /* draw 2D rect command */
                 [&](const RenderCommandDraw &draw) {
                     /* TODO: solve texture handle */
-                    m_batch->draw_rect(draw.pos, draw.size, draw.anchor, draw.rotation, draw.color, draw.texture, m_filter);
+                    m_batch->draw_rect({
+                        .pos = draw.pos,
+                        .size = draw.size,
+                        .anchor = draw.anchor,
+                        .rotation = draw.rotation,
+                        .uv_min = draw.uv_min,
+                        .uv_max = draw.uv_max,
+                        .color = draw.color,
+                        .texture = draw.texture,
+                        .filter = m_filter,
+                    });
                 },
             },
             command);
@@ -286,6 +296,12 @@ TextureHandle Renderer2D::load_texture(ImageData &data) {
 void Renderer2D::destroy_texture(TextureHandle texture) {
     ASSERT_DEVICE_READY();
     m_rd->destroy_texture(texture);
+}
+
+void *Renderer2D::get_texture_native_ptr(TextureHandle texture) {
+    ASSERT_DEVICE_READY();
+    const auto info = m_rd->get_texture_info(texture);
+    return info ? info->native_ptr : nullptr;
 }
 
 /* ================== *

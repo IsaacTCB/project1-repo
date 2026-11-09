@@ -16,7 +16,7 @@ struct VertexAttribute {
 
     enum class Format : uint8_t {
         /* signed ints */
-        INT,
+        INT8,
         INT16,
         INT32,
 

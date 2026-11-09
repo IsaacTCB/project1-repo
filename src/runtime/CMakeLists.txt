@@ -32,6 +32,7 @@ set(RUNTIME_SOURCES
     input_service.cpp
     image/decoder.cpp
     renderer/renderer_2d.cpp
+    renderer/render_queue_builder.cpp
     renderer/batch_builder_2d.cpp
     system/view/view_system_2d.cpp
     debug/sinks/file_log_sink.cpp
@@ -47,6 +48,7 @@ engine_add_module(runtime)
 if(ENGINE_ENABLE_IMGUI)
     target_sources(runtime PRIVATE
         debug/imgui_backend.cpp
+        debug/imgui_editor.cpp
         debug/imgui_style.cpp
         debug/sinks/imgui_log_sink.cpp
     )

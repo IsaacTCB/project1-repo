@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 
 #include "core/image/image.h"
 #include "core/math/color.h"
@@ -81,6 +82,11 @@ enum class TextureWrap : uint8_t {
     MIRRORED_REPEAT,
 };
 
+struct RenderTextureInfo {
+    /* TODO: add width, height, format, filtering, etc... */
+    void *native_ptr;
+};
+
 struct SamplerInitDesc {
     struct FilterProps {
         TextureFilter mag = TextureFilter::LINEAR;
@@ -154,6 +160,7 @@ public:
     virtual TextureHandle load_texture(const ImageData &data) = 0;
     virtual void destroy_texture(TextureHandle texture) = 0;
     virtual bool has_texture(TextureHandle texture) = 0;
+    [[nodiscard]] virtual std::optional<RenderTextureInfo> get_texture_info(TextureHandle texture) const = 0;
 
     virtual SamplerHandle create_sampler(const SamplerInitDesc &sampler_desc) = 0;
     virtual void destroy_sampler(SamplerHandle sampler) = 0;

@@ -6,13 +6,12 @@
 #include "core/logger.h"
 
 #include "runtime/asset_cache.h"
-#include "runtime/audio/audio_handles.h"
 #include "runtime/image/decoder.h"
 #include "runtime/renderer/render_handles.h"
 
 struct AssetService::Impl {
-    AssetCache<TextureHandle> textures;
-    AssetCache<AudioSourceHandle> audio_sources;
+    AssetCache<TextureAsset> textures;
+    AssetCache<AudioSourceAsset> audio_sources;
 };
 
 AssetService::AssetService() = default;
@@ -25,7 +24,7 @@ AssetService::AssetService(const Provider &provider)
     auto texture_load_fn = [this](std::string_view path) {
         return this->load_texture(path);
     };
-    auto texture_unload_fn = [this](auto handle) {
+    auto texture_unload_fn = [this](const auto &handle) {
         this->unload_texture(handle);
     };
     m_impl->textures.set_load_callbacks(texture_load_fn, texture_unload_fn);
@@ -34,7 +33,7 @@ AssetService::AssetService(const Provider &provider)
     auto audio_source_load_fn = [this](std::string_view path) {
         return this->load_audio_source(path);
     };
-    auto audio_source_unload_fn = [this](auto handle) {
+    auto audio_source_unload_fn = [this](const auto &handle) {
         this->unload_audio_source(handle);
     };
     m_impl->audio_sources.set_load_callbacks(audio_source_load_fn, audio_source_unload_fn);
@@ -60,27 +59,27 @@ AudioSourceRef AssetService::get_audio_source(std::string_view path) {
 
 /* Loaders */
 
-TextureHandle AssetService::load_texture(std::string_view path) const {
+TextureAsset AssetService::load_texture(std::string_view path) const {
     ASSERT(m_provider.renderer.load_texture);
 
     ImageData image = Image::decode(path);
     if (!image) {
         LOG_WARN("Unable to load image at \"{}\"", path);
-        return TextureHandle{};
+        return TextureAsset{};
     }
 
     LOG_TRACE("loading texture {}", path);
     return m_provider.renderer.load_texture(image, m_provider.renderer.userdata);
 }
 
-void AssetService::unload_texture(TextureHandle handle) const {
-    LOG_TRACE("unloading texture {}", handle);
+void AssetService::unload_texture(const TextureAsset &texture) const {
+    LOG_TRACE("unloading texture {}", texture.handle);
     ASSERT(m_provider.renderer.unload_texture);
-    ASSERT(handle, "Attempted to destroy an invalid handle");
-    m_provider.renderer.unload_texture(handle, m_provider.renderer.userdata);
+    ASSERT(texture.handle, "Attempted to destroy an invalid handle");
+    m_provider.renderer.unload_texture(texture.handle, m_provider.renderer.userdata);
 }
 
-AudioSourceHandle AssetService::load_audio_source(std::string_view path) const {
+AudioSourceAsset AssetService::load_audio_source(std::string_view path) const {
     ASSERT(m_provider.audio.load_source);
 
     void *userdata = m_provider.audio.userdata;
@@ -89,12 +88,12 @@ AudioSourceHandle AssetService::load_audio_source(std::string_view path) const {
     auto source = m_provider.audio.get_audio_source_from_file(path, userdata);
     return source
              ? m_provider.audio.load_source(source, userdata)
-             : AudioSourceHandle{};
+             : AudioSourceAsset{};
 }
 
-void AssetService::unload_audio_source(AudioSourceHandle handle) const {
-    LOG_TRACE("unloading audio source {}...", handle);
+void AssetService::unload_audio_source(const AudioSourceAsset &source) const {
+    LOG_TRACE("unloading audio source {}...", source.handle);
     ASSERT(m_provider.audio.unload_source);
-    ASSERT(handle, "Attempted to destroy an invalid handle");
-    m_provider.audio.unload_source(handle, m_provider.audio.userdata);
+    ASSERT(source, "Attempted to destroy an invalid handle");
+    m_provider.audio.unload_source(source, m_provider.audio.userdata);
 }
