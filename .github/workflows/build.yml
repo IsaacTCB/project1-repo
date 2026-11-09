@@ -39,7 +39,7 @@ jobs:
       - name: Install packages
         run: |
           dnf install -y --setopt=install_weak_deps=False \
-            git tar zstd gcc gcc-c++ cmake ninja-build ccache SDL3-devel \
+            git tar zstd gcc gcc-c++ cmake ninja-build ccache SDL3-devel libogg-devel libvorbis-devel \
             ${{ env.ACT && 'nodejs' || '' }}
 
       # ${{ github.workspace }} resolves to the host path inside job containers.
@@ -152,8 +152,8 @@ jobs:
           key: vcpkg-${{ env.VCPKG_TRIPLET }}-${{ env.VCPKG_REF }}-
           restore-keys: vcpkg-${{ env.VCPKG_TRIPLET }}-${{ env.VCPKG_REF }}-
 
-      - name: Install SDL3
-        run: .vcpkg/vcpkg install sdl3 --triplet ${{ env.VCPKG_TRIPLET }} --clean-after-build
+      - name: Install Dependencies
+        run: .vcpkg/vcpkg install sdl3 libogg libvorbis --triplet ${{ env.VCPKG_TRIPLET }} --clean-after-build
 
       # Content-addressed key: only uploads when vcpkg actually built something new.
       - name: Save vcpkg binary cache
@@ -289,8 +289,8 @@ jobs:
   #         key: vcpkg-${{ env.VCPKG_TRIPLET }}-gcc${{ steps.gcc.outputs.version }}-${{ env.VCPKG_REF }}-
   #         restore-keys: vcpkg-${{ env.VCPKG_TRIPLET }}-gcc${{ steps.gcc.outputs.version }}-${{ env.VCPKG_REF }}-
   #
-  #     - name: Install SDL3
-  #       run: .vcpkg/vcpkg install sdl3 --triplet ${{ env.VCPKG_TRIPLET }} --clean-after-build
+  #     - name: Install Dependencies
+  #       run: .vcpkg/vcpkg install sdl3 libogg libvorbis --triplet ${{ env.VCPKG_TRIPLET }} --clean-after-build
   #
   #     - name: Save vcpkg binary cache
   #       uses: actions/cache/save@v6
