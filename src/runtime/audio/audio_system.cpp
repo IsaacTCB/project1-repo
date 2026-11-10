@@ -203,6 +203,7 @@ VoiceHandle AudioSystem::play_audio(AudioSourceHandle source_handle, const PlayD
     auto *inst = m_voice_controller.attach(voice_handle, std::move(instance));
     const bool queued = m_audio_thread.commands.try_emplace(PlaySoundCommand{
         .handle_index = voice_handle.index(),
+        .priority = desc.priority,
         .instance = inst,
     });
 
@@ -217,7 +218,6 @@ VoiceHandle AudioSystem::play_audio(AudioSourceHandle source_handle, const PlayD
 }
 
 void AudioSystem::stop_audio(VoiceHandle voice) {
-    ASSERT(m_voice_controller.is_playing(voice), "'voice' must be a valid voice!");
     m_voice_controller.stop_voice(voice);
 }
 
@@ -226,17 +226,14 @@ bool AudioSystem::is_audio_playing(VoiceHandle voice) const {
 }
 
 bool AudioSystem::is_audio_looping(VoiceHandle voice) const {
-    ASSERT(m_voice_controller.is_playing(voice), "'voice' must be a valid voice!");
     return m_voice_controller.is_looping(voice);
 }
 
 void AudioSystem::set_audio_volume(VoiceHandle voice, float volume) {
-    ASSERT(m_voice_controller.is_playing(voice), "'voice' must be a valid voice!");
     m_voice_controller.set_volume_gain(voice, volume);
 }
 
 void AudioSystem::set_audio_looping(VoiceHandle voice, bool looping) {
-    ASSERT(m_voice_controller.is_playing(voice), "'voice' must be a valid voice!");
     m_voice_controller.set_looping(voice, looping);
 }
 
@@ -247,6 +244,7 @@ std::span<float> AudioSystem::render_audio(size_t requested_frames) {
         m_audio_thread.mixer.create_voice({
             .instance = cmd.instance,
             .handle_index = cmd.handle_index,
+            .priority = cmd.priority,
         });
     }
 

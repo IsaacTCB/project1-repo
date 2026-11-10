@@ -79,6 +79,7 @@ private:
 
     struct PlaySoundCommand {
         size_t handle_index;
+        int priority;
         IAudioSourceInstance *instance;
     };
 

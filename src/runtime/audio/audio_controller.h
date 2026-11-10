@@ -29,6 +29,7 @@ struct LoopPointsSeconds {
 using LoopPointsDesc = std::variant<LoopPointsFrames, LoopPointsSeconds>;
 
 struct PlayDesc {
+    int priority = 0;
     float volume = 1.0f;
     float pitch = 1.0f;
     bool looping = false;
@@ -88,5 +89,5 @@ private:
         return const_cast<VoiceController *>(this)->get_slot_from_handle(handle);
     }
 
-    std::array<VoiceSlot, AudioLimits::MAX_VOICES> m_slots;
+    std::array<VoiceSlot, AudioLimits::MAX_SLOTS> m_slots;
 };

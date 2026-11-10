@@ -15,7 +15,7 @@ struct VoiceTag;
 using AudioSourceHandle = Handle<AudioSourceTag>;
 
 /* VoiceHandle is special because we only need
- * (AudioLimits::MAX_VOICES + 1) indices (0 is reserved
+ * (AudioLimits::MAX_SLOTS + 1) indices (0 is reserved
  * for invalid handles). Most voice indices will eventually
  * get recycled, so generation capacity is more important
  * than ever. We use some C++ compile-time trickery to
@@ -25,8 +25,8 @@ using AudioSourceHandle = Handle<AudioSourceTag>;
 template <>
 struct HandleMeta<VoiceTag> {
     using StorageType = HandleDefaults::StorageType;
-    static constexpr size_t IndexBits = std::bit_width(AudioLimits::MAX_VOICES + 1);
+    static constexpr size_t IndexBits = std::bit_width(AudioLimits::MAX_SLOTS + 1);
     static constexpr size_t GenerationBits = std::numeric_limits<StorageType>::digits - IndexBits;
 };
 using VoiceHandle = Handle<VoiceTag>;
-static_assert(VoiceHandle::INDEX_MAX >= AudioLimits::MAX_VOICES - 1);
+static_assert(VoiceHandle::INDEX_MAX >= AudioLimits::MAX_SLOTS - 1);

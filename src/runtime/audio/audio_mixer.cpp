@@ -1,6 +1,7 @@
 #include "audio_mixer.h"
 
 #include "audio_limits.h"
+#include "core/assertion.h"
 #include "voice_controls.h"
 
 #include <algorithm>
@@ -16,7 +17,7 @@ static constexpr uint64_t FIXED_POINT_ONE = 1ull << FIXED_POINT_BITS;
 static constexpr uint64_t FIXED_POINT_MASK = FIXED_POINT_ONE - 1;
 
 AudioMixer::AudioMixer() {
-    m_voices = std::make_unique<std::array<VoicePlaybackState, AudioLimits::MAX_VOICES>>();
+    m_voices = std::make_unique<std::array<VoicePlaybackState, AudioLimits::MAX_SLOTS>>();
 }
 
 static inline float approach(float from, float to, float max_delta) {
@@ -145,18 +146,32 @@ AudioMixer::VoicePlaybackState *AudioMixer::find_free_voice() {
 }
 
 void AudioMixer::create_voice(VoiceCreateDesc &&desc) {
-    auto *v = find_free_voice();
+    const auto reject = [&]() {
+        m_voice_controller->mark_finished(desc.handle_index);
+    };
 
+    if (audible_voices_count() >= AudioLimits::MAX_VOICES) {
+        auto *victim = find_voice_victim(desc.priority);
+        if (!victim) {
+            reject();
+            return;
+        }
+        victim->stopping = true;
+    }
+
+    auto *v = find_free_voice();
     if (!v) {
         /* Failed to find or steal a voice candidate, so we must
          * flag voice controller that this voice won't play */
-        m_voice_controller->mark_finished(desc.handle_index);
+        reject();
         return;
     }
 
     const auto info = desc.instance->source()->info();
     reset_voice(*v);
     v->instance = desc.instance;
+    v->priority = desc.priority;
+    v->serial = m_serial_last++;
     v->handle_index = desc.handle_index;
     v->channels = info.channels;
     v->sample_rate = info.sample_rate;
@@ -284,6 +299,34 @@ void AudioMixer::render_frames(std::span<float> out, size_t frames) {
             end_voice(v);
         }
     }
+}
+
+size_t AudioMixer::audible_voices_count() const {
+    size_t audible = 0;
+    for (const auto &voice : *m_voices) {
+        if (voice.instance && !voice.stopping) {
+            audible++;
+        }
+    }
+    return audible;
+}
+
+AudioMixer::VoicePlaybackState *AudioMixer::find_voice_victim(int desired_priority) {
+    /* find the the oldest currently active voice with the lowest priority */
+    VoicePlaybackState *best = nullptr;
+    for (auto &voice : *m_voices) {
+        if (!voice.instance || voice.stopping) {
+            continue;
+        }
+        if (!best || voice.priority < best->priority ||
+            (voice.priority == best->priority && voice.serial < best->serial)) {
+            best = &voice;
+        }
+    }
+
+    return (best && best->priority <= desired_priority)
+             ? best
+             : nullptr;
 }
 
 void AudioMixer::end_voice(VoicePlaybackState &voice) {
