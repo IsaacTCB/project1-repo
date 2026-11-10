@@ -60,14 +60,10 @@ endif()
 add_subdirectory(${PROJECT_SOURCE_DIR}/external/stb_image external/stb_image)
 target_link_libraries(runtime PRIVATE stb_image)
 
-# vorbis
-find_package(vorbis)
-if(vorbis_FOUND)
-    target_link_libraries(runtime PRIVATE Vorbis::vorbisfile)
-else()
-    add_subdirectory(${PROJECT_SOURCE_DIR}/external/vorbis external/vorbis)
-    target_link_libraries(runtime PRIVATE Vorbis::vorbisfile)
-endif()
+# ogg & vorbis
+add_subdirectory(${PROJECT_SOURCE_DIR}/external/ogg external/ogg)
+add_subdirectory(${PROJECT_SOURCE_DIR}/external/vorbis external/vorbis)
+target_link_libraries(runtime PRIVATE Ogg::ogg Vorbis::vorbisfile)
 
 # dr_libs (wav & mp3), header-only
 add_library(dr_libs INTERFACE)
