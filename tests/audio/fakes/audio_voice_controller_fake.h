@@ -72,8 +72,8 @@ public:
     }
 
 private:
-    std::array<std::unique_ptr<IAudioSourceInstance>, AudioLimits::MAX_VOICES> m_instances;
-    std::array<bool, AudioLimits::MAX_VOICES> m_marked_finished;
+    std::array<std::unique_ptr<IAudioSourceInstance>, AudioLimits::MAX_SLOTS> m_instances;
+    std::array<bool, AudioLimits::MAX_SLOTS> m_marked_finished{};
     bool m_looping = false;
     bool m_stop_requested = false;
     float m_volume = 1.0f;

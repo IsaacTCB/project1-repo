@@ -43,7 +43,7 @@ public:
         return AudioSourceDecoded::open(std::move(decoder))->create_instance();
     }
 
-    std::optional<size_t> add_voice(std::unique_ptr<IAudioSourceInstance> instance) {
+    std::optional<size_t> add_voice(std::unique_ptr<IAudioSourceInstance> instance, int priority = 0) {
         auto idx = m_controller.claim();
         if (!idx) {
             return std::nullopt;
@@ -58,6 +58,7 @@ public:
         m_mixer.create_voice({
             .instance = inst,
             .handle_index = *idx,
+            .priority = priority,
         });
 
         return *idx;
@@ -300,6 +301,112 @@ TEST_F(AudioMixerTest, DontMarkVoiceFinishedIfSourceIsNotOver) {
 
     /* check if voice is flagged as finished */
     EXPECT_FALSE(m_controller.was_marked_finished(*voice));
+}
+
+class AudioMixerStealTest : public AudioMixerTest {
+protected:
+    AudioMixerStealTest() {
+        m_controller.set_looping(true);
+    }
+
+    size_t add_looping_voice(int priority) {
+        auto idx = add_voice(get_signal(1.0f, 10), priority);
+        EXPECT_TRUE(idx);
+        return idx.value_or(0);
+    }
+
+    /* fills every audible voice and returns handle indices */
+    std::array<size_t, AudioLimits::MAX_VOICES> fill_all_voices(int priority) {
+        std::array<size_t, AudioLimits::MAX_VOICES> handles{};
+        for (auto &h : handles) {
+            h = add_looping_voice(priority);
+        }
+        return handles;
+    }
+
+    /* renders until stolen voices ramp down is finished */
+    void render_past_ramp() {
+        constexpr size_t BUFFER_FRAMES = 64;
+        constexpr auto RAMP_FRAMES = static_cast<size_t>(
+            AudioMixer::VOLUME_RAMP_SECONDS * static_cast<float>(AudioLimits::OUTPUT_SAMPLE_RATE));
+        constexpr size_t MAX_ITERATIONS = (RAMP_FRAMES / BUFFER_FRAMES) + 2;
+
+        std::array<float, BUFFER_FRAMES * AudioLimits::OUTPUT_CHANNELS> buf;
+        for (size_t i = 0; i < MAX_ITERATIONS; ++i) {
+            m_mixer.render_frames(buf, BUFFER_FRAMES);
+        }
+    }
+
+    size_t finished_count(std::span<const size_t> handles) {
+        size_t finished = 0;
+        for (const size_t handle : handles) {
+            if (m_controller.was_marked_finished(handle)) {
+                ++finished;
+            }
+        }
+        return finished;
+    }
+};
+
+TEST_F(AudioMixerStealTest, StealsLowPriorityVoice) {
+    constexpr size_t LOW_PRIORITY_SLOT = 10;
+
+    std::array<size_t, AudioLimits::MAX_VOICES> handles{};
+    for (size_t i = 0; i < handles.size(); ++i) {
+        handles[i] = add_looping_voice(i == LOW_PRIORITY_SLOT ? 1 : 5);
+    }
+    render_past_ramp();
+    ASSERT_EQ(finished_count(handles), 0);
+
+    const size_t newcomer = add_looping_voice(5);
+    ASSERT_FALSE(m_controller.was_marked_finished(newcomer));
+    render_past_ramp();
+
+    /* the low priority voice was stolen, even though it isn't the oldest */
+    EXPECT_TRUE(m_controller.was_marked_finished(handles[LOW_PRIORITY_SLOT]));
+    EXPECT_EQ(finished_count(handles), 1);
+    EXPECT_FALSE(m_controller.was_marked_finished(newcomer));
+}
+
+TEST_F(AudioMixerStealTest, StealsOldestVoiceWithSamePriority) {
+    const auto handles = fill_all_voices(3);
+    render_past_ramp();
+
+    const size_t newcomer = add_looping_voice(3);
+    render_past_ramp();
+
+    EXPECT_TRUE(m_controller.was_marked_finished(handles.front()));
+    EXPECT_EQ(finished_count(handles), 1);
+    EXPECT_FALSE(m_controller.was_marked_finished(newcomer));
+}
+
+TEST_F(AudioMixerStealTest, ConsecutiveStealsPickDifferentVictims) {
+    /* a voice that is already ramping down must not be picked again */
+    const auto handles = fill_all_voices(3);
+    render_past_ramp();
+
+    const size_t first = add_looping_voice(3);
+    const size_t second = add_looping_voice(3);
+    render_past_ramp();
+
+    EXPECT_TRUE(m_controller.was_marked_finished(handles[0]));
+    EXPECT_TRUE(m_controller.was_marked_finished(handles[1]));
+    EXPECT_EQ(finished_count(handles), 2);
+    EXPECT_FALSE(m_controller.was_marked_finished(first));
+    EXPECT_FALSE(m_controller.was_marked_finished(second));
+}
+
+TEST_F(AudioMixerStealTest, StealFailsWhenAllVoicesHaveHigherPriority) {
+    const auto handles = fill_all_voices(5);
+    render_past_ramp();
+
+    const size_t rejected = add_looping_voice(1);
+
+    /* this should be rejected immediately, no ramp involved */
+    EXPECT_TRUE(m_controller.was_marked_finished(rejected));
+
+    render_past_ramp();
+    EXPECT_EQ(finished_count(handles), 0);
 }
 
 // TEST(AudioTest, ConstSignalSelfTest) {

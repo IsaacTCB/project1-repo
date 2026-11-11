@@ -56,7 +56,7 @@ TEST_F(AudioControllerTest, IsPlayingReturnsTrueAfterClaiming) {
 }
 
 TEST_F(AudioControllerTest, ClaimFailsWhenAllVoicesAreOccupied) {
-    std::array<VoiceHandle, AudioLimits::MAX_VOICES> voices;
+    std::array<VoiceHandle, AudioLimits::MAX_SLOTS> voices;
 
     for (auto &voice : voices) {
         voice = m_controller.claim({}, {});
@@ -128,7 +128,7 @@ TEST_F(AudioControllerTest, StopAllVoicesWithHandle) {
 }
 
 TEST_F(AudioControllerTest, FinishedVoiceIsNotImmediatelyReusable) {
-    std::array<VoiceHandle, AudioLimits::MAX_VOICES> voices;
+    std::array<VoiceHandle, AudioLimits::MAX_SLOTS> voices;
     for (auto &voice : voices) {
         voice = m_controller.claim({}, {});
         ASSERT_TRUE(voice.valid());
@@ -141,7 +141,7 @@ TEST_F(AudioControllerTest, FinishedVoiceIsNotImmediatelyReusable) {
 }
 
 TEST_F(AudioControllerTest, FinishedVoiceCanBeClaimedAfterUpdate) {
-    std::array<VoiceHandle, AudioLimits::MAX_VOICES> voices;
+    std::array<VoiceHandle, AudioLimits::MAX_SLOTS> voices;
     for (auto &voice : voices) {
         voice = m_controller.claim({}, {});
         ASSERT_TRUE(voice.valid());
@@ -157,7 +157,7 @@ TEST_F(AudioControllerTest, FinishedVoiceCanBeClaimedAfterUpdate) {
 /* Releasing handles */
 
 TEST_F(AudioControllerTest, ReleasedVoiceHandleBecomesInvalid) {
-    std::array<VoiceHandle, AudioLimits::MAX_VOICES> voices;
+    std::array<VoiceHandle, AudioLimits::MAX_SLOTS> voices;
     for (auto &voice : voices) {
         voice = m_controller.claim({}, {});
         ASSERT_TRUE(voice.valid());
@@ -176,7 +176,7 @@ TEST_F(AudioControllerTest, ReleasedVoiceHandleBecomesInvalid) {
 }
 
 TEST_F(AudioControllerTest, ReleaseAllInvalidatesAllHandles) {
-    std::array<VoiceHandle, AudioLimits::MAX_VOICES> voices;
+    std::array<VoiceHandle, AudioLimits::MAX_SLOTS> voices;
     for (auto &voice : voices) {
         voice = m_controller.claim({}, {});
         ASSERT_TRUE(voice.valid());
