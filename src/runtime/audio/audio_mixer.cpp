@@ -1,7 +1,6 @@
 #include "audio_mixer.h"
 
 #include "audio_limits.h"
-#include "core/assertion.h"
 #include "voice_controls.h"
 
 #include <algorithm>
