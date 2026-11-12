@@ -340,11 +340,11 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
 
         /* Audio handles */
         .audio = {
-            .load_source = [](std::shared_ptr<IAudioSource> &image, void *userdata) -> AudioSourceAsset {
+            .load_source = [](std::shared_ptr<IAudioSource> &source_def, void *userdata) -> AudioSourceAsset {
                 ASSERT(userdata);
                 auto *audio = static_cast<AudioSystem *>(userdata);
 
-                const AudioSourceHandle source = audio->load_source(image);
+                const AudioSourceHandle source = audio->load_source(source_def);
                 if (!source) {
                     return {};
                 }
@@ -352,7 +352,7 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
                 const auto info = audio->get_source_info(source);
                 ASSERT(info, "Audio source does not provide info.");
                 return {
-                    .handle = audio->load_source(image),
+                    .handle = source,
                     .frame_count = static_cast<uint64_t>(info->frame_count),
                     .sample_rate = static_cast<uint32_t>(info->sample_rate),
                     .channels = static_cast<uint8_t>(info->channels),
