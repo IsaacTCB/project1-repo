@@ -7,6 +7,7 @@
 #include <vorbis/vorbisfile.h>
 
 #include "core/logger.h"
+#include "runtime/audio/audio_limits.h"
 
 /* ================== *
  *       Source       *
@@ -21,11 +22,19 @@ std::shared_ptr<AudioSourceDecoded> AudioSourceDecoded::open(std::unique_ptr<IAu
 }
 
 bool AudioSourceDecoded::decode(std::unique_ptr<IAudioDecoder> decoder) {
+    /* TODO: Downmix audio streams with more than 2 channels into stereo */
+
     if (!decoder->open()) {
         return false;
     }
 
     const auto &info = decoder->info();
+
+    /* reject audio streams with more than 2 channels. */
+    if (info.channels == 0 || info.channels >= AudioLimits::OUTPUT_CHANNELS) {
+        return false;
+    }
+
     m_info = {
         .channels = info.channels,
         .sample_rate = info.sample_rate,
