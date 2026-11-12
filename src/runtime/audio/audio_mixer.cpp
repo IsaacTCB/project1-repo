@@ -122,6 +122,10 @@ static size_t resample_pcm(const ResamplePcmDesc &desc) {
 }
 
 static uint64_t get_step_rate(size_t src_freq, float pitch = 1.0f) {
+    /* Clamp the pitch to [0.0, AudioLimits::MAX_PITCH]. Also works
+     * with NaN, which makes this return 0.0f. */
+    pitch = pitch > 0.0f ? std::min(pitch, AudioLimits::MAX_PITCH) : 0.0f;
+
     double step_f =
         static_cast<double>(src_freq) /
         static_cast<double>(AudioLimits::OUTPUT_SAMPLE_RATE);

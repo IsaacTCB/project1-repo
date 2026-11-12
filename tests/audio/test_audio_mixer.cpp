@@ -13,6 +13,7 @@
 #include "runtime/audio/audio_source_decoded.h"
 
 #include <gtest/gtest.h>
+#include <limits>
 #include <optional>
 
 class AudioMixerTest : public testing::Test {
@@ -248,6 +249,52 @@ TEST_F(AudioMixerTest, MarksFinishedWhenSourceEnds) {
     m_mixer.render_frames(buf, buf.size() / AudioLimits::OUTPUT_CHANNELS);
 
     /* check if voice is flagged as finished */
+    EXPECT_TRUE(m_controller.was_marked_finished(*voice));
+}
+
+TEST_F(AudioMixerTest, NonPositivePitchHoldsFirstSample) {
+    constexpr size_t RENDER_FRAMES = 50;
+    constexpr size_t PCM_COUNT = RENDER_FRAMES * AudioLimits::OUTPUT_CHANNELS;
+
+    /* NaN floats should be the same as negative floats */
+    constexpr auto FLOAT_NAN = std::numeric_limits<float>::quiet_NaN();
+
+    for (const float pitch : {-1.0f, FLOAT_NAN}) {
+        AudioMixer mixer;
+        TestVoiceControls controller;
+        mixer.set_voice_controller(controller);
+        controller.set_pitch(pitch);
+
+        /* pitch is clamped to 0, so the voice barely advances */
+        auto idx = controller.claim();
+        ASSERT_TRUE(idx);
+        auto *inst = controller.attach(*idx, get_signal(1.0f, RENDER_FRAMES));
+        mixer.create_voice({.instance = inst, .handle_index = *idx, .priority = 0});
+
+        std::array<float, PCM_COUNT> buf;
+        mixer.render_frames(buf, RENDER_FRAMES);
+
+        expect_audio_near(buf, expected_const_signal<PCM_COUNT>(1.0f, RENDER_FRAMES), 0.0001f);
+        EXPECT_FALSE(controller.was_marked_finished(*idx)) << "pitch: " << pitch;
+    }
+}
+
+TEST_F(AudioMixerTest, InfinitePitchIsClampedToMaxPitch) {
+    constexpr size_t RENDER_FRAMES = 50;
+    constexpr size_t PCM_COUNT = RENDER_FRAMES * AudioLimits::OUTPUT_CHANNELS;
+
+    /* at MAX_PITCH, the source is consumed in exactly OUTPUT_FRAMES frames */
+    constexpr size_t OUTPUT_FRAMES = 25;
+    constexpr auto SOURCE_FRAMES = static_cast<size_t>(OUTPUT_FRAMES * AudioLimits::MAX_PITCH);
+
+    m_controller.set_pitch(std::numeric_limits<float>::infinity());
+    auto voice = add_voice(get_signal(1.0f, SOURCE_FRAMES));
+    ASSERT_TRUE(voice);
+
+    std::array<float, PCM_COUNT> buf;
+    m_mixer.render_frames(buf, RENDER_FRAMES);
+
+    expect_audio_near(buf, expected_const_signal<PCM_COUNT>(1.0f, OUTPUT_FRAMES), 0.0001f);
     EXPECT_TRUE(m_controller.was_marked_finished(*voice));
 }
 

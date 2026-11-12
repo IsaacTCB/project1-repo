@@ -256,7 +256,8 @@ std::span<float> AudioSystem::render_audio(size_t requested_frames) {
         m_buffer, frames);
 
     /* after mixing is done, apply hard-limiter */
-    for (auto &sample : m_buffer) {
+    for (size_t i = 0; i < requested_frames * CHANNELS; ++i) {
+        auto &sample = m_buffer[i];
         sample = std::clamp(sample, -1.0f, 1.0f);
     }
 

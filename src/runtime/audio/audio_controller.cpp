@@ -98,7 +98,10 @@ VoiceController::VoiceSlot *VoiceController::get_slot_from_handle(VoiceHandle ha
     }
 
     auto &slot = m_slots[handle.index()];
-    if (handle.gen() != slot.generation.load(std::memory_order_relaxed)) {
+    /* slot generation counts past VoiceHandle::GENERATION_MASK is capable of,
+     * so we must manually wrap it for its comparison. */
+    const size_t gen = slot.generation.load(std::memory_order_relaxed);
+    if (handle.gen() != (gen & VoiceHandle::GENERATION_MASK)) {
         return nullptr;
     }
 

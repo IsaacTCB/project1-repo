@@ -175,6 +175,22 @@ TEST_F(AudioControllerTest, ReleasedVoiceHandleBecomesInvalid) {
     EXPECT_FALSE(m_controller.is_playing(voices[0]));
 }
 
+/* TODO: this test is really slow, possibly because we are
+ * claiming 33,554,431 voices just to release them. Make it faster
+ * somehow. */
+// TEST_F(AudioControllerTest, HandleStaysValidAfterGenerationWrapsAround) {
+//     for (size_t i = 0; i <= VoiceHandle::GENERATION_MAX; ++i) {
+//         const VoiceHandle voice = m_controller.claim({}, {});
+//         ASSERT_TRUE(voice.valid());
+//         m_controller.force_release(voice);
+//     }
+//
+//     const VoiceHandle voice = m_controller.claim({}, {});
+//     ASSERT_TRUE(voice.valid());
+//     EXPECT_EQ(voice.gen(), 0u) << "generation should have wrapped";
+//     EXPECT_TRUE(m_controller.is_playing(voice));
+// }
+
 TEST_F(AudioControllerTest, ReleaseAllInvalidatesAllHandles) {
     std::array<VoiceHandle, AudioLimits::MAX_SLOTS> voices;
     for (auto &voice : voices) {

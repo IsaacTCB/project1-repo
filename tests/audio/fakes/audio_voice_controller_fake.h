@@ -20,13 +20,17 @@ public:
         return {
             .stop_requested = m_stop_requested,
             .volume = m_volume,
-            .pitch = 1.0f,
+            .pitch = m_pitch,
             .looping = m_looping,
         };
     }
 
     void set_volume(float volume) {
         m_volume = volume;
+    }
+
+    void set_pitch(float pitch) {
+        m_pitch = pitch;
     }
 
     void set_looping(bool looping) {
@@ -77,4 +81,5 @@ private:
     bool m_looping = false;
     bool m_stop_requested = false;
     float m_volume = 1.0f;
+    float m_pitch = 1.0f;
 };
