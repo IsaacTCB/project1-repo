@@ -30,3 +30,5 @@ add_subdirectory(handles)
 # Math tests
 add_subdirectory(math)
 
+# Audio tests
+add_subdirectory(audio)

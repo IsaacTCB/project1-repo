@@ -70,7 +70,7 @@ SDL_AppResult SDL3_PlatformImpl::init(int argc, char *argv[]) {
             return SDL_APP_FAILURE;
     }
 
-    if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
+    if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_AUDIO)) {
         LOG_CRITICAL("Failed to initialize SDL3. Reason: {0}", SDL_GetError());
         return SDL_APP_FAILURE;
     }

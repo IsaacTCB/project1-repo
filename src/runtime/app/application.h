@@ -3,10 +3,12 @@
 #include "core/math/vec2i.h"
 #include "runtime/app/context/frame_context.h"
 #include "runtime/asset_service.h"
+#include "runtime/audio/audio_system.h"
 #include "runtime/input_service.h"
 #include "runtime/platform_services.h"
 #include "runtime/system/view/view_system_2d.h"
 
+#include <memory>
 #include <cstdint>
 #include <string>
 
@@ -33,6 +35,7 @@ public:
     struct Servers {
         InputService &input;
         AssetService &asset;
+        std::unique_ptr<AudioSystem> &audio;
     };
 
 public:

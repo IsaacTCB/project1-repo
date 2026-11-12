@@ -6,6 +6,7 @@
 
 #include "core/math/vec2i.h"
 #include "graphics/api/render_device_factory.h"
+#include "runtime/audio/audio_device.h"
 #include "runtime/debug/imgui_backend.h"
 
 #include "server_macros.inl"
@@ -41,6 +42,11 @@ public:
     DECLARE_SERVER(IDisplayServer)
 
 public:
+    /* HACK: We don't have a proper audio platform server
+     * interface, so we wire it up here. Obviously this is
+     * bad, and should be fixed asap. */
+    virtual std::unique_ptr<IAudioDevice> get_audio_device() = 0;
+
     /**
      * @brief Initializes the window display
      *

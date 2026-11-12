@@ -9,6 +9,7 @@
 #include "runtime/renderer/renderer_2d.h"
 #include "runtime/server/display_server.h"
 
+#include "sdl3_audio_device.h"
 #include "sdl3_registry.h"
 
 #include <SDL3/SDL.h>
@@ -20,6 +21,11 @@ public:
     }
 
 private:
+    std::unique_ptr<IAudioDevice> get_audio_device() override {
+        return std::unique_ptr<IAudioDevice>(
+            new SDL3_AudioDevice());
+    }
+
     DisplayWindowHandle init_display(const DisplayWindowProps &props) override {
         auto *specs = m_registry.get(props.api);
         if (!specs) {

@@ -30,6 +30,7 @@
 #include "platform_services.h"
 #include "runtime/app/application.h"
 #include "runtime/app/context/frame_context.h"
+#include "runtime/audio/audio_handles.h"
 #include "runtime/debug/sinks/file_log_sink.h"
 #include "runtime/renderer/render_queue_builder.h"
 #include "runtime/system/view/view_system_2d.h"
@@ -253,6 +254,7 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
         IApplication::Servers{
             .input = m_input_service,
             .asset = m_asset_service.value(),
+            .audio = m_audio_system,
         },
         m_platform));
     if (!m_app) {
@@ -260,9 +262,11 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
         exit(-1);
     }
 
-    ApplicationConfig config;
-    m_app->configure(config);
-    m_app_config = std::move(config);
+    {
+        ApplicationConfig config;
+        m_app->configure(config);
+        m_app_config = std::move(config);
+    }
 
     /* initialize fps counter */
     m_fps = {};
@@ -302,9 +306,14 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
         .aspect = m_app_config.view.aspect,
     });
 
+    m_audio_system = std::make_unique<AudioSystem>(
+        m_platform.display.get_audio_device());
+    m_audio_system->init();
+
     /* initialize asset service */
     m_asset_service.reset();
     m_asset_service.emplace(::AssetService::Provider{
+        /* Renderer2D handles */
         .renderer = {
             .load_texture = [](ImageData &image, void *userdata) -> TextureAsset {
                 ASSERT(userdata);
@@ -328,7 +337,42 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
             },
             .userdata = &(*m_renderer),
         },
+
+        /* Audio handles */
+        .audio = {
+            .load_source = [](std::shared_ptr<IAudioSource> &source_def, void *userdata) -> AudioSourceAsset {
+                ASSERT(userdata);
+                auto *audio = static_cast<AudioSystem *>(userdata);
+
+                const AudioSourceHandle source = audio->load_source(source_def);
+                if (!source) {
+                    return {};
+                }
+
+                const auto info = audio->get_source_info(source);
+                ASSERT(info, "Audio source does not provide info.");
+                return {
+                    .handle = source,
+                    .frame_count = static_cast<uint64_t>(info->frame_count),
+                    .sample_rate = static_cast<uint32_t>(info->sample_rate),
+                    .channels = static_cast<uint8_t>(info->channels),
+                };
+            },
+            .unload_source = [](AudioSourceHandle source, void *userdata) -> void {
+                ASSERT(userdata);
+                auto *audio = static_cast<AudioSystem *>(userdata);
+                audio->unload_source(source);
+            },
+            .get_audio_source_from_file = [](const std::string_view path, void *userdata) -> std::shared_ptr<IAudioSource> {
+                ASSERT(userdata);
+                auto *audio = static_cast<AudioSystem *>(userdata);
+                return audio->get_source_from_path(path);
+            },
+
+            .userdata = m_audio_system.get(),
+        },
     });
+
     /* poll window size */
     Vec2i display_size = m_platform.display.get_size(m_window);
     LOG_INFO("display size: {0}", display_size);
@@ -462,7 +506,7 @@ void EngineRuntime::update(float delta) {
         return;
     }
 
-#if defined(DEBUG)
+#ifdef DEBUG
     /* update caption debug info */
     if (new_second) {
         const auto &render_size = m_view.get_layout().render_viewport.size;
@@ -493,6 +537,7 @@ void EngineRuntime::update(float delta) {
         }
     }
 
+    m_audio_system->update();
     m_input_service.update();
 
     for (const auto &event : m_platform.event.span<EventInput>()) {
@@ -557,6 +602,9 @@ void EngineRuntime::close() {
 
     m_app->on_close();
     m_app.reset();
+
+    m_audio_system->close();
+    m_audio_system.reset();
 
     m_input_service.close();
     m_asset_service.reset();

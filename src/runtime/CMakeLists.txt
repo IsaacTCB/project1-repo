@@ -21,6 +21,13 @@ add_custom_target(runtime_version
 )
 
 set(RUNTIME_SOURCES
+    audio/audio_system.cpp
+    audio/decoders/mp3_audio_decoder.cpp
+    audio/decoders/vorbis_audio_decoder.cpp
+    audio/decoders/wav_audio_decoder.cpp
+    audio/audio_controller.cpp
+    audio/audio_source_decoded.cpp
+    audio/audio_mixer.cpp
     asset_service.cpp
     input_service.cpp
     image/decoder.cpp
@@ -52,3 +59,13 @@ endif()
 # stb_image
 add_subdirectory(${PROJECT_SOURCE_DIR}/external/stb_image external/stb_image)
 target_link_libraries(runtime PRIVATE stb_image)
+
+# ogg & vorbis
+add_subdirectory(${PROJECT_SOURCE_DIR}/external/ogg external/ogg)
+add_subdirectory(${PROJECT_SOURCE_DIR}/external/vorbis external/vorbis)
+target_link_libraries(runtime PRIVATE Ogg::ogg Vorbis::vorbisfile)
+
+# dr_libs (wav & mp3), header-only
+add_library(dr_libs INTERFACE)
+target_include_directories(dr_libs SYSTEM INTERFACE ${PROJECT_SOURCE_DIR}/external/dr_libs)
+target_link_libraries(runtime PRIVATE dr_libs)

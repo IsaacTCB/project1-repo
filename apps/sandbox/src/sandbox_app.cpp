@@ -13,10 +13,23 @@
 #include "runtime/app/application.h"
 #include "runtime/app/context/frame_context.h"
 #include "runtime/asset_service.h"
+#include "runtime/audio/audio_controller.h"
+#include "runtime/audio/audio_system.h"
 #include "runtime/camera_2d_utils.h"
 #include "runtime/input_service.h"
 
 #include "entity.h"
+
+#if ENABLE_IMGUI
+#include <imgui.h>
+#endif
+
+#define AUDIO_FILEPATH "test.ogg"
+
+constexpr auto AUDIO_LOOP_POINTS = LoopPointsFrames{
+    .start = 460239,
+    .end = 0,
+};
 
 class SandboxApplication : public IApplication {
     DECLARE_APP(SandboxApplication);
@@ -43,6 +56,16 @@ public:
         };
     }
 
+    AudioSourceRef load_sound(const std::string &filepath) {
+        auto handle = m_servers.asset.get_audio_source(filepath);
+        if (!handle.get()) {
+            LOG_WARN("Failed to load audio source {}", filepath);
+            return AudioSourceRef{};
+        }
+        LOG_INFO("Loaded load audio source {}", filepath);
+        return handle;
+    }
+
     void on_init() override {
         m_texture = m_servers.asset.get_texture("test.png");
         if (m_texture) {
@@ -57,6 +80,26 @@ public:
 
         m_camera.zoom = 0.8f;
         m_camera.anchor = Camera2D::AnchorMode::CENTER;
+
+        m_audio_source = load_sound(AUDIO_FILEPATH);
+        if (m_audio_source.get()) {
+            auto ch = m_servers.audio->get_source_length_seconds(m_audio_source.get());
+            LOG_TRACE("song is {:.1f}s long", ch);
+
+            m_bgm_voice = m_servers.audio->play_audio(m_audio_source.get(),
+                {
+                    .volume = 0.2f,
+                    .pitch = 1.0f,
+                    .looping = true,
+                    .loop_points = AUDIO_LOOP_POINTS,
+                });
+
+            if (m_servers.audio->is_audio_playing(m_bgm_voice)) {
+                LOG_TRACE("playing voice!");
+            }
+        }
+
+        m_click_sound = load_sound("click.wav");
     }
 
     void on_update(UpdateContext &ctx) override {
@@ -74,16 +117,41 @@ public:
         }
 
         if (m_servers.input.is_key_just_released(Input::Key::Scancode::SPACE)) {
-            LOG_TRACE("Undamn");
+            if (m_servers.audio->is_audio_playing(m_bgm_voice)) {
+                const bool looping = m_servers.audio->is_audio_looping(m_bgm_voice);
+                LOG_INFO("Toggling looping {}...", looping ? "off" : "on");
+                m_servers.audio->set_audio_looping(m_bgm_voice, !looping);
+            } else {
+                m_bgm_voice = m_servers.audio->play_audio(m_audio_source.get(),
+                    {
+                        .volume = 0.2f,
+                        .pitch = 1.0f,
+                        .looping = true,
+                        .loop_points = AUDIO_LOOP_POINTS,
+                    });
+
+                LOG_TRACE("playing bgm...");
+            }
         }
 
         Vec2 mouse_pos = get_mouse_coords();
         if (m_servers.input.is_mouse_button_just_pressed(Input::Mouse::Buttons::LEFT)) {
             float speed_scale = Random::randf_range(0.85f, 1.2f);
             m_entities.emplace_back(Vec2(mouse_pos), speed_scale);
+
+            /* play click sound effect */
+            if (m_click_sound.get()) {
+                m_servers.audio->play_audio(m_click_sound.get());
+            }
         }
         if (m_servers.input.is_mouse_button_just_released(Input::Mouse::Buttons::RIGHT)) {
             LOG_TRACE("Walked");
+
+            if (m_servers.audio->is_audio_playing(m_bgm_voice)) {
+                float new_volume = Random::randf_range(0.5f, 1.0f);
+                LOG_TRACE("Setting music volume to {}%...", static_cast<int>(new_volume * 100.0f));
+                m_servers.audio->set_audio_volume(m_bgm_voice, new_volume);
+            }
         }
 
         Vec2 move{};
@@ -140,7 +208,66 @@ public:
 
         m_camera.position.x = std::floor(m_entities[0].pos.x);
         m_camera.position.y = std::floor(m_entities[0].pos.y);
+
+#if ENABLE_IMGUI
+        imgui_logic();
+#endif
     }
+
+#if ENABLE_IMGUI
+    void imgui_logic() {
+        ImGui::Begin("Audio Inspector");
+
+        std::string path{AUDIO_FILEPATH};
+        ImGui::InputText("Audio File", path.data(), path.size() + 1, ImGuiInputTextFlags_ReadOnly);
+
+        if (m_audio_source.get()) {
+            const auto info = m_servers.audio->get_source_info(m_audio_source.get());
+            ImGui::Text("channels = %zu", info->channels);
+            ImGui::Text("sample rate = %zu", info->sample_rate);
+            ImGui::Text("frame count = %zu", info->frame_count);
+            ImGui::Text("duration (seconds) = %.2fs", info->duration_seconds());
+        }
+
+        bool is_playing = m_bgm_voice && m_servers.audio->is_audio_playing(m_bgm_voice);
+        static float s_volume = 0.5f;
+
+        if (ImGui::Checkbox("Playing", &is_playing)) {
+            if (is_playing) {
+                m_bgm_voice = m_servers.audio->play_audio(m_audio_source.get(),
+                    {
+                        .volume = s_volume,
+                        .pitch = 1.0f,
+                        .looping = true,
+                        .loop_points = AUDIO_LOOP_POINTS,
+                    });
+            } else {
+                m_servers.audio->stop_audio(m_bgm_voice);
+                m_bgm_voice = {};
+            }
+        }
+
+        ImGui::SeparatorText("Audio Voice");
+
+        if (is_playing) {
+            bool looping = m_servers.audio->is_audio_looping(m_bgm_voice);
+            if (ImGui::Checkbox("Looping", &looping)) {
+                m_servers.audio->set_audio_looping(m_bgm_voice, looping);
+            }
+
+            auto loop_points = AUDIO_LOOP_POINTS;
+            ImGui::Text("loop start = %zu", loop_points.start);
+            ImGui::Text("loop end = %zu", loop_points.end);
+            if (ImGui::DragFloat("Volume", &s_volume, 0.01f, 0.0f, 10.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp)) {
+                m_servers.audio->set_audio_volume(m_bgm_voice, s_volume);
+            }
+        } else {
+            ImGui::TextWrapped("Audio voice not currently active!");
+        }
+
+        ImGui::End();
+    }
+#endif
 
     void on_draw(RenderContext &ctx) override {
         ctx.view_context = &m_view_context;
@@ -197,6 +324,11 @@ private:
     std::vector<Entity> m_entities;
     TextureRef m_texture;
     Camera2D m_camera;
+
+    AudioSourceRef m_audio_source;
+    AudioSourceRef m_click_sound;
+
+    VoiceHandle m_bgm_voice;
 
     ViewContext2D m_view_context;
 };
