@@ -1,20 +1,49 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string_view>
 
+#include "core/image/image.h"
+#include "core/math/vec2i.h"
 #include "runtime/renderer/render_handles.h"
 
 #include "asset_ref.h"
 
-using TextureRef = AssetRef<TextureHandle>;
+/* TODO: move asset definitions outta here */
+struct TextureAsset {
+    TextureHandle handle;
+    PixelFormat format;
+    Vec2i size;
+    uint64_t native_handle; /* opaque backend handle */
+
+    operator TextureHandle() const { return handle; }
+    operator bool() const { return handle.valid(); }
+};
+
+class TextureRef : public AssetRefMixin<TextureRef, TextureAsset> {
+public:
+    using AssetRefMixin::AssetRefMixin;
+
+    /* texture metadata */
+    [[nodiscard]] TextureHandle handle() const { return this->get().handle; }
+    [[nodiscard]] PixelFormat format() const { return this->get().format; }
+    [[nodiscard]] Vec2i size() const { return this->get().size; };
+    [[nodiscard]] int width() const { return this->get().size.x; };
+    [[nodiscard]] int height() const { return this->get().size.y; };
+    [[nodiscard]] uint64_t native() const { return this->get().native_handle; }
+
+    /* misc */
+    [[nodiscard]] bool valid() const { return static_cast<bool>(this->get()); }
+    [[nodiscard]] operator bool() const { return this->valid(); }
+};
 
 class ImageData;
 class AssetService {
 public:
     class Provider {
     public:
-        using LoadFn = TextureHandle (*)(ImageData &image, void *userdata);
+        using LoadFn = TextureAsset (*)(ImageData &image, void *userdata);
         using UnloadFn = void (*)(TextureHandle handle, void *userdata);
 
         struct {
@@ -35,8 +64,8 @@ public:
     TextureRef get_texture(std::string_view path);
 
 private:
-    [[nodiscard]] TextureHandle load_texture(std::string_view path) const;
-    void unload_texture(TextureHandle handle) const;
+    [[nodiscard]] TextureAsset load_texture(std::string_view path) const;
+    void unload_texture(const TextureAsset &texture) const;
 
 private:
     struct Impl;

@@ -102,6 +102,7 @@ public:
     TextureHandle load_texture(const ImageData &data) override;
     void destroy_texture(TextureHandle texture) override;
     bool has_texture(TextureHandle texture) override;
+    std::optional<RenderTextureInfo> get_texture_info(TextureHandle texture) const override;
 
     SamplerHandle create_sampler(const SamplerInitDesc &sampler_desc) override;
     void destroy_sampler(SamplerHandle sampler) override;

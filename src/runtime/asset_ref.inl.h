@@ -4,98 +4,95 @@
 
 /* == Asset Control Block == */
 
-template <typename Handle>
-IAssetControlBlock<Handle>::IAssetControlBlock() = default;
+template <typename TAsset>
+IAssetControlBlock<TAsset>::IAssetControlBlock() = default;
 
-template <typename Handle>
-IAssetControlBlock<Handle>::IAssetControlBlock(DestroyFn destroy_fn, Handle handle)
-    : destroy_fn(destroy_fn), ref_count(0), handle(handle) {}
+template <typename TAsset>
+template <typename MakeAsset>
+IAssetControlBlock<TAsset>::IAssetControlBlock(DestroyFn destroy_fn, MakeAsset &&make_asset)
+    : destroy_fn(destroy_fn), ref_count(0), handle(std::forward<MakeAsset>(make_asset)()) {}
 
-template <typename Handle>
-void IAssetControlBlock<Handle>::inc_ref() {
+template <typename TAsset>
+void IAssetControlBlock<TAsset>::inc_ref() {
     ref_count++;
 }
 
-template <typename Handle>
-void IAssetControlBlock<Handle>::dec_ref() {
+template <typename TAsset>
+void IAssetControlBlock<TAsset>::dec_ref() {
     if (ref_count == 0 || --ref_count == 0) {
         destroy_fn(this);
     }
 }
 
-template <typename Handle>
-Handle IAssetControlBlock<Handle>::get_handle() {
+template <typename TAsset>
+TAsset IAssetControlBlock<TAsset>::get_handle() {
     return handle;
 }
 
 /* == Asset Ref == */
 
-template <typename Handle>
-AssetRef<Handle>::AssetRef(IAssetControlBlock<Handle> &slot)
-    : m_ctrl_block(&slot), m_handle(slot.get_handle()) {}
+template <typename TAsset>
+AssetRef<TAsset>::AssetRef(IAssetControlBlock<TAsset> &slot)
+    : m_ctrl_block(&slot) {}
 
-template <typename Handle>
-AssetRef<Handle>::AssetRef() : m_ctrl_block(nullptr), m_handle{} {}
+template <typename TAsset>
+AssetRef<TAsset>::AssetRef() : m_ctrl_block(nullptr) {}
 
-template <typename Handle>
-AssetRef<Handle>::~AssetRef() {
+template <typename TAsset>
+AssetRef<TAsset>::~AssetRef() {
     release();
 }
 
-template <typename Handle>
-AssetRef<Handle>::AssetRef(const AssetRef &other)
-    : m_ctrl_block(other.m_ctrl_block), m_handle(other.m_handle) {
+template <typename TAsset>
+AssetRef<TAsset>::AssetRef(const AssetRef &other)
+    : m_ctrl_block(other.m_ctrl_block) {
     acquire();
 }
 
-template <typename Handle>
-AssetRef<Handle>::AssetRef(AssetRef &&other) noexcept
-    : m_ctrl_block(other.m_ctrl_block), m_handle(other.m_handle) {
+template <typename TAsset>
+AssetRef<TAsset>::AssetRef(AssetRef &&other) noexcept
+    : m_ctrl_block(other.m_ctrl_block) {
     other.m_ctrl_block = nullptr;
-    other.m_handle = Handle{};
 }
 
-template <typename Handle>
-AssetRef<Handle> &AssetRef<Handle>::operator=(const AssetRef<Handle> &rhs) {
+template <typename TAsset>
+AssetRef<TAsset> &AssetRef<TAsset>::operator=(const AssetRef<TAsset> &rhs) {
     if (this == &rhs) {
         return *this;
     }
 
     release();
     m_ctrl_block = rhs.m_ctrl_block;
-    m_handle = rhs.m_handle;
     acquire();
     return *this;
 }
 
-template <typename Handle>
-AssetRef<Handle> &AssetRef<Handle>::operator=(AssetRef<Handle> &&rhs) noexcept {
+template <typename TAsset>
+AssetRef<TAsset> &AssetRef<TAsset>::operator=(AssetRef<TAsset> &&rhs) noexcept {
     if (this == &rhs) {
         return *this;
     }
 
     release();
     m_ctrl_block = rhs.m_ctrl_block;
-    m_handle = rhs.m_handle;
     rhs.m_ctrl_block = nullptr;
-    rhs.m_handle = Handle{};
     return *this;
 }
 
-template <typename Handle>
-void AssetRef<Handle>::reset() {
-    *this = AssetRef<Handle>{};
+template <typename TAsset>
+void AssetRef<TAsset>::reset() {
+    *this = AssetRef<TAsset>{};
 }
 
-template <typename Handle>
-void AssetRef<Handle>::acquire() {
+template <typename TAsset>
+void AssetRef<TAsset>::acquire() {
     if (m_ctrl_block) {
         m_ctrl_block->inc_ref();
     }
 }
 
-template <typename Handle>
-void AssetRef<Handle>::release() {
+template <typename TAsset>
+void AssetRef<TAsset>::release() {
     if (m_ctrl_block) {
         auto *slot = m_ctrl_block;
         m_ctrl_block = nullptr;
@@ -103,10 +100,11 @@ void AssetRef<Handle>::release() {
     }
 }
 
-template <typename Handle>
-Handle AssetRef<Handle>::get() const {
+template <typename TAsset>
+const TAsset &AssetRef<TAsset>::get() const {
+    static TAsset s_null{};
     if (!m_ctrl_block) {
-        return Handle{};
+        return s_null;
     }
-    return m_handle;
+    return m_ctrl_block->handle;
 }
