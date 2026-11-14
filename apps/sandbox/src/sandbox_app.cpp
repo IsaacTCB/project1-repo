@@ -83,7 +83,7 @@ public:
             /* misc. */
             .particle_texture{},
             .particle_size = Vec2{10.0f, 10.0f},
-            .particle_gravity = Vec2{0.0f, -8.0f},
+            .particle_gravity = Vec2{0.0f, -480.0f},
         });
         m_emitter = m_particles.create_emitter(m_emitter_effect);
         m_emitter.set_emitting(true);

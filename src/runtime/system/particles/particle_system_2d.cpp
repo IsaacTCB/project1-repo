@@ -103,7 +103,7 @@ void ParticleSystem2D::update_particles(float delta) {
         vel += effect->particle_gravity * delta;
 
         /* update position from velocity */
-        m_particles->pos[p] += vel;
+        m_particles->pos[p] += vel * delta;
 
         /* update lifetime */
         m_particles->lifetime_remaining[p] -= delta;
