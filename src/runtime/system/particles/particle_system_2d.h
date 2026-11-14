@@ -14,7 +14,6 @@
 
 #include "particle_emitter_2d.h"
 #include "runtime/asset_service.h"
-#include "runtime/renderer/render_queue.h"
 
 struct ParticleEffect2D {
     float lifetime_min;
@@ -41,13 +40,14 @@ struct ParticleEffect2D {
     Vec2 particle_gravity{0.0f, 0.0f};
 };
 
+class RenderQueueBuilder;
 class ParticleSystem2D {
 public:
     ParticleSystem2D();
 
     void seed(uint32_t seed = 0);
     void update(float delta);
-    void render(RenderQueue &queue);
+    void render(RenderQueueBuilder &queue);
 
 public:
     template <typename Fx>
