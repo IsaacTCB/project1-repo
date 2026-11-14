@@ -14,6 +14,10 @@
 #include "platform_services.h"
 #include "runtime/app/application.h"
 #include "runtime/app/context/frame_context.h"
+#include "runtime/renderer/render_queue.h"
+#if ENABLE_IMGUI
+#include "runtime/debug/imgui_editor.h"
+#endif
 #include "runtime/server/display_server.h"
 #include "runtime/system/view/view_system_2d.h"
 
@@ -81,11 +85,6 @@ private:
      */
     bool count_fps(float delta);
 
-#if ENABLE_IMGUI
-    void imgui_editor();
-    void imgui_console();
-#endif
-
 private:
     PlatformServices m_platform;
 
@@ -96,13 +95,13 @@ private:
     RenderQueue m_queue;
 
 #if ENABLE_IMGUI
-    std::unique_ptr<IImGuiBackend> m_imgui;
-    std::shared_ptr<class ImGuiLogState> m_imgui_log_state;
+    ImGuiEditor m_imgui_editor;
 #endif
 
     std::string m_program_name;
     std::filesystem::path m_export_log{};
     std::string m_preferred_backend;
+    std::optional<uint32_t> m_fps_override;
 
     ViewSystem m_view;
 

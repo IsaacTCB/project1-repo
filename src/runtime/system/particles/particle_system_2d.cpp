@@ -2,6 +2,7 @@
 
 #include "core/math/random.h"
 #include "core/math/vec2.h"
+#include "runtime/renderer/render_queue_builder.h"
 
 #include <algorithm>
 #include <cmath>
@@ -49,7 +50,7 @@ void ParticleSystem2D::update(float delta) {
     update_particles(delta);
 }
 
-void ParticleSystem2D::render(RenderQueue &queue) {
+void ParticleSystem2D::render(RenderQueueBuilder &queue) {
     particle_foreach([&](size_t p) {
         const ParticleEffect2D *effect = m_effects.get(m_particles->effect[p]);
         if (!effect) {
@@ -99,7 +100,7 @@ void ParticleSystem2D::update_particles(float delta) {
 
         /* apply gravity to velocity */
         Vec2 &vel = m_particles->vel[p];
-        vel += effect->particle_gravity;
+        vel += effect->particle_gravity * delta;
 
         /* update position from velocity */
         m_particles->pos[p] += vel * delta;

@@ -48,6 +48,11 @@ public:
 
     void on_init() override {
         m_texture = m_servers.asset.get_texture("test.png");
+        if (m_texture) {
+            LOG_TRACE("loaded texture size is {}x{}", m_texture.width(), m_texture.height());
+        } else {
+            LOG_WARN("failed to load sandbox texture");
+        }
 
         m_entities.emplace_back(Vec2{0.0f, 0.0f}, 1.0f);
 
@@ -78,7 +83,7 @@ public:
             /* misc. */
             .particle_texture{},
             .particle_size = Vec2{10.0f, 10.0f},
-            .particle_gravity = Vec2{0.0f, -8.0f},
+            .particle_gravity = Vec2{0.0f, -480.0f},
         });
         m_emitter = m_particles.create_emitter(m_emitter_effect);
         m_emitter.set_emitting(true);
@@ -203,7 +208,7 @@ public:
             scale_factor *= scale_factor * scale_factor;
 
             ctx.queue.draw_texture_ex(
-                m_texture.get(),
+                m_texture.handle(),
                 Color::WHITE,
                 draw_pos,
                 Vec2i(scale * scale_factor),

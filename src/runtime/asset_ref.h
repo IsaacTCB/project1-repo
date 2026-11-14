@@ -4,13 +4,13 @@
 #include <cstddef>
 
 /**
- * @brief An shared interface used by AssetRef to
- * reference an asset. An implementation class is
- * used inside AssetCache.
+ * @brief Controls AssetRef's ref counter, similar to
+ * shared_ptr but it's intrusive.
+ * An implementation class is used inside AssetCache.
  *
- * @tparam Handle The underlying asset/handle.
+ * @tparam TAsset The underlying asset/handle.
  */
-template <typename Handle>
+template <typename TAsset>
 class IAssetControlBlock {
 public:
     using DestroyFn = void (*)(IAssetControlBlock *caller);
@@ -18,25 +18,26 @@ public:
 
 protected:
     explicit IAssetControlBlock();
-    explicit IAssetControlBlock(DestroyFn destroy_fn, Handle handle);
+    template <typename MakeAsset>
+    explicit IAssetControlBlock(DestroyFn destroy_fn, MakeAsset &&make_asset);
 
 public:
     void inc_ref();
     void dec_ref();
-    Handle get_handle();
+    TAsset get_handle();
 
 public:
     std::atomic<size_t> ref_count;
-    Handle handle;
+    TAsset handle;
 };
 
 /* forward declaration */
-template <typename Handle>
+template <typename TAsset>
 class AssetCache;
 
 /**
  * @brief A shared resource reference that holds an
- * asset Handle.
+ * asset TAsset.
  *
  * @note Users are not meant to construct this object
  * directly, only rather via a wrapper service like
@@ -46,13 +47,13 @@ class AssetCache;
  * but internally it's a little bit more specialized and
  * thus **should** result in better performance.
  *
- * @tparam T Handle type
+ * @tparam T TAsset type
  */
-template <typename Handle>
+template <typename TAsset>
 class AssetRef {
 private:
-    friend class AssetCache<Handle>;
-    explicit AssetRef(IAssetControlBlock<Handle> &slot);
+    friend class AssetCache<TAsset>;
+    explicit AssetRef(IAssetControlBlock<TAsset> &slot);
 
 public:
     explicit AssetRef();
@@ -60,18 +61,58 @@ public:
 
     AssetRef(const AssetRef &other);
     AssetRef(AssetRef &&other) noexcept;
-    AssetRef &operator=(const AssetRef<Handle> &rhs);
-    AssetRef &operator=(AssetRef<Handle> &&rhs) noexcept;
+    AssetRef &operator=(const AssetRef<TAsset> &rhs);
+    AssetRef &operator=(AssetRef<TAsset> &&rhs) noexcept;
 
-public:
     void reset();
     void acquire();
     void release();
-    [[nodiscard]] Handle get() const;
+    [[nodiscard]] const TAsset &get() const;
 
 private:
-    IAssetControlBlock<Handle> *m_ctrl_block;
-    Handle m_handle;
+    IAssetControlBlock<TAsset> *m_ctrl_block;
+};
+
+/**
+ * @brief CRTP helper class that implements asset ref
+ * implicit/explicit conversion boilerplate
+ *
+ * Usage:
+ *
+ * class RandomRef : public<RandomAssetRef, RandomAsset> {
+ * public:
+ *     using AssetRefMixin::AssetRefMixin;
+ *
+ *     // then insert your custom methods here
+ *     int rng() const { ... }
+ * }
+ *
+ * // now you are able to do this:
+ * AssetRef<RandomAsset> asset;
+ * RandomRef r = std::move(asset);
+ * r.rng()
+ */
+template <typename Derived, typename TAsset>
+class AssetRefMixin : public AssetRef<TAsset> {
+public:
+    using AssetRef<TAsset>::AssetRef;
+    AssetRefMixin() = default;
+
+    /* move constructor/assignment */
+    AssetRefMixin(AssetRef<TAsset> &&other)
+        : AssetRef<TAsset>(std::move(other)) {}
+    AssetRefMixin(const AssetRef<TAsset> &other)
+        : AssetRef<TAsset>(other) {}
+
+    /* copy constructor/assignment */
+    AssetRefMixin &operator=(AssetRef<TAsset> &&rhs) {
+        AssetRef<TAsset>::operator=(std::move(rhs));
+        return *this;
+    }
+    AssetRefMixin &operator=(const AssetRef<TAsset> &rhs) {
+        AssetRef<TAsset>::operator=(rhs);
+        return *this;
+    }
 };
 
 #include "asset_ref.inl.h" // IWYU pragma: keep
