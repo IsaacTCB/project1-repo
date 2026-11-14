@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <optional>
 #include <queue>
 #include <vector>
@@ -164,6 +165,17 @@ public:
 
         auto index = static_cast<size_t>(slot - m_pool.data());
         m_available_slots.emplace(index);
+    }
+
+    template <typename Func>
+    void for_each(Func &&func) {
+        for (Slot &slot : m_pool) {
+            if (!slot.data.has_value()) {
+                continue;
+            }
+
+            std::invoke(func, *slot.data);
+        }
     }
 
     void clear() {

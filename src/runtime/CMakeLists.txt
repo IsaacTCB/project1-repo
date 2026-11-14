@@ -24,6 +24,8 @@ set(RUNTIME_SOURCES
     asset_service.cpp
     input_service.cpp
     image/decoder.cpp
+    system/particles/particle_emitter_2d.cpp
+    system/particles/particle_system_2d.cpp
     renderer/renderer_2d.cpp
     renderer/render_queue_builder.cpp
     renderer/batch_builder_2d.cpp
