@@ -204,11 +204,11 @@ public:
             if (move.length() > 0.1f) {
                 Vec2 dir = move.normalized();
 
-                float acc = 20.0f;
+                float acc = 1200.0f;
                 if (vel.velocity.length() > 0.1f) {
                     float dot = vel.velocity.normalized().dot(dir);
                     if (dot < -0.8f) {
-                        acc = 40.0f;
+                        acc = 2400.0f;
 
                         auto &transform = m_registry.get<TransformComponent>(entity);
                         m_emitter.set_position(transform.position + Vec2{0.0f, 12.0f});
@@ -222,25 +222,28 @@ public:
                 }
 
                 vel.velocity += dir * acc * delta;
-                vel.velocity.limit_length(move.length() * 10.0f);
+                vel.velocity.limit_length(move.length() * 600.0f);
             } else {
                 vel.velocity -= vel.velocity * delta * 10.0f;
             }
         });
 
-        m_registry.view<TransformComponent, VelocityComponent>().each([](auto &transform, auto &vel) {
+        m_registry.view<TransformComponent, VelocityComponent>().each([&](auto &transform, auto &vel) {
             // move x
-            if (get_tilemap_at_pos(transform.position + Vec2{vel.velocity.x, 0.0f})) {
+            Vec2 solved_velocity = vel.velocity * delta;
+            if (get_tilemap_at_pos(transform.position + Vec2{solved_velocity.x, 0.0f})) {
                 vel.velocity.x = 0.0f;
+                solved_velocity.x = 0.0f;
             }
-            transform.position.x += vel.velocity.x;
+            transform.position.x += solved_velocity.x;
 
             // move y
-            if (get_tilemap_at_pos(transform.position + Vec2{0, vel.velocity.y})) {
+            if (get_tilemap_at_pos(transform.position + Vec2{0, solved_velocity.y})) {
                 /* TODO: snap */
                 vel.velocity.y = 0.0f;
+                solved_velocity.y = 0.0f;
             }
-            transform.position.y += vel.velocity.y;
+            transform.position.y += solved_velocity.y;
 
             /* TODO: perform collision checks */
         });
