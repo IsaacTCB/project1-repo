@@ -47,7 +47,7 @@ AssetRef<TAsset> AssetCache<TAsset>::get(std::string_view path) {
 
     CacheSlot *slot = &it->second;
     ++slot->ref_count;
-    return AssetRef<TAsset>{*slot};
+    return AssetRefBuilder::create<TAsset>(*slot);
 }
 
 template <typename TAsset>

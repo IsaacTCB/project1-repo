@@ -62,6 +62,7 @@ public:
     void clear();
 
     TextureRef get_texture(std::string_view path);
+    TextureRef create_texture(ImageData &image);
 
 private:
     [[nodiscard]] TextureAsset load_texture(std::string_view path) const;
