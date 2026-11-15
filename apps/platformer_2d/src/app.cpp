@@ -86,6 +86,9 @@ public:
             .caption = "Platformer 2D",
             .size = {1200, 600},
             .resizable = true,
+
+            /* TODO: texture filtering must be off just so
+             * that the checkered background wont get blended. */
             .filter_textures = false,
         };
     }
