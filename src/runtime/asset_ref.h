@@ -52,7 +52,7 @@ class AssetCache;
 template <typename TAsset>
 class AssetRef {
 private:
-    friend class AssetCache<TAsset>;
+    friend class AssetRefBuilder;
     explicit AssetRef(IAssetControlBlock<TAsset> &slot);
 
 public:
@@ -71,6 +71,16 @@ public:
 
 private:
     IAssetControlBlock<TAsset> *m_ctrl_block;
+};
+
+/* Proxy class used to create new AssetRef instances
+ * while hiding the block constructors directly. */
+class AssetRefBuilder {
+public:
+    template <typename TAsset, typename... Args>
+    static AssetRef<TAsset> create(Args &&...args) {
+        return AssetRef<TAsset>{std::forward<Args>(args)...};
+    }
 };
 
 /**
