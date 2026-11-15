@@ -23,6 +23,7 @@
 #include <entt/entity/registry.hpp>
 
 #include "components.h"
+#include "core/image/image.h"
 #include "runtime/system/particles/particle_emitter_2d.h"
 #include "runtime/system/particles/particle_system_2d.h"
 #include "utils/gridmap.h"
@@ -85,6 +86,38 @@ public:
             .caption = "Platformer 2D",
             .size = {1200, 600},
             .resizable = true,
+            .filter_textures = false,
+        };
+    }
+
+    ImageData build_checker_image(Color primary, Color secondary) {
+        constexpr size_t CHECKER_IMG_SIZE = 8;
+        constexpr size_t CHECKER_IMG_BPP = 4;
+        constexpr size_t CHECKER_IMG_STRIDE = CHECKER_IMG_SIZE * CHECKER_IMG_BPP;
+        std::vector<uint8_t> pixels(CHECKER_IMG_SIZE * CHECKER_IMG_STRIDE);
+
+        for (size_t y = 0; y < CHECKER_IMG_SIZE; ++y) {
+            for (size_t x = 0; x < CHECKER_IMG_SIZE; ++x) {
+                auto *pixel = &pixels[(y * CHECKER_IMG_STRIDE) + (x * CHECKER_IMG_BPP)];
+                if ((x / 4) == (y / 4)) {
+                    pixel[0] = primary.r;
+                    pixel[1] = primary.g;
+                    pixel[2] = primary.b;
+                    pixel[3] = primary.a;
+                } else {
+                    pixel[0] = secondary.r;
+                    pixel[1] = secondary.g;
+                    pixel[2] = secondary.b;
+                    pixel[3] = secondary.a;
+                }
+            }
+        }
+
+        return ImageData{
+            .width = CHECKER_IMG_SIZE,
+            .height = CHECKER_IMG_SIZE,
+            .format = PixelFormat::RGBA8,
+            .pixels = std::move(pixels),
         };
     }
 
@@ -124,6 +157,11 @@ public:
             });
 
         m_vignette_texture = m_servers.asset.get_texture("vignette.png");
+
+        {
+            ImageData checker_image = build_checker_image(Color{115, 174, 210}, Color{114, 168, 211});
+            m_checkers = m_servers.asset.create_texture(checker_image);
+        }
 
         Random::randomize();
 
@@ -309,35 +347,35 @@ public:
     }
 
     void draw_checker_background(RenderContext &ctx) const {
-        /* FIXME: not an app problem, but an engine one:
-         * currently our OpenGL renderer does not support any
-         * batching, so each rectangle will consume ONE draw
-         * call, which is wasteful since we are rendering
-         * hundreds of rectangles. */
         constexpr float PARALLAX = 0.8f;
+        constexpr float CHECKER_TILE_SIZE = 32.0f;
+        constexpr float CHECKER_OUTSET_PADDING = 4.0f;
+
         const Vec2 parallax_offset = m_camera.position * PARALLAX;
-
         const auto bounds = ctx.view_context->get_bounds_aabb();
-        const auto tx = static_cast<int>(std::floor((bounds.tl.x - parallax_offset.x) / 16.0f));
-        const auto ty = static_cast<int>(std::floor((bounds.tl.y - parallax_offset.y) / 16.0f));
-        const auto tw = static_cast<int>(std::ceil(bounds.width() / 16.0f) + 1);
-        const auto th = static_cast<int>(std::ceil(bounds.height() / 16.0f) + 1);
-        for (int y = 0; y < th; ++y) {
-            for (int x = 0; x < tw; ++x) {
-                const int bx = x + tx;
-                const int by = y + ty;
 
-                const bool odd = (std::abs(by + bx) % 2) == 1;
-                ctx.queue.draw_color(
-                    odd ? Color{114, 168, 211}
-                        : Color{115, 174, 210},
-                    Vec2i{
-                        (bx * 16) + static_cast<int>(parallax_offset.x),
-                        (by * 16) + static_cast<int>(parallax_offset.y),
-                    },
-                    Vec2i{16, 16});
-            }
-        }
+        const Vec2 uv_min{
+            (bounds.tl.x - parallax_offset.x - CHECKER_OUTSET_PADDING) / CHECKER_TILE_SIZE,
+            (bounds.tl.y - parallax_offset.y - CHECKER_OUTSET_PADDING) / CHECKER_TILE_SIZE,
+        };
+
+        const Vec2 uv_max{
+            (bounds.br.x - parallax_offset.x + CHECKER_OUTSET_PADDING) / CHECKER_TILE_SIZE,
+            (bounds.br.y - parallax_offset.y + CHECKER_OUTSET_PADDING) / CHECKER_TILE_SIZE,
+        };
+
+        ctx.queue.draw_texture_uv(
+            m_checkers.handle(),
+            uv_min,
+            uv_max,
+            Vec2i{
+                static_cast<int>(bounds.tl.x - CHECKER_OUTSET_PADDING),
+                static_cast<int>(bounds.tl.y - CHECKER_OUTSET_PADDING),
+            },
+            Vec2i{
+                static_cast<int>(std::ceil(bounds.width() + (CHECKER_OUTSET_PADDING * 2.0f))),
+                static_cast<int>(std::ceil(bounds.height() + (CHECKER_OUTSET_PADDING * 2.0f))),
+            });
     }
 
     void on_close() override {
@@ -356,6 +394,7 @@ private:
     ViewContext2D m_view_context;
 
     TextureRef m_vignette_texture;
+    TextureRef m_checkers;
 
     entt::registry m_registry;
     entt::entity m_player_entity;
