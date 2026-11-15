@@ -1,11 +1,13 @@
 #include "asset_service.h"
 
 #include <string_view>
+#include <utility>
 
 #include "core/image/image.h"
 #include "core/logger.h"
 
 #include "runtime/asset_cache.h"
+#include "runtime/asset_ref.h"
 #include "runtime/image/decoder.h"
 #include "runtime/renderer/render_handles.h"
 
@@ -41,6 +43,75 @@ void AssetService::clear() {
 
 TextureRef AssetService::get_texture(std::string_view path) {
     return m_impl->textures.get(path);
+}
+
+namespace {
+
+/**
+ * @brief An exclusive asset service control block used to
+ * handle procedurally generated assets at runtime ref counting.
+ * E.g. a gradient texture that was created on the fly at runtime.
+ *
+ * @tparam TAsset The asset data itself
+ * @tparam Allocator A struct containing at least two static functions: make(AssetService*, ...) and destroy(AssetService*, TAsset&).
+ */
+template <typename TAsset, typename Allocator>
+class ProceduralAssetBlock : public IAssetControlBlock<TextureAsset> {
+public:
+    /* TODO: use C++ 20 concepts to force a compile-time contract */
+
+    template <typename... Args>
+    static AssetRef<TAsset> create(AssetService &asset, Args &&...args) {
+        auto *block = new ProceduralAssetBlock(&asset, std::forward<Args>(args)...);
+        if (!block) {
+            /* allocation failed, just quit */
+            return AssetRef<TAsset>{};
+        }
+
+        if (!block->handle) {
+            /* if the resulting asset is invalid, then
+             * we deallocate the control block */
+            delete block;
+            return AssetRef<TAsset>{};
+        }
+        return AssetRefBuilder::create<TAsset>(*block);
+    }
+
+private:
+    template <typename... Args>
+    explicit ProceduralAssetBlock(AssetService *asset, Args &&...args)
+        : IAssetControlBlock(
+              ProceduralAssetBlock::destroy_callback,
+              [&]() { return Allocator::make(asset, std::forward<Args>(args)...); }),
+          m_asset(asset) {
+    }
+
+    static void destroy_callback(IAssetControlBlock *caller) {
+        auto *block = static_cast<ProceduralAssetBlock *>(caller);
+        Allocator::destroy(block->m_asset, block->handle);
+        delete caller;
+    }
+    AssetService *m_asset;
+};
+
+} // namespace
+
+TextureRef AssetService::create_texture(ImageData &image) {
+    ASSERT(image, "attempted to create invalid texture");
+    ASSERT(m_provider.renderer.load_texture);
+
+    struct TextureAssetAllocator {
+        static TextureAsset make(AssetService *asset, ImageData &image) {
+            return asset->m_provider
+                .renderer.load_texture(
+                    image,
+                    asset->m_provider.renderer.userdata);
+        }
+        static void destroy(AssetService *asset, TextureAsset &texture) {
+            asset->unload_texture(texture);
+        }
+    };
+    return ProceduralAssetBlock<TextureAsset, TextureAssetAllocator>::create(*this, image);
 }
 
 /* Loaders */
