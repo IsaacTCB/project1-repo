@@ -48,7 +48,7 @@ public:
     [[nodiscard]] const std::vector<RenderCommand> &get() const { return m_queue; }
     [[nodiscard]] std::vector<RenderCommand> &get() { return m_queue; }
 
-    [[nodiscard]] GlyphSpan push_glyphs(std::span<GlyphQuad> glyphs) {
+    [[nodiscard]] GlyphSpan push_glyphs(std::span<const GlyphQuad> glyphs) {
         size_t offset = m_glyphs.size();
         for (const auto &glyph : glyphs) {
             m_glyphs.push_back(glyph);
