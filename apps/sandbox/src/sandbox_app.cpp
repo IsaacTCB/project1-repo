@@ -14,6 +14,7 @@
 #include "runtime/app/context/frame_context.h"
 #include "runtime/asset_service.h"
 #include "runtime/camera_2d_utils.h"
+#include "runtime/fonts/font_resource.h"
 #include "runtime/input_service.h"
 
 #include "entity.h"
@@ -57,6 +58,13 @@ public:
 
         m_camera.zoom = 0.8f;
         m_camera.anchor = Camera2D::AnchorMode::CENTER;
+
+        /* TEMPORARY: load font directly */
+        const char *font_name = "font.otf";
+        m_font = FontResource::load_font(font_name, 22.0f);
+        if (m_font) {
+            LOG_TRACE("loaded '{}' successfully.", font_name);
+        }
     }
 
     void on_update(UpdateContext &ctx) override {
@@ -149,6 +157,10 @@ public:
         ctx.queue.draw_color(Color{88, 90, 220}, {0, 0}, {400, 400});
         ctx.queue.draw_color(Color{48, 45, 120, 80}, {40, 40}, {320, 320});
 
+        if (m_font) {
+            ctx.queue.draw_text(*m_font, "The brown fox jumps over the lazy dog", {0, 0});
+        }
+
         for (const auto &entity : m_entities) {
             Vec2i draw_pos{entity.pos};
 
@@ -197,6 +209,7 @@ private:
     std::vector<Entity> m_entities;
     TextureRef m_texture;
     Camera2D m_camera;
+    std::optional<FontResource> m_font;
 
     ViewContext2D m_view_context;
 };

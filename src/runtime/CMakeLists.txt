@@ -27,6 +27,7 @@ set(RUNTIME_SOURCES
     renderer/renderer_2d.cpp
     renderer/render_queue_builder.cpp
     renderer/batch_builder_2d.cpp
+    fonts/font_resource.cpp
     system/view/view_system_2d.cpp
     debug/sinks/file_log_sink.cpp
     runtime.cpp
@@ -48,7 +49,10 @@ if(ENGINE_ENABLE_IMGUI)
     target_link_libraries(runtime PUBLIC imgui)
 endif()
 
-
 # stb_image
 add_subdirectory(${PROJECT_SOURCE_DIR}/external/stb_image external/stb_image)
 target_link_libraries(runtime PRIVATE stb_image)
+
+# stb_freetype
+add_subdirectory(${PROJECT_SOURCE_DIR}/external/stb_truetype external/stb_truetype)
+target_link_libraries(runtime PRIVATE stb_truetype)

@@ -5,6 +5,8 @@
 #include "core/math/vec2i.h"
 
 #include "render_handles.h"
+#include "runtime/fonts/font_resource.h"
+#include <string_view>
 
 class RenderQueue;
 
@@ -31,6 +33,12 @@ public:
      * ================ */
     void draw_color_ex(Color color, const Vec2i &position, const Vec2i &size, const Vec2 &anchor, float rotation);
     void draw_color(Color color, const Vec2i &position, const Vec2i &size);
+
+    /* ================ *
+     *  Text Rendering  *
+     * ================ */
+    /* TODO: replace FontResource with font handle */
+    void draw_text(const FontResource &font, std::string_view string, const Vec2i &position);
 
 public:
     /* FIXME: this function is only needed so that the renderer

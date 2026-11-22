@@ -4,6 +4,7 @@ engine_create_application(${EXAMPLE_NAME}
 
 set(EXAMPLE_ASSETS
     assets/test.png
+    assets/font.otf
 )
 
 # Adds engine-level warnings and compile definitions

@@ -182,6 +182,21 @@ void Renderer2D::render_frame_pass(const RenderContext &ctx) {
                         .filter = m_filter,
                     });
                 },
+                [&](const RenderCommandDrawText &draw) {
+                    for (const auto &glyph : ctx.queue.queue().to_span(draw.glyphs)) {
+                        m_batch->draw_rect({
+                            .pos = glyph.position,
+                            .size = glyph.size,
+                            .anchor = {0.0f, 0.0f},
+                            .rotation = 0.0f,
+                            .uv_min = glyph.uv_min,
+                            .uv_max = glyph.uv_max,
+                            .color = Color{},
+                            .texture = draw.texture,
+                            .filter = true,
+                        });
+                    }
+                },
             },
             command);
     }
