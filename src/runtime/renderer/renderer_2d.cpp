@@ -1,11 +1,13 @@
 #include "renderer_2d.h"
 
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <variant>
 
 #include "core/assertion.h"
 #include "core/logger.h"
+#include "core/math/base.h"
 #include "core/math/vec2.h"
 #include "core/math/vec2i.h"
 #include "core/view_context_2d.h"
@@ -183,17 +185,31 @@ void Renderer2D::render_frame_pass(const RenderContext &ctx) {
                     });
                 },
                 [&](const RenderCommandDrawText &draw) {
+                    /* TODO: this whole command is slow. We are doing a lot of redudant
+                     * work per glyph so that m_batch->draw_rect produces the result we
+                     * expect. */
+                    const Vec2 text_anchor_local = draw.size * draw.anchor;
+                    const bool has_rotation = !is_zero_approx(draw.rotation);
+                    const float c = has_rotation ? std::cos(draw.rotation) : 1.0f;
+                    const float s = has_rotation ? std::sin(draw.rotation) : 0.0f;
+
                     for (const auto &glyph : ctx.queue.queue().to_span(draw.glyphs)) {
+                        const Vec2 rel = glyph.position - text_anchor_local;
+                        const Vec2 rotated_rel =
+                            has_rotation
+                                ? Vec2{(rel.x * c) - (rel.y * s), (rel.x * s) + (rel.y * c)}
+                                : rel;
+
                         m_batch->draw_rect({
-                            .pos = glyph.position,
+                            .pos = draw.pos + rotated_rel,
                             .size = glyph.size,
                             .anchor = {0.0f, 0.0f},
-                            .rotation = 0.0f,
+                            .rotation = draw.rotation,
                             .uv_min = glyph.uv_min,
                             .uv_max = glyph.uv_max,
-                            .color = Color{},
+                            .color = draw.color,
                             .texture = draw.texture,
-                            .filter = true,
+                            .filter = false,
                         });
                     }
                 },

@@ -32,7 +32,10 @@ struct RenderCommandDrawText {
     TextureHandle texture;
     GlyphSpan glyphs;
     Vec2 pos;
-    /* TODO: rotation */
+    Vec2 size;
+    Vec2 anchor;
+    float rotation;
+    Color color;
 };
 using RenderCommand = std::variant<
     RenderCommandDraw,

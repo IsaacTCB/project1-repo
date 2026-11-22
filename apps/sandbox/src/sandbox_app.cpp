@@ -15,6 +15,7 @@
 #include "runtime/asset_service.h"
 #include "runtime/camera_2d_utils.h"
 #include "runtime/fonts/font_resource.h"
+#include "runtime/fonts/text_layout.h"
 #include "runtime/input_service.h"
 
 #include "entity.h"
@@ -158,7 +159,14 @@ public:
         ctx.queue.draw_color(Color{48, 45, 120, 80}, {40, 40}, {320, 320});
 
         if (m_font) {
-            ctx.queue.draw_text(*m_font, "The brown fox jumps over the lazy dog", {0, 0});
+            static TextLayout layout;
+            static bool s_once = true;
+            if (s_once) {
+                layout.build(
+                    *m_font, "The brown fox jumps\nover the lazy dog\n\r--------------------\nCheck this out!!", {.align = TextAlign::CENTER});
+                s_once = false;
+            }
+            ctx.queue.draw_text_layout(layout, {0, 0});
         }
 
         for (const auto &entity : m_entities) {

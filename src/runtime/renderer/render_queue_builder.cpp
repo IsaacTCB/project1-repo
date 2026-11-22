@@ -60,16 +60,24 @@ void RenderQueueBuilder::draw_color(Color color, const Vec2i &position, const Ve
  *  Text Rendering  *
  * ================ */
 
-void RenderQueueBuilder::draw_text(const FontResource &font, std::string_view string, const Vec2i &position) {
-    /* ugly code so that we dont allocate
-     * on every call. This should become member
-     * variables of text layout once that is done. */
-    static TextLayout layout{};
-    layout.build(font, string);
-
+void RenderQueueBuilder::draw_text_layout(const TextLayout &layout, const Vec2i &position) {
     m_queue.get().emplace_back(RenderCommandDrawText{
-        .texture = font.atlas,
+        .texture = layout.atlas(),
         .glyphs = m_queue.push_glyphs(layout.glyphs()),
         .pos = Vec2{position},
+        .size = layout.size(),
+        .anchor = Vec2{0.0f, 0.0f},
+        .rotation = 0.0f,
+        .color = Color{},
     });
+}
+
+/* ugly code so that we dont allocate
+ * on every call. This should become member
+ * variables of text layout once that is done. */
+thread_local static TextLayout layout{};
+
+void RenderQueueBuilder::draw_text(const FontResource &font, std::string_view string, const Vec2i &position) {
+    layout.build(font, string, {.align = TextAlign::LEFT});
+    draw_text_layout(layout, position);
 }

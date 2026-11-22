@@ -9,6 +9,7 @@
 #include <string_view>
 
 class RenderQueue;
+class TextLayout;
 
 /**
  * @class RenderQueueBuilder
@@ -38,6 +39,7 @@ public:
      *  Text Rendering  *
      * ================ */
     /* TODO: replace FontResource with font handle */
+    void draw_text_layout(const TextLayout &layout, const Vec2i &position);
     void draw_text(const FontResource &font, std::string_view string, const Vec2i &position);
 
 public:
