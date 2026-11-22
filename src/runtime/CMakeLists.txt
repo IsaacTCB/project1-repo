@@ -28,6 +28,7 @@ set(RUNTIME_SOURCES
     renderer/render_queue_builder.cpp
     renderer/batch_builder_2d.cpp
     fonts/font_resource.cpp
+    fonts/text_layout.cpp
     system/view/view_system_2d.cpp
     debug/sinks/file_log_sink.cpp
     runtime.cpp
