@@ -209,7 +209,7 @@ void Renderer2D::render_frame_pass(const RenderContext &ctx) {
                             .uv_max = glyph.uv_max,
                             .color = draw.color,
                             .texture = draw.texture,
-                            .filter = true,
+                            .filter = m_filter,
                         });
                     }
                 },
