@@ -6,6 +6,7 @@
 
 #include "core/image/image.h"
 #include "core/math/vec2i.h"
+#include "runtime/fonts/font_resource.h"
 #include "runtime/renderer/render_handles.h"
 
 #include "asset_ref.h"
@@ -63,6 +64,8 @@ public:
 
     TextureRef get_texture(std::string_view path);
     TextureRef create_texture(ImageData &image);
+
+    std::optional<FontResource> load_font(std::string_view path, float pixel_height);
 
 private:
     [[nodiscard]] TextureAsset load_texture(std::string_view path) const;

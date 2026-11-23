@@ -27,7 +27,7 @@ set(RUNTIME_SOURCES
     renderer/renderer_2d.cpp
     renderer/render_queue_builder.cpp
     renderer/batch_builder_2d.cpp
-    fonts/font_resource.cpp
+    fonts/decoders/font_truetype.cpp
     fonts/text_layout.cpp
     system/view/view_system_2d.cpp
     debug/sinks/file_log_sink.cpp

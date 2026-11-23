@@ -1,5 +1,7 @@
 #include "asset_service.h"
 
+#include <filesystem>
+#include <fstream>
 #include <string_view>
 #include <utility>
 
@@ -8,11 +10,13 @@
 
 #include "runtime/asset_cache.h"
 #include "runtime/asset_ref.h"
+#include "runtime/fonts/decoders/font_truetype.h"
 #include "runtime/image/decoder.h"
 #include "runtime/renderer/render_handles.h"
 
 struct AssetService::Impl {
     AssetCache<TextureAsset> textures;
+    FontLoader font_loader;
 };
 
 AssetService::AssetService() = default;
@@ -20,6 +24,37 @@ AssetService::AssetService() = default;
 AssetService::AssetService(const Provider &provider)
     : m_provider{provider} {
     m_impl = std::make_unique<Impl>();
+
+    /* setup font loader */
+    m_impl->font_loader.set_callbacks({
+        .callback = [](std::vector<uint8_t> bitmap, int width, int height, void *userdata) {
+            auto *asset = static_cast<AssetService *>(userdata);
+
+            /* HACK: renderer does not support grayscale images (yet!), so
+             * convert 1 channel grayscale image into 4 channel rgba */
+            std::vector<uint8_t> converted;
+            converted.resize(width * height * 4);
+            for (int y = 0; y < height; ++y) {
+                for (int x = 0; x < width; ++x) {
+                    const uint8_t coverage = bitmap[x + (y * width)];
+
+                    uint8_t *dst = &converted[(x + (y * width)) * 4];
+                    dst[2] = dst[1] = dst[0] = 0xFF;
+                    dst[3] = coverage;
+                }
+            }
+
+            ImageData image{
+                .width = static_cast<size_t>(width),
+                .height = static_cast<size_t>(height),
+                .format = PixelFormat::RGBA8,
+                .pixels = std::move(converted),
+            };
+            return asset->m_provider.renderer.load_texture(image, asset->m_provider.renderer.userdata)
+                .handle;
+        },
+        .userdata = this,
+    });
 
     /* config texture callbacks */
     auto texture_load_fn = [this](std::string_view path) {
@@ -134,4 +169,38 @@ void AssetService::unload_texture(const TextureAsset &texture) const {
     ASSERT(m_provider.renderer.unload_texture);
     ASSERT(texture.handle, "Attempted to destroy an invalid handle");
     m_provider.renderer.unload_texture(texture.handle, m_provider.renderer.userdata);
+}
+
+namespace {
+
+std::optional<std::vector<uint8_t>> load_file(const std::filesystem::path &path) {
+    std::ifstream file(path, std::ios::binary);
+    if (!file) {
+        return std::nullopt;
+    }
+
+    file.seekg(0, std::ios::end);
+    size_t size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    std::vector<uint8_t> file_data(size);
+    file.read(
+        reinterpret_cast<char *>(file_data.data()),
+        file_data.size());
+
+    return file_data;
+}
+
+}; // namespace
+
+std::optional<FontResource> AssetService::load_font(std::string_view path, float pixel_height) {
+    auto file = load_file(path);
+    if (!file) {
+        return std::nullopt;
+    }
+    return m_impl->font_loader.load_truetype(std::move(*file),
+        {
+            .pixel_height = pixel_height,
+            .oversampling = 2,
+        });
 }

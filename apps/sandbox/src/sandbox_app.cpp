@@ -62,7 +62,7 @@ public:
 
         /* TEMPORARY: load font directly */
         const char *font_name = "font.otf";
-        m_font = FontResource::load_font(font_name, 22.0f);
+        m_font = m_servers.asset.load_font(font_name, 22.0f);
         if (m_font) {
             LOG_TRACE("loaded '{}' successfully.", font_name);
         }

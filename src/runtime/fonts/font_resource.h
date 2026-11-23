@@ -1,20 +1,16 @@
 #pragma once
 
 #include <cstdint>
-#include <filesystem>
 #include <unordered_map>
-#include <vector>
 
 #include "core/math/vec2.h"
 #include "runtime/renderer/render_handles.h"
 
 class FontResource {
 public:
-    /* TODO: replace this dumb font loading
-     * with a proper font asset system */
-    using LoadTextureFn = TextureHandle (*)(std::vector<uint8_t> bitmap, int width, int height, void *userdata);
-    static void set_load_texture_callback(LoadTextureFn callback, void *userdata);
-    static std::optional<FontResource> load_font(const std::filesystem::path &path, float pixel_height);
+    /* standard ASCII font range */
+    static constexpr int FIRST_CHAR = 32;
+    static constexpr int CHAR_COUNT = 95;
 
 public:
     using Codepoint = char32_t;
@@ -31,6 +27,7 @@ public:
         float advance;
     };
 
+    /* FIXME: atlas texture is leaking, because no one unloads it */
     TextureHandle atlas;
 
 public:

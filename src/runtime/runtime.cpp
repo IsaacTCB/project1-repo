@@ -14,7 +14,6 @@
 #include "core/events/platform_events.h"
 #include "core/events/window_events.h"
 #include "core/image/image.h"
-#include "core/input/keyboard.h"
 #include "core/logger.h"
 #include "core/math/color.h"
 #include "core/math/vec2.h"
@@ -32,7 +31,6 @@
 #include "runtime/app/application.h"
 #include "runtime/app/context/frame_context.h"
 #include "runtime/debug/sinks/file_log_sink.h"
-#include "runtime/fonts/font_resource.h"
 #include "runtime/renderer/render_queue_builder.h"
 #include "runtime/system/view/view_system_2d.h"
 #include "runtime/version.h"
@@ -336,33 +334,6 @@ void EngineRuntime::init(IApplicationHandler &app_handler) {
     LOG_INFO("display size: {0}", display_size);
     m_view.set_output_rect({.position = {0, 0}, .size = display_size});
     m_input_service.init();
-
-    FontResource::set_load_texture_callback([](std::vector<uint8_t> bitmap, int width, int height, void *userdata) {
-        auto *renderer = static_cast<Renderer2D *>(userdata);
-
-        /* HACK: renderer does not support grayscale images (yet!), so
-         * convert 1 channel grayscale image into 4 channel rgba */
-        std::vector<uint8_t> converted;
-        converted.resize(width * height * 4);
-        for (int y = 0; y < height; ++y) {
-            for (int x = 0; x < width; ++x) {
-                const uint8_t coverage = bitmap[x + (y * width)];
-
-                uint8_t *dst = &converted[(x + (y * width)) * 4];
-                dst[2] = dst[1] = dst[0] = 0xFF;
-                dst[3] = coverage;
-            }
-        }
-
-        ImageData image{
-            .width = static_cast<size_t>(width),
-            .height = static_cast<size_t>(height),
-            .format = PixelFormat::RGBA8,
-            .pixels = std::move(converted),
-        };
-        return renderer->load_texture(image);
-    },
-        &m_renderer.value());
 
     /* initialize application */
     m_app->on_init();
