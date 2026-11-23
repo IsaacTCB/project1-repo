@@ -33,6 +33,7 @@ struct RenderCommandDrawText {
     GlyphSpan glyphs;
     Vec2 pos;
     Vec2 size;
+    Vec2 scale;
     Vec2 anchor;
     float rotation;
     Color color;

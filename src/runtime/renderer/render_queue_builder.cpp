@@ -66,6 +66,7 @@ void RenderQueueBuilder::draw_text_layout(const TextLayout &layout, const Vec2i 
         .glyphs = m_queue.push_glyphs(layout.glyphs()),
         .pos = Vec2{position},
         .size = layout.size(),
+        .scale = Vec2{1.0f, 1.0f},
         .anchor = Vec2{0.0f, 0.0f},
         .rotation = 0.0f,
         .color = Color{},
