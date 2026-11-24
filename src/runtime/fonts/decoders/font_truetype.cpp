@@ -96,12 +96,12 @@ std::optional<FontResource> FontLoader::load_truetype(std::vector<uint8_t> file_
     }
 
     /* 4. submit atlas glyph to gpu (temporary) */
-    result.atlas = m_texture.callback(
+    result.m_atlas = m_texture.callback(
         std::move(pixels),
         static_cast<int>(opts.atlas_width),
         static_cast<int>(opts.atlas_height),
         m_texture.userdata);
-    if (!result.atlas) {
+    if (!result.valid()) {
         return std::nullopt;
     }
 

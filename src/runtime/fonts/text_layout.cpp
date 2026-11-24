@@ -6,7 +6,7 @@ void TextLayout::extract_glyphs_from_string(const FontResource &font, std::strin
     m_glyphs.reserve(string.size());
 
     /* bind texture */
-    m_atlas = font.atlas;
+    m_atlas = font.atlas();
 
     float ascent = font.metrics.ascent;
     float line_height =

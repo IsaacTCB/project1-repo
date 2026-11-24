@@ -27,11 +27,12 @@ public:
         float advance;
     };
 
-    /* FIXME: atlas texture is leaking, because no one unloads it */
-    TextureHandle atlas;
+    TextureHandle atlas() const noexcept {
+        return this->m_atlas;
+    }
 
     [[nodiscard]] bool valid() const noexcept {
-        return this->atlas.valid();
+        return this->m_atlas.valid();
     }
     [[nodiscard]] explicit operator bool() const noexcept {
         return valid();
@@ -73,6 +74,11 @@ public:
     }
 
 private:
+    friend struct FontLoader;
     std::unordered_map<Codepoint, Glyph> m_glyphs;
     std::unordered_map<uint64_t, float> m_kerning;
+
+    /* NOTE: texture atlas does not automatically free its
+     * contents. Ideally we'd use a TextureRef instead... */
+    TextureHandle m_atlas;
 };

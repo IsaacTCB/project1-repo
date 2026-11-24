@@ -102,7 +102,7 @@ AssetService::AssetService(const Provider &provider)
     };
     auto font_unload_fn = [this](const FontResource &handle) {
         m_provider.renderer.unload_texture(
-            handle.atlas, m_provider.renderer.userdata);
+            handle.atlas(), m_provider.renderer.userdata);
     };
     m_impl->fonts.set_load_callbacks(font_load_fn, font_unload_fn);
 }
