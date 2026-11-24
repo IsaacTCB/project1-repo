@@ -62,7 +62,7 @@ public:
 
         /* TEMPORARY: load font directly */
         const char *font_name = "font.otf";
-        m_font = m_servers.asset.load_font(font_name, 22.0f);
+        m_font = m_servers.asset.get_font(font_name, 22.0f);
         if (m_font) {
             LOG_TRACE("loaded '{}' successfully.", font_name);
         }
@@ -163,7 +163,7 @@ public:
             static bool s_once = true;
             if (s_once) {
                 layout.build(
-                    *m_font, "The brown fox jumps\nover the lazy dog\n\r--------------------\nCheck this out!!", {.align = TextAlign::CENTER});
+                    m_font.resource(), "The brown fox jumps\nover the lazy dog\n\r--------------------\nCheck this out!!", {.align = TextAlign::CENTER});
                 s_once = false;
             }
             ctx.queue.draw_text_layout(layout, {0, 0});
@@ -217,7 +217,7 @@ private:
     std::vector<Entity> m_entities;
     TextureRef m_texture;
     Camera2D m_camera;
-    std::optional<FontResource> m_font;
+    FontRef m_font;
 
     ViewContext2D m_view_context;
 };

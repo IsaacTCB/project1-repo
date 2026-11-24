@@ -30,6 +30,13 @@ public:
     /* FIXME: atlas texture is leaking, because no one unloads it */
     TextureHandle atlas;
 
+    [[nodiscard]] bool valid() const noexcept {
+        return this->atlas.valid();
+    }
+    [[nodiscard]] explicit operator bool() const noexcept {
+        return valid();
+    }
+
 public:
     Glyph &add_glyph(Codepoint code, const Glyph &glyph) {
         return m_glyphs.emplace(code, glyph).first->second;

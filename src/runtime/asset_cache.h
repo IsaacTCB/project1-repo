@@ -1,16 +1,48 @@
 #pragma once
 
 #include <functional>
+#include <string>
 #include <string_view>
 #include <unordered_map>
 
 #include "asset_ref.h"
 
-template <typename TAsset>
+struct TransparentStringHash {
+    using is_transparent = void;
+    [[nodiscard]] std::size_t operator()(std::string_view sv) const noexcept {
+        return std::hash<std::string_view>{}(sv);
+    }
+    [[nodiscard]] std::size_t operator()(const std::string &s) const noexcept {
+        return std::hash<std::string_view>{}(s);
+    }
+    [[nodiscard]] std::size_t operator()(const char *s) const noexcept {
+        return std::hash<std::string_view>{}(s);
+    }
+};
+
+struct TransparentStringEqual {
+    using is_transparent = void;
+    [[nodiscard]] constexpr bool operator()(std::string_view a, std::string_view b) const noexcept {
+        return a == b;
+    }
+};
+
+template <
+    typename TAsset,
+    typename TKey = std::string,
+    typename THash = TransparentStringHash,
+    typename TKeyEqual = TransparentStringEqual>
 class AssetCache {
 public:
-    using LoadFn = std::function<TAsset(std::string_view)>;
+    using AssetCacheType = AssetCache<TAsset, TKey, THash, TKeyEqual>;
+    using KeyType = TKey;
+    using Hasher = THash;
+    using KeyEqual = TKeyEqual;
+
+    using LoadFn = std::function<TAsset(const TKey &)>;
     using UnloadFn = std::function<void(const TAsset &)>;
+
+    explicit AssetCache(THash hasher = THash{}, TKeyEqual key_equal = TKeyEqual{});
 
 public:
     /**
@@ -33,20 +65,28 @@ public:
      * @param path Cache key. Currently only represents path in filesystem.
      * @return An AssetRef with proper ref counting support.
      */
-    [[nodiscard]] AssetRef<TAsset> get(std::string_view path);
+    template <typename T>
+    [[nodiscard]] AssetRef<TAsset> get(T &&key);
 
-    [[nodiscard]] static size_t get_hash(std::string_view path);
+    template <typename T>
+    [[nodiscard]] size_t get_hash(T &&path) const;
 
 private:
     class CacheSlot : public IAssetControlBlock<TAsset> {
     public:
         template <typename MakeAsset>
-        explicit CacheSlot(AssetCache<TAsset> *cache, size_t hash, MakeAsset &&make_asset);
+        CacheSlot(
+            AssetCache *cache,
+            TKey key,
+            std::size_t hash,
+            MakeAsset &&make_asset);
+
         static void destroy_callback(IAssetControlBlock<TAsset> *block);
 
     public:
-        AssetCache<TAsset> *cache;
-        size_t hash;
+        AssetCacheType *cache;
+        TKey key;
+        size_t hash = 0;
     };
 
     void destroy(CacheSlot *slot);
@@ -54,7 +94,9 @@ private:
 private:
     LoadFn m_load_fn;
     UnloadFn m_unload_fn;
-    std::unordered_map<size_t, CacheSlot> m_cache;
+    [[no_unique_address]] THash m_hasher;
+    [[no_unique_address]] TKeyEqual m_key_equal;
+    std::unordered_map<TKey, CacheSlot, THash, TKeyEqual> m_cache;
 };
 
 #include "asset_cache.inl.h" // IWYU pragma: keep

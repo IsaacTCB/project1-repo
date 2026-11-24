@@ -14,8 +14,39 @@
 #include "runtime/image/decoder.h"
 #include "runtime/renderer/render_handles.h"
 
+namespace {
+
+template <typename T>
+void hash_combine(std::size_t &seed, const T &value) {
+    seed ^= std::hash<T>{}(value) +
+            (seed << 6) +
+            (seed >> 2);
+}
+
+struct FontCacheKey {
+    std::string path;
+    float pixel_height; /* <--- dunno if it's a good idea to store floats as key but oh well */
+
+    bool operator==(const FontCacheKey &other) const {
+        return path == other.path &&
+               pixel_height == other.pixel_height;
+    }
+};
+
+struct FontCacheKeyHash {
+    std::size_t operator()(const FontCacheKey &key) const {
+        std::size_t seed = 0;
+        hash_combine(seed, key.path);
+        hash_combine(seed, key.pixel_height);
+        return seed;
+    }
+};
+
+} // namespace
+
 struct AssetService::Impl {
     AssetCache<TextureAsset> textures;
+    AssetCache<FontResource, FontCacheKey, FontCacheKeyHash, std::equal_to<>> fonts;
     FontLoader font_loader;
 };
 
@@ -57,13 +88,23 @@ AssetService::AssetService(const Provider &provider)
     });
 
     /* config texture callbacks */
-    auto texture_load_fn = [this](std::string_view path) {
+    auto texture_load_fn = [this](const std::string &path) {
         return this->load_texture(path);
     };
     auto texture_unload_fn = [this](const auto &handle) {
         this->unload_texture(handle);
     };
     m_impl->textures.set_load_callbacks(texture_load_fn, texture_unload_fn);
+
+    /* config font callbacks */
+    auto font_load_fn = [this](const FontCacheKey &font) {
+        return this->load_font(font.path, font.pixel_height);
+    };
+    auto font_unload_fn = [this](const FontResource &handle) {
+        m_provider.renderer.unload_texture(
+            handle.atlas, m_provider.renderer.userdata);
+    };
+    m_impl->fonts.set_load_callbacks(font_load_fn, font_unload_fn);
 }
 
 AssetService::~AssetService() {
@@ -193,14 +234,28 @@ std::optional<std::vector<uint8_t>> load_file(const std::filesystem::path &path)
 
 }; // namespace
 
-std::optional<FontResource> AssetService::load_font(std::string_view path, float pixel_height) {
+FontRef AssetService::get_font(std::string_view path, float pixel_height) {
+    return m_impl->fonts.get(FontCacheKey{
+        .path = std::string{path},
+        .pixel_height = pixel_height,
+    });
+}
+
+FontResource AssetService::load_font(std::string_view path, float pixel_height) {
     auto file = load_file(path);
     if (!file) {
-        return std::nullopt;
+        return {};
     }
-    return m_impl->font_loader.load_truetype(std::move(*file),
+    const auto font = m_impl->font_loader.load_truetype(std::move(*file),
         {
             .pixel_height = pixel_height,
             .oversampling = 2,
         });
+
+    if (!font) {
+        return {};
+    }
+
+    LOG_TRACE("loaded font '{}' ph={}", path, pixel_height);
+    return *font;
 }

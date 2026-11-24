@@ -31,10 +31,6 @@ public:
     TAsset handle;
 };
 
-/* forward declaration */
-template <typename TAsset>
-class AssetCache;
-
 /**
  * @brief A shared resource reference that holds an
  * asset TAsset.

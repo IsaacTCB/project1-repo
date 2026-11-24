@@ -39,6 +39,16 @@ public:
     [[nodiscard]] operator bool() const { return this->valid(); }
 };
 
+class FontRef : public AssetRefMixin<FontRef, FontResource> {
+public:
+    using AssetRefMixin::AssetRefMixin;
+    [[nodiscard]] const FontResource &resource() const { return this->get(); }
+
+    /* misc */
+    [[nodiscard]] bool valid() const { return static_cast<bool>(this->get()); }
+    [[nodiscard]] operator bool() const { return this->valid(); }
+};
+
 class ImageData;
 class AssetService {
 public:
@@ -65,11 +75,12 @@ public:
     TextureRef get_texture(std::string_view path);
     TextureRef create_texture(ImageData &image);
 
-    std::optional<FontResource> load_font(std::string_view path, float pixel_height);
+    FontRef get_font(std::string_view path, float pixel_height);
 
 private:
     [[nodiscard]] TextureAsset load_texture(std::string_view path) const;
     void unload_texture(const TextureAsset &texture) const;
+    FontResource load_font(std::string_view path, float pixel_height);
 
 private:
     struct Impl;
