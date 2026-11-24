@@ -91,7 +91,7 @@ namespace {
  * @tparam Allocator A struct containing at least two static functions: make(AssetService*, ...) and destroy(AssetService*, TAsset&).
  */
 template <typename TAsset, typename Allocator>
-class ProceduralAssetBlock : public IAssetControlBlock<TextureAsset> {
+class ProceduralAssetBlock : public IAssetControlBlock<TAsset> {
 public:
     /* TODO: use C++ 20 concepts to force a compile-time contract */
 
@@ -115,13 +115,13 @@ public:
 private:
     template <typename... Args>
     explicit ProceduralAssetBlock(AssetService *asset, Args &&...args)
-        : IAssetControlBlock(
+        : IAssetControlBlock<TAsset>(
               ProceduralAssetBlock::destroy_callback,
               [&]() { return Allocator::make(asset, std::forward<Args>(args)...); }),
           m_asset(asset) {
     }
 
-    static void destroy_callback(IAssetControlBlock *caller) {
+    static void destroy_callback(IAssetControlBlock<TAsset> *caller) {
         auto *block = static_cast<ProceduralAssetBlock *>(caller);
         Allocator::destroy(block->m_asset, block->handle);
         delete caller;
