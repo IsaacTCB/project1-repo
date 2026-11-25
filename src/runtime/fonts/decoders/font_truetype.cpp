@@ -87,7 +87,7 @@ std::optional<FontResource> FontLoader::load_truetype(std::vector<uint8_t> file_
 
         /* get kerning values */
         for (int j = 0; j < CHAR_COUNT; ++j) {
-            int kern = stbtt_GetCodepointKernAdvance(&info, i, j);
+            int kern = stbtt_GetCodepointKernAdvance(&info, FIRST_CHAR + i, FIRST_CHAR + j);
             if (kern == 0) {
                 continue;
             }
